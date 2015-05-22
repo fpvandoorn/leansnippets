@@ -6,13 +6,6 @@ open eq is_trunc pi equiv sigma.ops sigma
 definition prop_truncate (A : Type) : Type :=
 Π (P : Type), (is_hprop P) → (A → P) → P
 
-set_option pp.universes true
-check @prop_truncate
-check @is_hprop
-print definition prop_truncate
-set_option pp.universes false
-
-
 namespace prop_truncate
 
   notation `∥` A `∥` := prop_truncate A
@@ -49,7 +42,7 @@ namespace prop_truncate
     apply equiv.trans,
       apply equiv_lift.{l l+1},
     fapply equiv.mk,
-      intro la, apply (lift.rec_on la), exact (@prop_abs.{l l+1} A),
+      intro la, eapply (lift.rec_on la), exact (@prop_abs.{l l+1} A),
     fapply is_equiv.adjointify,
         intro aa, apply (aa (lift A) HlA (λ x, lift.up x)),
       intros, apply (@is_hprop.elim (prop_truncate.{l l+1} A) (is_prop_of_prop_truncate.{l l+1} A)),
