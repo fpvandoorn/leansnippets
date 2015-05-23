@@ -2,7 +2,7 @@
 
 import types.eq arity types.pi hit.colimit
 
-open eq is_trunc nat unit type_quotient seq_colim is_equiv funext
+open eq is_trunc nat unit type_quotient seq_colim is_equiv funext pi sigma sigma.ops
 
 namespace naive_tr
 section
@@ -174,89 +174,112 @@ end
     apply H
   end
 
-
 section
   parameter {X : Type}
 
-  private definition A [reducible] (n : ℕ) : Type :=
+  definition A (n : ℕ) : Type :=
   nat.rec_on n X (λn' X', naive_tr X')
 
-  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n) :=
+  definition S := Σ(n : ℕ), A n
+
+  definition f ⦃n : ℕ⦄ (a : A n) : A (succ n) :=
   tr a
 
-  private definition i [reducible] := @inc _ f
+  definition i := @inc _ f
 
-  definition my_tr [reducible] := @seq_colim A f
+  definition my_tr [reducible] := seq_colim f
+
+  example : my_tr = @type_quotient S (@seq_rel A f : S → S → Type) := idp
+
+  definition fs (u : S) : S :=
+  ⟨succ u.1, tr u.2⟩
+
+  definition fs_eq {n : ℕ} (a b : A n) : fs ⟨n, a⟩ = fs ⟨n, b⟩ :=
+  sigma_eq idp (pathover_idp_of_eq !tr_eq)
+
+  definition is (u : S) : my_tr := inc f u.2
+
+  definition glues (u : S) : is (fs u) = is u :=
+  !eq_of_rel !seq_rel.Rmk
 
   theorem glue_ap {n : ℕ} {a a' : A n} (p : a = a')
     : ap i (ap !f p) = !glue ⬝ ap i p ⬝ !glue⁻¹ :=
   eq.rec_on p !con.right_inv⁻¹
 
+  definition fr [reducible] (k : ℕ) (a : S) : S :=
+  ⟨a.1 + k, nat.rec_on k a.2 (λk' a', f a')⟩
 
-  definition fr [reducible] {n : ℕ} (k : ℕ) (a : A n) : A (n+k) :=
-  nat.rec_on k a (λk' a', f a')
+  example (k : ℕ) (a : S) : fs (fr k a) = fr (succ k) a := idp
 
-  example {n : ℕ} (k : ℕ) (a : A n) : f (fr k a) = fr (succ k) a := idp
-
-  definition f_fr [reducible] {n : ℕ} (k : ℕ) (a : A n)
-    : add_succ n k ▸ fr k (f a) = f (fr k a) :=
+  definition fs_fr [reducible] (k : ℕ) (a : S)
+    : fr k (fs a) = fs (fr k a) :=
   begin
-    apply (nat.rec_on k),
+    induction k with k IH,
       {apply idp},
-      {clear k, intros [k, IH],
-        apply (concat (ap_transport (add_succ n) f k (fr k (f a)))),
-        apply (ap (@f _) IH)}
+      {exact (ap fs IH)}
   end
 
-  definition fr_f [reducible] {n : ℕ} (k : ℕ) (a : A n)
-    : fr k (f a) = (add_succ n k)⁻¹ᵖ ▸ f (fr k a) :=
-  eq_inv_tr_of_tr_eq !f_fr
+  definition fs_fr_succ (k : ℕ) (a : S) : fs_fr (succ k) a = ap fs (fs_fr k a) := idp
 
-  definition inc_fr [reducible] {n : ℕ} (k : ℕ) (a : A n) : i (fr k a) = i a :=
-  nat.rec_on k idp (λk' p', glue f (fr k' a) ⬝ p')
+  definition is_fr [reducible] (k : ℕ) (a : S) : is (fr k a) = is a :=
+  nat.rec_on k idp (λk' p', !glues ⬝ p')
 
-  definition eq_constructors_same [reducible] {n : ℕ} (a a' : A n) : i a = i a' :=
+  definition is_fr_succ (k : ℕ) (a : S) : is_fr (succ k) a = !glues ⬝ is_fr k a := idp
+
+  definition eq_constructors_same [reducible] {n : ℕ} (a a' : A n)
+    : is ⟨n, a⟩ = is ⟨n, a'⟩ :=
   calc
     i a = i (f a) : glue
         ... = i (f a') : ap i (tr_eq a a')
         ... = i a' : glue
 
-  definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
+  definition eq_constructors_same' [reducible] (a a' : S) (p : a.1 = a'.1)
+    : is a = is a' :=
+  ap is (sigma_eq proof p qed proof !pathover_tr qed) ⬝ eq_constructors_same (p ▸ a.2) a'.2
+
+  definition eq_constructors [reducible] (a b : S) : is a = is b :=
   calc
-    i a = i (fr m a)                    : inc_fr
+    is a = is (fr (succ b.1) a) : is_fr
 --    ... = i (f (add_comm m n ▸ fr n b)) : ap i (tr_eq (fr m a) _)
-    ... = i (add_comm m n ▸ fr n b)     : eq_constructors_same
-    ... = i (fr n b)                    : apd011 @i (add_comm m n) idp
-    ... = i b                           : inc_fr
+    ... = is (fr (succ a.1) b)  : !eq_constructors_same' (ap succ !add_comm)
+    ... = is b                  : is_fr
 
   -- print definition eq_constructors --THIS GIVES:
   -- λ (X : Type) (n m : ℕ) (a : A n) (b : A m),
-  -- (inc_fr m a) ⁻¹ ⬝
+  -- (is_fr m a) ⁻¹ ⬝
   -- eq_constructors_same (fr m a) (add_comm m n ▸ fr n b) ⬝
   -- (apD011 i (add_comm m n) idp) ⁻¹ ⬝
-  -- inc_fr n b
+  -- is_fr n b
 
   --eq_constructors a (f b) ≡
-  -- (inc_fr (succ m) a) ⁻¹ ⬝
+  -- (is_fr (succ m) a) ⁻¹ ⬝
   -- eq_constructors_same (fr (succ m) a) (add_comm (succ m) n ▸ fr n (f b)) ⬝
   -- (apD011 i (add_comm (succ m) n) idp) ⁻¹ ⬝
-  -- inc_fr n (f b)
+  -- is_fr n (f b)
 
-  theorem inc_fr_glue {m : ℕ} (n : ℕ) (b : A m)
-    : inc_fr n (f b) ⬝ glue f b
-    = apd011 @i (add_succ m n) (f_fr n b) ⬝ glue f (fr n b) ⬝ inc_fr n b :=
-  sorry
+  theorem is_fr_glue (n : ℕ) (b : S)
+    : is_fr n (fs b) ⬝ glues b
+    = ap is !fs_fr ⬝ glues (fr n b) ⬝ is_fr n b :=
+  begin
+    induction n with n IH,
+    { reflexivity},
+    { rewrite [is_fr_succ,con.assoc, IH, con.assoc, ↓is_fr (succ n) b, -con.assoc,fs_fr_succ],
+      clear IH, apply ap (λx, x ⬝ _),
+  --     induction n with n IH,
+  -- { rewrite [↑[fr,add_succ,fs,add,fs_fr],▸*], symmetry, apply idp_con},
+  -- { rewrite [fs_fr_succ], }
+  apply sorry},
+  end
+
+    -- { rewrite [i_fr_succ,con.assoc, ↓succ m + n, IH, con.assoc,↓i_fr (succ n) b, -con.assoc], clear IH, apply ap (λx, x ⬝ _),
+
 
   theorem eq2_partial {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
   !is_hset_image_of_is_hprop_image eq_constructors_same
 
-  theorem glue2 {n : ℕ} {a a' : A n} (p : a = a')
-    : (glue f a)⁻¹ ⬝ ap i (ap !f p) ⬝ glue f a' = ap i p :=
-  eq.rec_on p (!con.left_inv)
-
   theorem ap_tr_eq_f' {n : ℕ} (a a' : A n) : ap i (tr_eq (f a) (f a')) =
    (glue f (f a)) ⬝ ap i (tr_eq a a') ⬝ (glue f (f a'))⁻¹ :=
-sorry --  !eq2_partial ⬝ !glue2⁻¹ᵖ
+  !eq2_partial ⬝ !glue_ap
 
   theorem ap_tr_eq_f {n : ℕ} (a a' : A n)
     : (glue f (f a))⁻¹ ⬝ ap i (tr_eq (f a) (f a')) ⬝ (glue f (f a')) =
@@ -298,98 +321,27 @@ sorry --  !eq2_partial ⬝ !glue2⁻¹ᵖ
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
     eq_constructors a (f b) ⬝ glue f b = eq_constructors a b :=
   begin
-    unfold eq_constructors, exact sorry
+    unfold eq_constructors, apply sorry
   end
 
-  theorem eq_constructors_comp_left {n m : ℕ} (a : A n) (b : A m) :
-    eq_constructors (f a) b = glue f a ⬝ eq_constructors a b :=
-  sorry
-
-  -- theorem my_tr_eq (aa bb : my_tr) : aa = bb :=
-  -- -- a proof using double recursion (whose induction principle is still unfinished)
-  -- begin
-  --   fapply (seq_colim_rec2_on aa bb),
-  --     {clears aa bb, intro n a m b, apply eq_constructors},
-  --     {intros n a m b, rewrite (transport_eq_l),
-  --       apply inv_con_eq_of_eq_con, apply eq_constructors_comp_left},
-  --     {intros n a m b, rewrite (transport_eq_r), apply eq_constructors_comp_right}
-  -- end
-exit
   definition my_tr_eq1 [reducible] (b : my_tr) {n : ℕ} (a : A n) : i a = b :=
   begin
-    fapply (seq_colim_rec_on b),
-      {clear b, intros (m, b), apply eq_constructors},
-      {/-clear b,-/ intros (m, b'),
-        rewrite (transport_eq_r), apply eq_constructors_comp_right},
+    induction b with m b,
+    { apply eq_constructors},
+    { apply (equiv.to_inv !pathover_eq_equiv_r), apply eq_constructors_comp_right},
   end
 
-  theorem my_tr_eq2 (a b : my_tr) : a = b := -- a proof using normal recursion twice (unfinished)
+  theorem my_tr_eq2 (a : my_tr) : Πb, a = b :=
   begin
-    fapply (seq_colim_rec_on a),
-      {clear a, intros (n, a), apply my_tr_eq1},
-      {intros (n, a'), rewrite (transport_eq_l),
-        apply inv_con_eq_of_eq_con, apply sorry},
+    induction a,
+    { intro b, apply my_tr_eq1},
+    { apply is_hprop.elimo}
   end
 
-  definition my_tr_rec {P : my_tr → Type} (H : Πa, P (my_i a))
-    [Pt : Πaa, is_hprop (P aa)] (aa : my_tr) : P aa :=
-  begin
-    fapply (seq_colim_rec_on aa),
-      {clear aa, intro n, apply (nat.rec_on n),
-        {exact H},
-        {clear n, intros (n, IH, a), fapply (naive_tr_rec_on a),
-          {clear a, change (Π (a : A n), P (i (tr a))), intro a,
-            exact (!glue⁻¹ ▸ IH a)},
-          {intros (a₁, a₂), apply is_hprop.elim}}},
-      {intros (n, a), apply is_hprop.elim}
-  end
-
-  set_option pp.universes true
-  check @my_tr_rec
-  check X
-  check @my_tr
-  check @my_i
-
-  example {P : my_tr → Type} (H : Πa, P (my_i a))
-    [Pt : Πaa, is_hprop (P aa)] (x : X) : my_tr_rec H (my_i x) = H x :=
-  idp
+  theorem is_hprop_my_tr : is_hprop my_tr :=
+  is_hprop.mk my_tr_eq2
 
 end
-
-
-  -- set_option pp.universes true
-  -- set_option pp.notation false
-  -- definition lt.elim [reducible] {n m : ℕ} (H : n < m) : Σk, m = n + succ k :=
-  -- lt.rec_on H ⟨0,idp⟩ (λm' H' IH, ⟨succ IH.1, ap succ (IH.2 ⬝ by esimp)⟩)
-
-  -- definition my_nat_rec [reducible] {P : ℕ → ℕ → Type} (n m : ℕ) (H1 : Π(n k : ℕ), P n (n + k))
-  --   (H2 : Π(n k : ℕ), P (n + k) n) : P n m :=
-  -- begin
-  --   apply (sum.cases_on (lt.trichotomy n m)),
-  --     {intro l, rewrite ((lt.elim l).2), apply H1},
-  --     {intro H, apply (sum.cases_on H),
-  --       {intro p, exact (p ▸ !H1)},
-  --       {intro l, rewrite ((lt.elim l).2), apply H2}}
-  -- end
-
-
-
-  -- definition fz [reducible] {n : ℕ} (a : A n) : A (0+n) :=
-  -- nat.rec_on n
-  --   (λa', a')
-  --   (λn' IH (a' : A (succ n')), naive_tr_rec_on' a'
-  --     (λ(a'' : A n'), f (IH a''))
-  --     (λ(b b' : A n'), !tr_eq)) a
-
-  -- private definition fl [reducible] {n : ℕ} (k : ℕ) : Π(a : A n), A (k+n) :=
-  -- nat.rec_on n
-  --   (λa, _)
-
-
-
-
-
-
 
 
   -- private definition fcomm_eq [reducible] {n : ℕ} (a : A n) : i (fcomm a) = i a :=
@@ -417,7 +369,7 @@ end
   -- eq_con_con_inv_of_inv_con_con_eq !eq_constructors_same_eq2
 
   -- definition eq_constructors_same2 [reducible] {n k : ℕ} (b : A (n + k)) (a : A n) : i b = i a :=
-  -- !eq_constructors_same ⬝ !inc_fr
+  -- !eq_constructors_same ⬝ !is_fr
 
   -- definition eq_constructors_same2_eq {n k : ℕ} (b : A (n + k)) (a : A n) : @eq_constructors_same2 n (succ k) (f b) a =
   --   glue f b ⬝ eq_constructors_same2 b a :=
@@ -428,5 +380,5 @@ end
 
   -- definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
   -- calc
-  --   i a = i (fr m a) : inc_fr
+  --   i a = i (fr m a) : is_fr
   --       ... = i b        : eq_constructors_same3
