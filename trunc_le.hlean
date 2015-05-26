@@ -237,34 +237,15 @@ section
     { exact f b},
   end
 
-  definition is_hprop_lt [instance] (n m : ℕ) : is_hprop (n < m) :=
-  begin
-    assert H : Π{n m : ℕ} (p : n < m) (q : succ n = m), p = q ▸ lt.base n,
-    { intros, cases p,
-      { assert H' : q = idp, apply is_hset.elim,
-        cases H', reflexivity},
-      { cases q, exfalso, exact lt.irrefl b a}},
-    apply is_hprop.mk, intros p q,
-    induction q,
-    { apply H},
-    { cases p,
-        exfalso, exact lt.irrefl b a,
-        exact ap lt.step !v_0}
-  end
-
-  definition is_hprop_le (n m : ℕ) : is_hprop (n ≤ m) := !is_hprop_lt
-
   definition fr_irrel [reducible] {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
   ap (fr a) !is_hprop.elim
-
-  print prefix nat
 
   definition fr_succ {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m)
     : fr a H = fr (f a) H2 :=
   begin
     induction H with m H b,
       exfalso, exact !lt.irrefl H2,
-      --esimp [fr, le.rec_on],
+      rewrite le.rec_on_step,
   end
 
   definition f_fr [reducible] {n : ℕ} (k : ℕ) (a : A n)
