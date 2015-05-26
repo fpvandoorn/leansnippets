@@ -1,6 +1,6 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
-import types.eq arity types.pi hit.colimit
+import types.eq arity types.pi hit.colimit types.nat.hott
 
 open eq is_trunc nat unit type_quotient seq_colim is_equiv funext pi
 
@@ -192,14 +192,80 @@ section
 
   definition my_tr [reducible] := @seq_colim A f
 
+  definition g {n : ℕ} (a : A n) := glue f a
+
   theorem glue_ap {n : ℕ} {a a' : A n} (p : a = a')
     : ap i (ap !f p) = !glue ⬝ ap i p ⬝ !glue⁻¹ :=
   eq.rec_on p !con.right_inv⁻¹
 
-  definition fr [reducible] {n : ℕ} (k : ℕ) (a : A n) : A (n+k) :=
-  nat.rec_on k a (λk' a', f a')
+  -- definition fr [reducible] {n : ℕ} (k : ℕ) (a : A n) : A (n+k) :=
+  -- nat.rec_on k a (λk' a', f a')
 
-  definition fr_succ {n : ℕ} (k : ℕ) (a : A n) : fr (succ k) a = f (fr k a) := idp
+  -- inductive mle (a : nat) : nat → Type₀ :=
+  -- | base : mle a a
+  -- | step : Π {b}, mle a b → mle a (succ b)
+
+  -- local infix `≤` := mle
+  -- print ≤
+
+  protected definition le.rec_on [recursor] {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type} {m : ℕ}
+    (H : n ≤ m) (C0 : C n (lt.base n))
+    (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) : C m H :=
+  begin
+    cases H, exact C0,
+    induction a,
+    { exact Cs C0},
+    { exact Cs v_0},
+  end
+
+  theorem le.rec_on_base {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type}
+    (C0 : C n (lt.base n))
+    (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) :
+    le.rec_on !lt.base C0 Cs = C0 :=
+  sorry
+
+  theorem le.rec_on_step {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type}
+    (C0 : C n (lt.base n))
+    (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) {m : ℕ} {H : n ≤ m} :
+    le.rec_on (lt.step H) C0 Cs = Cs (le.rec_on H C0 Cs) :=
+  sorry
+
+  definition fr [reducible] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
+  begin
+    induction H with m H b,
+    { exact a},
+    { exact f b},
+  end
+
+  definition is_hprop_lt [instance] (n m : ℕ) : is_hprop (n < m) :=
+  begin
+    assert H : Π{n m : ℕ} (p : n < m) (q : succ n = m), p = q ▸ lt.base n,
+    { intros, cases p,
+      { assert H' : q = idp, apply is_hset.elim,
+        cases H', reflexivity},
+      { cases q, exfalso, exact lt.irrefl b a}},
+    apply is_hprop.mk, intros p q,
+    induction q,
+    { apply H},
+    { cases p,
+        exfalso, exact lt.irrefl b a,
+        exact ap lt.step !v_0}
+  end
+
+  definition is_hprop_le (n m : ℕ) : is_hprop (n ≤ m) := !is_hprop_lt
+
+  definition fr_irrel [reducible] {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
+  ap (fr a) !is_hprop.elim
+
+  print prefix nat
+
+  definition fr_succ {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m)
+    : fr a H = fr (f a) H2 :=
+  begin
+    induction H with m H b,
+      exfalso, exact !lt.irrefl H2,
+      --esimp [fr, le.rec_on],
+  end
 
   definition f_fr [reducible] {n : ℕ} (k : ℕ) (a : A n)
     : fr k (f a) =[add_succ n k] f (fr k a) :=
@@ -227,34 +293,75 @@ section
   definition eq_constructors_same_eq {n m : ℕ} (a : A n) (a' : A m) (p : n = m) : i a = i a' :=
   by cases p;apply eq_constructors_same
 
-  definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
+  definition eq_ge {n m : ℕ} (a : A n) (b : A m) (H : n ≥ m) : i a = i b :=
+  obtain (k : ℕ) (p : m + k = n), from le.elim H,
   calc
-    i a = i (fr m a)                    : i_fr
---    ... = i (f (add_comm m n ▸ fr n b)) : ap i (tr_eq (fr m a) _)
---    ... = i (add_comm m n ▸ fr n b)     : eq_constructors_same
-    ... = i (fr n b)                    : !eq_constructors_same_eq !add_comm
--- : (apo011 @i (add_comm m n) !pathover_tr)⁻¹
-    ... = i b                           : i_fr
+    i a = i (fr k b) : !eq_constructors_same_eq p⁻¹
+    ... = i b        : i_fr
 
-  -- print definition eq_constructors --THIS GIVES:
-  -- λ (X : Type) (n m : ℕ) (a : A n) (b : A m),
-  -- (i_fr m a) ⁻¹ ⬝
-  -- eq_constructors_same (fr m a) (add_comm m n ▸ fr n b) ⬝
-  -- (apD011 i (add_comm m n) idp) ⁻¹ ⬝
-  -- i_fr n b
 
-  --eq_constructors a (f b) ≡
-  -- (i_fr (succ m) a) ⁻¹ ⬝
-  -- eq_constructors_same (fr (succ m) a) (add_comm (succ m) n ▸ fr n (f b)) ⬝
-  -- (apD011 i (add_comm (succ m) n) idp) ⁻¹ ⬝
-  -- i_fr n (f b)
+
+
+
+
+
+
+
+  theorem eq2_partial {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
+  !is_hset_image_of_is_hprop_image eq_constructors_same
+  theorem ap_tr_eq_f' {n : ℕ} (a a' : A n) : ap i (tr_eq (f a) (f a')) =
+   (glue f (f a)) ⬝ ap i (tr_eq a a') ⬝ (glue f (f a'))⁻¹ :=
+  !eq2_partial ⬝ !glue_ap
+  theorem ap_tr_eq_f {n : ℕ} (a a' : A n)
+    : (glue f (f a))⁻¹ ⬝ ap i (tr_eq (f a) (f a')) ⬝ (glue f (f a')) =
+    ap i (tr_eq a a') :=
+  inv_con_con_eq_of_eq_con_con_inv !ap_tr_eq_f'
+  theorem eq_constructors_same_f' {n : ℕ} (a a' : A n)
+    : !glue⁻¹ ⬝ eq_constructors_same (f a) (f a') ⬝ !glue = eq_constructors_same a a' :=
+  begin
+   esimp [eq_constructors_same],
+   apply (ap (λx, _ ⬝ x ⬝ _)),
+   apply (ap_tr_eq_f a a'),
+  end
+  theorem eq_constructors_same_f {n : ℕ} (a a' : A n) :
+    (glue f a)⁻¹ ⬝ eq_constructors_same (f a) (f a') =
+    eq_constructors_same a a' ⬝ (glue f a')⁻¹ :=
+  eq_con_inv_of_con_eq !eq_constructors_same_f'
+
+  theorem eq_constructors_same_eq_f {n m : ℕ} (a : A n) (a' : A m) (p : n = m) :
+    (glue f a)⁻¹ ⬝ eq_constructors_same_eq (f a) (f a') (ap succ p) =
+    eq_constructors_same_eq a a' p ⬝ (glue f a')⁻¹ :=
+  by cases p; apply eq_constructors_same_f
+
+
+
+
+  definition eq_lt {n m : ℕ} (a : A n) (b : A m) (H : n < m) : i a = i b :=
+  (eq_ge b a (le_of_lt H))⁻¹
+
+  theorem eq_gt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≥ succ m) (H2 : n ≥ m)
+    : eq_ge a (f b) H1 ⬝ glue f b = eq_ge a b H2 :=
+  begin
+    unfold eq_ge, esimp,
+    eapply (sigma.rec_on (le.elim H1)), intros k p,
+    eapply (sigma.rec_on (le.elim H2)), intros k' p',
+    have q : k' = succ k,
+    begin refine add.cancel_left _, exact m, exact p' ⬝ p⁻¹ ⬝ !add_succ end,
+    cases q, esimp,
+    rewrite i_fr_succ, apply sorry
+  end
+
+  theorem eq_eq_f {n : ℕ} (a b : A n) (H1 : n < succ n) (H2 : n ≤ n)
+    : eq_lt a (f b) H1 ⬝ glue f b = eq_ge a b H2 :=
+  sorry
+
+  theorem eq_lt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n < succ m) (H2 : n < m)
+    : eq_lt a (f b) H1 ⬝ glue f b  = eq_lt a b H2 :=
+  sorry
 
   definition eq_constructors_same_con [reducible] {n : ℕ} (a : A n)
     {a' a'' : A n} (p : a' = a'') : eq_constructors_same a a' = eq_constructors_same a a'' ⬝ ap i p⁻¹ :=
   by induction p; reflexivity
-
-  -- set_option pp.implicit true
-  -- set_option pp.notation false
 
   theorem i_fr_glue {m : ℕ} (n : ℕ) (b : A m)
     : i_fr n (f b) ⬝ glue f b
@@ -272,58 +379,21 @@ section
 }
   end
 
-variables
-(m : ℕ)
-(b : A 0)
-
--- eval apo011 @i idp (f_fr 1 b)
-
-
-  theorem eq2_partial {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
-  !is_hset_image_of_is_hprop_image eq_constructors_same
-
-  theorem ap_tr_eq_f' {n : ℕ} (a a' : A n) : ap i (tr_eq (f a) (f a')) =
-   (glue f (f a)) ⬝ ap i (tr_eq a a') ⬝ (glue f (f a'))⁻¹ :=
-  !eq2_partial ⬝ !glue_ap
-
-  theorem ap_tr_eq_f {n : ℕ} (a a' : A n)
-    : (glue f (f a))⁻¹ ⬝ ap i (tr_eq (f a) (f a')) ⬝ (glue f (f a')) =
-    ap i (tr_eq a a') :=
-  inv_con_con_eq_of_eq_con_con_inv !ap_tr_eq_f'
-
-  theorem eq_constructors_same_f' {n : ℕ} (a a' : A n)
-    : !glue⁻¹ ⬝ eq_constructors_same (f a) (f a') ⬝ !glue = eq_constructors_same a a' :=
-  begin
-   esimp [eq_constructors_same],
-   apply (ap (λx, _ ⬝ x ⬝ _)),
-   apply (ap_tr_eq_f a a'),
-  end
-
-  theorem eq_constructors_same_f {n : ℕ} (a a' : A n) :
-    (glue f a)⁻¹ ⬝ eq_constructors_same (f a) (f a') =
-    eq_constructors_same a a' ⬝ (glue f a')⁻¹ :=
-  eq_con_inv_of_con_eq !eq_constructors_same_f'
-
-  theorem eq_constructors_same_eq_f {n m : ℕ} (a : A n) (a' : A m) (p : n = m) :
-    (glue f a)⁻¹ ⬝ eq_constructors_same_eq (f a) (f a') (ap succ p) =
-    eq_constructors_same_eq a a' p ⬝ (glue f a')⁻¹ :=
-  by cases p; apply eq_constructors_same_f
-
   definition tr_f {n m : ℕ} (a : A n) (p : n = m) : p ▸ f a = f (p ▸ a) :=
   eq.rec_on p idp
 
-  definition lemma1 {m : ℕ} (n : ℕ) (b : A m)
-    : add_comm (succ m) n ▸ fr n (f b) = f (add_comm m n ▸ fr n b) :=
-  begin
---    rewrite (fr_f n b),
-    apply concat, apply (ap (transport _ _)), apply eq_tr_of_pathover !f_fr,
-    -- rewrite -(con_tr (add_succ m n)⁻¹ (add_comm (succ m) n) (f (fr n b)))
-    apply concat, apply inverse, apply con_tr,
-    -- esimp {add_comm}, --doesn't work
-    apply concat, apply (ap (λy, transport A y (f _))),
-    apply (inv_con_cancel_left (add_succ m n) (ap succ (add_comm m n))),
-    apply ap_transport,
-  end
+--   definition lemma1 {m : ℕ} (n : ℕ) (b : A m)
+--     : add_comm (succ m) n ▸ fr n (f b) = f (add_comm m n ▸ fr n b) :=
+--   begin
+-- --    rewrite (fr_f n b),
+--     apply concat, apply (ap (transport _ _)), apply eq_tr_of_pathover !f_fr,
+--     -- rewrite -(con_tr (add_succ m n)⁻¹ (add_comm (succ m) n) (f (fr n b)))
+--     apply concat, apply inverse, apply con_tr,
+--     -- esimp {add_comm}, --doesn't work
+--     apply concat, apply (ap (λy, transport A y (f _))),
+--     apply (inv_con_cancel_left (add_succ m n) (ap succ (add_comm m n))),
+--     apply ap_transport,
+--   end
 
   definition apo011_inv_con {A Z : Type} {B : A → Type} (f : Πa, B a → Z) {a a' a'' : A}
     {b : B a} {b' : B a'} {b'' : B a''} (Ha : a' = a) (Ha' : a' = a'')
@@ -344,23 +414,29 @@ variables
   -- set_option pp.beta false
 --  set_option pp.metavar_args true
 
+open sum
+theorem lt_or_ge (a b : ℕ) : (a < b) ⊎ (a ≥ b) :=
+lt.by_cases inl (λH, inr (eq.rec_on H !le.refl)) (λH, inr (le_of_lt H))
+
+definition lt_ge_by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a ≥ b → P) : P :=
+sum.rec_on (lt_or_ge a b) H1 H2
+
+  definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
+  lt_ge_by_cases !eq_lt !eq_ge
+
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
     eq_constructors a (f b) ⬝ glue f b = eq_constructors a b :=
   begin
-    unfold eq_constructors, rewrite [con.assoc _ !i_fr !glue, i_fr_glue,
-      -con.assoc _ _ !i_fr, -con.assoc _ _ !glue,con.assoc _ _⁻¹ _, apo011_inv_con,
-      i_fr_succ,con_inv,con.assoc _⁻¹ _⁻¹ _],
-    apply ap (λx, x ⬝ _),
-    apply concat, apply ap (λx, _ ⬝ x ⬝ _ ⬝ _),
-    apply concat, apply ap (λx, _ ⬝ x), apply eq_constructors_same_con, apply lemma1,
-    rewrite -con.assoc, apply ap (λx, x ⬝ _), apply eq_constructors_same_f,
-    rewrite +con.assoc,
-    apply ap (λx, _ ⬝ (_ ⬝ (_ ⬝ (_ ⬝ x)))),
-    --unfold lemma1,
+    unfold [eq_constructors,lt_ge_by_cases],
+    focus (eapply sum.rec_on (lt_or_ge n (succ m));
+      all_goals eapply sum.rec_on (lt_or_ge n m);
+      all_goals (intro H1 H2;esimp)),
+    { apply eq_lt_f},
+    { have H : n = m, begin apply le.antisymm, exact le_of_lt_succ H2, exact H1 end,
+      cases H, apply eq_eq_f},
+    { exfalso, apply lt.irrefl m, apply lt.trans, apply lt_of_succ_le H2, exact H1},
+    { apply eq_gt_f},
   end
-  check @lemma1
-  check @fr_succ
-  print lemma1
 
   definition my_tr_eq1 [reducible] (b : my_tr) {n : ℕ} (a : A n) : i a = b :=
   begin
@@ -380,43 +456,3 @@ variables
   is_hprop.mk my_tr_eq2
 
 end
-
-
-  -- private definition fcomm_eq [reducible] {n : ℕ} (a : A n) : i (fcomm a) = i a :=
-  -- sorry
-
-  -- definition eq_constructors_same_eq'' {n : ℕ} (a a' : A n) : ap i (tr_eq (f a) (f a')) =
-  --  (glue f (f a)) ⬝ ap i (tr_eq a a') ⬝ (glue f (f a'))⁻¹ :=
-  -- !eq2_partial ⬝ !glue2
-
-  -- definition eq_constructors_same_eq' {n : ℕ} (a a' : A n)
-  --   : (glue f (f a))⁻¹ ⬝ ap i (tr_eq (f a) (f a')) ⬝ (glue f (f a')) =
-  --   ap i (tr_eq a a') :=
-  -- inv_con_con_eq_of_eq_con_con_inv !eq_constructors_same_eq''
-
-  -- theorem eq_constructors_same_eq2 {n : ℕ} (a a' : A n)
-  --   : !glue⁻¹ ⬝ eq_constructors_same (f a) (f a') ⬝ !glue = eq_constructors_same a a' :=
-  -- begin
-  --  esimp {eq_constructors_same},
-  --  apply (ap (λx, _ ⬝ x ⬝ _)),
-  --  apply (eq_constructors_same_eq' a a'),
-  -- end
-
-  -- theorem eq_constructors_same_eq {n : ℕ} (a a' : A n)
-  --   : eq_constructors_same (f a) (f a') = !glue ⬝ eq_constructors_same a a' ⬝ !glue⁻¹ :=
-  -- eq_con_con_inv_of_inv_con_con_eq !eq_constructors_same_eq2
-
-  -- definition eq_constructors_same2 [reducible] {n k : ℕ} (b : A (n + k)) (a : A n) : i b = i a :=
-  -- !eq_constructors_same ⬝ !i_fr
-
-  -- definition eq_constructors_same2_eq {n k : ℕ} (b : A (n + k)) (a : A n) : @eq_constructors_same2 n (succ k) (f b) a =
-  --   glue f b ⬝ eq_constructors_same2 b a :=
-  -- sorry
-
-  -- definition eq_constructors_same3 [reducible] {n k : ℕ} (b : A (k + n)) (a : A n) : i b = i a :=
-  -- apd011 @i !add_comm idp ⬝ eq_constructors_same2 (!add_comm ▸ b) a
-
-  -- definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
-  -- calc
-  --   i a = i (fr m a) : i_fr
-  --       ... = i b        : eq_constructors_same3
