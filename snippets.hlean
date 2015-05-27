@@ -165,3 +165,20 @@ namespace lt
 
 end lt
 end nat
+
+/---------------------------------------------------------------------------------------------------
+  [WIP] try to see whether having a list of paths is useful
+---------------------------------------------------------------------------------------------------/
+
+namespace lpath
+  open nat eq
+  inductive lpath {A : Type} (a : A) : A → ℕ → Type :=
+  lidp : lpath a a 0,
+  cons : Π{n : ℕ} {b c : A} (p : b = c) (l : lpath a b n), lpath a c (succ n)
+
+  open lpath.lpath
+
+  protected definition elim {A : Type} : Π{a : A} {b : A} {n : ℕ} (l : lpath a b n), a = b
+  | elim (lidp a) := idp
+  | elim (cons p l) := elim l ⬝ p
+end lpath
