@@ -344,7 +344,8 @@ section
       all_goals eapply sum.rec_on (lt_or_ge n m);
       all_goals (intro H1 H2;esimp)),
     { apply eq_lt_f},
-    { have H : n = m, begin apply le.antisymm, exact le_of_succ_le_succ H2, exact H1 end,
+    { assert H : n = m,
+        apply le.antisymm, exact le_of_succ_le_succ H2, exact H1,
       cases H, apply eq_eq_f},
     { exfalso, apply lt.irrefl m, apply lt.trans, exact H2, exact H1},
     { apply eq_gt_f},
@@ -385,10 +386,11 @@ section
 
 end
 
-definition tr'.{u} (A : Type.{u}) : Type.{u}                                       := @my_tr A
-definition tr {A : Type} : A → tr' A                                               := @i A 0
-definition is_hprop_hte (A : Type) : is_hprop (tr' A)                              := is_hprop_my_tr
-protected definition tr'.rec {A : Type} {P : tr' A → Type}
-  [Pt : Π(x : tr' A), is_hprop (P x)] (H : Π(a : A), P (tr a)) : Π(x : tr' A), P x := @rec A P Pt H
-example {A : Type} {P : tr' A → Type} [Pt : Πaa, is_hprop (P aa)]
-        (H : Πa, P (tr a)) (a : A) : (tr'.rec H) (tr a) = H a                      := by reflexivity
+definition my_trunc.{u} (A : Type.{u}) : Type.{u}                        := @my_tr A
+definition tr {A : Type} : A → my_trunc A                                := @i A 0
+definition is_hprop_hte (A : Type) : is_hprop (my_trunc A)               := is_hprop_my_tr
+definition my_trunc.rec {A : Type} {P : my_trunc A → Type}
+  [Pt : Π(x : my_trunc A), is_hprop (P x)]
+  (H : Π(a : A), P (tr a)) : Π(x : my_trunc A), P x                      := @rec A P Pt H
+example {A : Type} {P : my_trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
+        (H : Πa, P (tr a)) (a : A) : (my_trunc.rec H) (tr a) = H a       := by reflexivity
