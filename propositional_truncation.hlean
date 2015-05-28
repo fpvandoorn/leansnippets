@@ -370,7 +370,7 @@ end
 
 definition my_trunc.{u} (A : Type.{u}) : Type.{u}                        := @my_tr A
 definition tr {A : Type} : A → my_trunc A                                := @i A 0
-definition is_hprop_hte (A : Type) : is_hprop (my_trunc A)               := is_hprop_my_tr
+definition is_hprop_my_trunc (A : Type) : is_hprop (my_trunc A)          := is_hprop_my_tr
 definition my_trunc.rec {A : Type} {P : my_trunc A → Type}
   [Pt : Π(x : my_trunc A), is_hprop (P x)]
   (H : Π(a : A), P (tr a)) : Π(x : my_trunc A), P x                      := @rec A P Pt H
