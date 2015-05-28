@@ -314,7 +314,7 @@ variables
     =
     eq_constructors_eq (fr m a) (fr n a') (add_comm n m) ⬝ (glue f (fr n a'))⁻¹
       ⬝ apo011 @i !add_succ⁻¹ !f_fr⁻¹ᵒ :=
-  !eq_constructors_eq_f ⬝ _
+  sorry
 
   definition tr_f {n m : ℕ} (a : A n) (p : n = m) : p ▸ f a = f (p ▸ a) :=
   eq.rec_on p idp
@@ -355,7 +355,7 @@ variables
     eq_constructors a (f b) ⬝ glue f b = eq_constructors a b :=
   begin
     unfold eq_constructors,
-
+    exact sorry
   end
 exit
 

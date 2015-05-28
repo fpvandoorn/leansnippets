@@ -356,6 +356,7 @@ variables
     rewrite +con.assoc,
     apply ap (λx, _ ⬝ (_ ⬝ (_ ⬝ (_ ⬝ x)))),
     --unfold lemma1,
+    exact sorry
   end
   check @lemma1
   check @fr_succ

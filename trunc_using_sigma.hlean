@@ -220,7 +220,7 @@ section
   end
 
   definition fs_fr_succ (k : ℕ) (a : S) : fs_fr (succ k) a = ap fs (fs_fr k a) := idp
-
+exit
   definition is_fr [reducible] (k : ℕ) (a : S) : is (fr k a) = is a :=
   nat.rec_on k idp (λk' p', !glues ⬝ p')
 

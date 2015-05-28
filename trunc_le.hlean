@@ -212,6 +212,7 @@ section
   local infix `<` := _root_.lt
   local infix `≥` := _root_.ge
   local infix `>` := _root_.gt
+  attribute le.base [refl]
 
 definition le.refl (n : ℕ) : n ≤ n := le.base n
 definition is_hprop_le [instance] (n m : ℕ) : is_hprop (n ≤ m) := sorry
@@ -222,10 +223,18 @@ definition le.trans {n m k : ℕ} (H1 : n ≤ m) (H2 : m ≤ k) : n ≤ k := sor
 definition le_succ_of_le {n m : ℕ} (H : n ≤ m) : n ≤ succ m := le.trans H !self_le_succ
 definition le_of_succ_le {n m : ℕ} (H : succ n ≤ m) : n ≤ m := le.trans !self_le_succ H
 definition le_of_lt {n m : ℕ} (H : n < m) : n ≤ m := le_of_succ_le H
-definition succ_le_succ {n m : ℕ} (H : n ≤ m) : succ n ≤ succ m := sorry
-definition le_of_succ_le_succ {n m : ℕ} (H : succ n ≤ succ m) : n ≤ m := sorry
-definition succ_le_succ_equiv (n m : ℕ) : (n ≤ m) ≃ (succ n ≤ succ m) :=
+definition succ_le_succ {n m : ℕ} (H : n ≤ m) : succ n ≤ succ m :=
+by induction H;reflexivity;exact le.step v_0
+definition pred_le_pred {n m : ℕ} (H' : n ≤ m) : pred n ≤ pred m :=
+by induction H';reflexivity;cases b;exact v_0;exact le.step v_0
+definition le_of_succ_le_succ {n m : ℕ} (H : succ n ≤ succ m) : n ≤ m :=
+pred_le_pred H
+definition le_succ_of_pred_le {n m : ℕ} (H : pred n ≤ m) : n ≤ succ m :=
+by cases n;exact le.step H;exact succ_le_succ H
+definition le_equiv_succ_le_succ (n m : ℕ) : (n ≤ m) ≃ (succ n ≤ succ m) :=
 equiv_of_is_hprop succ_le_succ le_of_succ_le_succ
+definition le_succ_equiv_pred_le (n m : ℕ) : (n ≤ succ m) ≃ (pred n ≤ m) :=
+equiv_of_is_hprop pred_le_pred le_succ_of_pred_le
 definition le.elim {n m : ℕ} (H : n ≤ m) : Σk, n + k = m := sorry
 theorem lt.by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a = b → P) (H3 : b < a → P) : P :=
 sorry
@@ -288,20 +297,29 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
   begin
     induction H with m H IH,
     { exfalso, exact neg_succ_le_self H2},
-    -- let S := le.cases H2,
-    -- cases S,
-    cases H2 with x H3,
-    { rewrite [is_hprop.elim H !le.refl]},
-    { rewrite [↑fr,↓fr (f a) H3,-IH]}
+    { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
+      --add some unfold-c's in files
+      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
+      revert H IH,
+      eapply le.rec_on (le_of_succ_le_succ H2),
+      { intros, esimp [succ_le_succ], apply concat, apply ap (fr a),
+        exact is_hprop.elim _ (le.step !le.base), reflexivity},
+      { intros, rewrite [↑fr,↓fr a H,↑succ_le_succ,↓succ_le_succ a_1], exact ap (@f _) !IH}},
   end
 
+  --first induction on H2
   definition f_fr {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : n ≤ succ m) : f (fr a H) = fr a H2 :=
   begin
-    induction H with m H IH,
-    { rewrite [is_hprop.elim H2 !self_le_succ]},
-    cases H2 with x H3,
-    { exfalso, exact !neg_add_le_self H},
-    { rewrite [↑fr,↓fr a H3,-IH]}
+    exact sorry
+    -- induction H with m H IH,
+    -- { rewrite [is_hprop.elim H2 !self_le_succ]},
+    -- { refine _ ⬝ ap (fr a) (to_left_inv !le_succ_equiv_pred_le H2),
+--      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
+
+--}
+    -- cases H2 with x H3,
+    -- { exfalso, exact !neg_add_le_self H},
+    -- { rewrite [↑fr,↓fr a H3,-IH]}
   end
 
   definition fr_f' {n m : ℕ} (a : A n) (H : succ n ≤ m) : fr a (le_of_succ_le H) = fr (f a) H :=
@@ -314,7 +332,7 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
   begin
     induction H with m H IH,
     { reflexivity},
-    { rewrite [↑fr,g,IH]},
+    { exact !g ⬝ IH},
   end
 
 -- --  nat.rec_on k idp (λk' p', glue f (fr k' a) ⬝ p')
@@ -338,13 +356,18 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
 
 
 
-
+check @le.rec
   theorem i_fr_glue {n m : ℕ} (b : A n) (H1 : n ≤ m) (H2 : succ n ≤ m)
     : ap i (fr_f b H1 H2) ⬝ i_fr (f b) H2 ⬝ glue f b = i_fr b H1 :=
   begin
     induction H1 with m H IH, exfalso, exact neg_succ_le_self H2,
     cases H2 with x H3,
-    { rewrite [is_hprop.elim H !le.refl], },
+    { rewrite [is_hprop.elim H !le.refl,↑fr_f,↑le_of_succ_le_succ,↑pred_le_pred,
+               ↑le_equiv_succ_le_succ,↑equiv_of_is_hprop,↑is_equiv_of_is_hprop,↑i_fr,↑fr],
+
+--some le.rec's are not reduced
+      refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), },
+
     { }
   end
 
