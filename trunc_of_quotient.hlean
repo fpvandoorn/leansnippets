@@ -358,9 +358,6 @@ variables
     --unfold lemma1,
     exact sorry
   end
-  check @lemma1
-  check @fr_succ
-  print lemma1
 
   definition my_tr_eq1 [reducible] (b : my_tr) {n : ℕ} (a : A n) : i a = b :=
   begin

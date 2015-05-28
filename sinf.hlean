@@ -1,7 +1,7 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
 open eq is_trunc nat sigma sigma.ops bool
-
+exit -- this file still uses the Licata trick for hits. It needs to be updated
 /- private -/ inductive susp (A : Type) : Type :=
 N {} : susp A,
 S {} : susp A

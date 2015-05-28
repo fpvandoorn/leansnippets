@@ -1,8 +1,122 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
-import types.eq arity types.pi hit.colimit types.nat.hott
+import types.eq arity types.pi hit.colimit types.nat.hott types.square
 
-open eq is_trunc unit type_quotient seq_colim is_equiv funext pi nat equiv
+open eq is_trunc unit type_quotient seq_colim is_equiv funext pi nat equiv sum
+
+/- HELPER LEMMAS, which we might want to add to other files -/
+
+  definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
+    {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
+  begin
+    apply con_eq_of_eq_con_inv,
+    apply inv_con_eq_of_eq_con,
+    rewrite -con.assoc,
+    apply H
+  end
+
+  theorem is_hprop_elim_self {A : Type} {H : is_hprop A} (x : A) : is_hprop.elim x x = idp :=
+  !is_hprop.elim
+
+  definition is_hset_image_of_is_hprop_image {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
+    (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
+  have H' : Π{b c : A} (r : b = c), !H⁻¹ ⬝ H a c = ap f r, from
+    (λb c r, eq.rec_on r !con.left_inv),
+  !H'⁻¹ ⬝ !H'
+
+  inductive le (a : nat) : nat → Type₀ :=
+  | base : le a a
+  | step : Π {b}, le a b → le a (succ b)
+
+  local infix `≤` := _root_.le
+  definition lt [reducible] (n m : ℕ) := succ n ≤ m
+  definition ge [reducible] (n m : ℕ) := m ≤ n
+  definition gt [reducible] (n m : ℕ) := succ m ≤ n
+  local infix `<` := _root_.lt
+  local infix `≥` := _root_.ge
+  local infix `>` := _root_.gt
+  attribute le.base [refl]
+
+abbreviation le.refl (n : ℕ) : n ≤ n := le.base n
+definition le_succ (n : ℕ) : n ≤ succ n := le.step !le.base
+definition pred_le (n : ℕ) : pred n ≤ n :=
+by cases n;all_goals (repeat constructor)
+definition le.trans [trans] {n m k : ℕ} (H1 : n ≤ m) (H2 : m ≤ k) : n ≤ k :=
+by induction H2 with n H2 IH;exact H1;exact le.step IH
+definition le_succ_of_le {n m : ℕ} (H : n ≤ m) : n ≤ succ m := le.trans H !le_succ
+definition le_of_succ_le {n m : ℕ} (H : succ n ≤ m) : n ≤ m := le.trans !le_succ H
+definition le_of_lt {n m : ℕ} (H : n < m) : n ≤ m := le_of_succ_le H
+definition succ_le_succ [unfold-c 3] {n m : ℕ} (H : n ≤ m) : succ n ≤ succ m :=
+by induction H;reflexivity;exact le.step v_0
+definition pred_le_pred [unfold-c 3] {n m : ℕ} (H : n ≤ m) : pred n ≤ pred m :=
+by induction H;reflexivity;cases b;exact v_0;exact le.step v_0
+definition le_of_succ_le_succ [unfold-c 3] {n m : ℕ} (H : succ n ≤ succ m) : n ≤ m :=
+pred_le_pred H
+definition le_succ_of_pred_le [unfold-c 1] {n m : ℕ} (H : pred n ≤ m) : n ≤ succ m :=
+by cases n;exact le.step H;exact succ_le_succ H
+definition not_succ_le_self {n : ℕ} : ¬succ n ≤ n :=
+by induction n with n IH;all_goals intros;cases a;apply IH;exact le_of_succ_le_succ a
+definition is_hprop_le [instance] (n m : ℕ) : is_hprop (n ≤ m) :=
+begin
+  assert lem : Π{n m : ℕ} (p : n ≤ m) (q : n = m), p = q ▸ le.base n,
+  { intros, cases p,
+    { assert H' : q = idp, apply is_hset.elim,
+      cases H', reflexivity},
+    { cases q, exfalso, apply not_succ_le_self a}},
+  apply is_hprop.mk, intro H1 H2, induction H2,
+  { apply lem},
+  { cases H1,
+    { exfalso, apply not_succ_le_self a},
+    { exact ap le.step !v_0}},
+end
+definition le_equiv_succ_le_succ (n m : ℕ) : (n ≤ m) ≃ (succ n ≤ succ m) :=
+equiv_of_is_hprop succ_le_succ le_of_succ_le_succ
+definition le_succ_equiv_pred_le (n m : ℕ) : (n ≤ succ m) ≃ (pred n ≤ m) :=
+equiv_of_is_hprop pred_le_pred le_succ_of_pred_le
+definition zero_le (n : ℕ) : 0 ≤ n :=
+by induction n with n IH;apply le.base;exact le.step IH
+definition zero_lt_succ (n : ℕ) : 0 < succ n :=
+by induction n with n IH;apply le.base;exact le.step IH
+definition lt.trans {n m k : ℕ} (H1 : n < m) (H2 : m < k) : n < k :=
+le.trans (le.step H1) H2
+definition le_lt_trans {n m k : ℕ} (H1 : n ≤ m) (H2 : m < k) : n < k :=
+le.trans (succ_le_succ H1) H2
+definition lt_le_trans {n m k : ℕ} (H1 : n < m) (H2 : m ≤ k) : n < k :=
+le.trans H1 H2
+theorem le.antisymm {n m : ℕ} (H1 : n ≤ m) (H2 : m ≤ n) : n = m :=
+begin
+  cases H1 with m' H1',
+  { reflexivity},
+  { cases H2 with n' H2',
+    { reflexivity},
+    { exfalso, apply not_succ_le_self, exact lt.trans H1' H2'}},
+end
+theorem lt.irrefl (n : ℕ) : ¬n < n := not_succ_le_self
+theorem le_lt_antisymm {n m : ℕ} (H1 : n ≤ m) (H2 : m < n) : empty :=
+!lt.irrefl (le_lt_trans H1 H2)
+theorem lt_le_antisymm {n m : ℕ} (H1 : n < m) (H2 : m ≤ n) : empty :=
+le_lt_antisymm H2 H1
+theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty :=
+le_lt_antisymm (le_of_lt H1) H2
+theorem lt.by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a = b → P) (H3 : b < a → P) : P :=
+begin
+  revert b H1 H2 H3, induction a with a IH,
+  { intros, cases b,
+      exact H2 idp,
+      exact H1 !zero_lt_succ},
+  { intros, cases b with b,
+      exact H3 !zero_lt_succ,
+    { apply IH,
+        intro H, exact H1 (succ_le_succ H),
+        intro H, exact H2 (ap succ H),
+        intro H, exact H3 (succ_le_succ H)}}
+end
+theorem lt_or_ge (a b : ℕ) : (a < b) ⊎ (a ≥ b) :=
+lt.by_cases inl (λH, inr (eq.rec_on H !le.refl)) (λH, inr (le_of_lt H))
+definition lt_ge_by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a ≥ b → P) : P :=
+sum.rec_on (lt_or_ge a b) H1 H2
+
+/- definition of "naive truncation" -/
 
 namespace naive_tr
 section
@@ -20,7 +134,7 @@ section
   definition tr_eq : tr a = tr a' :=
   eq_of_rel _ star
 
-   protected definition rec {P : naive_tr → Type} (Pt : Π(a : A), P (tr a))
+   protected definition rec [recursor] {P : naive_tr → Type} (Pt : Π(a : A), P (tr a))
     (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (x : naive_tr) : P x :=
   begin
     fapply (type_quotient.rec_on x),
@@ -45,234 +159,40 @@ section
   (Pt : A → P) (Pe : Πa a', Pt a = Pt a') : P :=
   elim Pt Pe x
 
-  -- theorem elim_tr_eq {P : Type}
-  --   (Pincl : Π⦃i : I⦄ (x : A i), P)
-  --   (Pglue : Π(j : J) (x : A (dom j)), Pincl (f j x) = Pincl x)
-  --     {j : J} (x : A (dom j)) : ap (elim Pincl Pglue) (cglue j x) = Pglue j x :=
-  -- begin
-  --   apply eq_of_fn_eq_fn_inv !(pathover_constant (cglue j x)),
-  --   rewrite [▸*,-apdo_eq_pathover_of_eq_ap,↑elim,rec_cglue],
-  -- end
-
-  -- protected definition elim_type (Pincl : Π⦃i : I⦄ (x : A i), Type)
-  --   (Pglue : Π(j : J) (x : A (dom j)), Pincl (f j x) ≃ Pincl x) (y : colimit) : Type :=
-  -- elim Pincl (λj a, ua (Pglue j a)) y
-
-  -- protected definition elim_type_on [reducible] (y : colimit)
-  --   (Pincl : Π⦃i : I⦄ (x : A i), Type)
-  --   (Pglue : Π(j : J) (x : A (dom j)), Pincl (f j x) ≃ Pincl x) : Type :=
-  -- elim_type Pincl Pglue y
-
-  -- theorem elim_type_cglue (Pincl : Π⦃i : I⦄ (x : A i), Type)
-  --   (Pglue : Π(j : J) (x : A (dom j)), Pincl (f j x) ≃ Pincl x)
-  --     {j : J} (x : A (dom j)) : transport (elim_type Pincl Pglue) (cglue j x) = Pglue j x :=
-  -- by rewrite [tr_eq_cast_ap_fn,↑elim_type,elim_cglue];apply cast_ua_fn
-
 end
 end naive_tr
 open naive_tr
 
-definition is_hset_image_of_is_hprop_image {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
-  (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
-have H' : Π{b c : A} (r : b = c), !H⁻¹ ⬝ H a c = ap f r, from
-  (λb c r, eq.rec_on r !con.left_inv),
-!H'⁻¹ ⬝ !H'
-
-definition ap_tr_eq_ap_tr {A : Type} {a a' : A} (p q : a = a') : ap tr p = ap tr q :=
-!is_hset_image_of_is_hprop_image tr_eq
-
-definition tr_tr_eq_tr_tr {A B : Type} {P : A → B → Type} {a a' : A} {b b' : B}
-  (p : a = a') (q : b = b') (x : P a b) : p ▸ q ▸ x = q ▸ p ▸ x :=
-eq.rec_on p (eq.rec_on q idp)
-
-abbreviation inc := @inclusion
-
--- definition transport_colim_rec {A : ℕ → Type} {f : Π⦃n⦄, A n → A (succ n)}
---   {P : seq_colim f → seq_colim f → Type} {aa aa' bb : seq_colim f} (p : aa = aa')
---   (H1 : Π⦃m : ℕ⦄ (b : A m), P aa (inc f b))
---   (H2 : Π⦃m : ℕ⦄ (b : A m), H1 (f b) =[glue f b] H1 b)
---   : p ▸ (seq_colim.rec_on f bb H1 H2)
---       = seq_colim.rec_on f bb (λm b, p ▸ H1 b) (λm b, !tr_tr_eq_tr_tr ⬝ ap (transport _ p) !H2) :=
--- begin
---   apply (eq.rec_on p), esimp
--- end
-
-definition eq_of_homotopy_tr {A : Type} {B : A → Type} {C : Πa, B a → Type}
-  {f g : Πa, B a} {H : f ∼ g} {a : A} (c : C a (f a)) :
-    eq_of_homotopy H ▸ c = H a ▸ c :=
-begin
-  apply (homotopy.rec_on H),
-  intro p, apply (eq.rec_on p),
-  rewrite (left_inv apd10 (refl f))
-end
-
-definition eq_of_homotopy_tr2 {A : Type} {B : A → Type} {C : Πa', B a' → Type}
-  {f g : Πa, B a} (H : f ∼ g) (c : Πa, C a (f a)) (a : A) :
-   (transport _ (eq_of_homotopy H) c) a = H a ▸ c a  :=
-begin
-  apply (homotopy.rec_on H),
-  intro p, apply (eq.rec_on p),
-  rewrite (left_inv apd10 (refl f))
-end
-
---set_option pp.notation false
--- definition seq_colim_rec2_on {A : ℕ → Type} {f : Π⦃n⦄, A n → A (succ n)}
---   {P : seq_colim f → seq_colim f → Type} (aa bb : seq_colim f)
---   (Hinc : Π⦃n : ℕ⦄ (a : A n) ⦃m : ℕ⦄ (b : A m), P (inc f a) (inc f b))
---   (Heq1 : Π⦃n : ℕ⦄ (a : A n) ⦃m : ℕ⦄ (b : A m), glue f a ▸ Hinc (f a) b = Hinc a b)
---   (Heq2 : Π⦃n : ℕ⦄ (a : A n) ⦃m : ℕ⦄ (b : A m), glue f b ▸ Hinc a (f b) = Hinc a b)
---     : P aa bb :=
--- begin
---   fapply (seq_colim_rec_on aa),
---     {intros [n, a], fapply (seq_colim_rec_on bb),
---       {exact (Hinc a)},
---       {exact (Heq2 a)}},
---     {intros [n, a], apply concat, apply transport_colim_rec,
---       fapply (apD011 (seq_colim_rec_on bb)),
---         {apply eq_of_homotopy; intro m, apply eq_of_homotopy; intro b, apply Heq1},
---         {apply eq_of_homotopy; intro m, apply eq_of_homotopy; intro b, apply sorry
--- --           rewrite (eq_of_homotopy_tr2 (λm, eq_of_homotopy (λb, Heq1 a b))
--- -- (tr_tr_eq_tr_tr (glue f b) (glue f a) (Hinc (f a) (f b)) ⬝ ap
--- --        (transport (λ (a_2 : seq_colim f), P a_2 (inc f b)) (glue f a))
--- --        (Heq2 (f a) b))
--- -- m)
--- }
--- }
--- end
-
-/- HELPER LEMMAS, which we might want to add to other files -/
-
-  definition add_zero [reducible] (n : ℕ) : 0 + n = n :=
-  nat.rec_on n idp (λn p, ap succ p)
-
-  definition add_succ [reducible] (n k : ℕ) : succ n + k = succ (n + k) :=
-  nat.rec_on k idp (λn p, ap succ p)
-
-  definition add_comm [reducible] (n k : ℕ) : n + k = k + n :=
-  --nat.rec_on k !add_zero (λn p, ap succ p ⬝ !add_succ)
-  nat.rec_on n !add_zero (λn p, add_succ n k ⬝ ap succ p)
-
-  definition ap_transport {A : Type} {B : A → Type} {f g : A → A} (p : f ∼ g) {i : A → A}
-    (h : Πa, B a → B (i a)) (a : A) (b : B (f a)) : ap i (p a) ▸ h (f a) b = h (g a) (p a ▸ b) :=
-  homotopy.rec_on p (λq, eq.rec_on q idp)
-
-  definition ap_pathover {A : Type} {B : A → Type} {f g : A → A} (p : f ∼ g) {i : A → A}
-    (h : Πa, B a → B (i a)) (a : A) (b : B (f a)) (b' : B (g a))
-    (r : pathover B b (p a) b') : pathover B (h (f a) b) (ap i (p a)) (h (g a) b') :=
-  by induction p; induction r using idp_rec_on; exact idpo
-
-  definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
-    {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
-  begin
-    apply con_eq_of_eq_con_inv,
-    apply inv_con_eq_of_eq_con,
-    rewrite -con.assoc,
-    apply H
-  end
-
-  definition eq_con_con_inv_of_inv_con_con_eq {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
-    {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : p⁻¹ ⬝ q ⬝ r = s) : q = p ⬝ s ⬝ r⁻¹ :=
-  begin
-    apply eq_con_inv_of_con_eq,
-    apply eq_con_of_inv_con_eq,
-    rewrite -con.assoc,
-    apply H
-  end
-
 section
   parameter {X : Type}
 
-  private definition A [reducible] (n : ℕ) : Type :=
-  nat.rec_on n X (λn' X', naive_tr X')
+  /- basic constructors -/
+  private definition A [reducible] (n : ℕ) : Type := nat.rec_on n X (λn' X', naive_tr X')
+  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n) :=  tr a
+  private definition f_eq [reducible] ⦃n : ℕ⦄ (a a' : A n) : f a = f a' := tr_eq a a'
+  private definition i [reducible] := @inclusion _ f
+  private definition my_tr [reducible] := @seq_colim A f
+  private definition g {n : ℕ} (a : A n) := glue f a
 
-  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n) :=
-  tr a
-
-  private definition i [reducible] := @inc _ f
-
-  definition my_tr [reducible] := @seq_colim A f
-
-  definition g {n : ℕ} (a : A n) := glue f a
-
-  theorem glue_ap {n : ℕ} {a a' : A n} (p : a = a')
-    : ap i (ap !f p) = !glue ⬝ ap i p ⬝ !glue⁻¹ :=
+  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
+    : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
   eq.rec_on p !con.right_inv⁻¹
 
-  -- definition fr [reducible] {n : ℕ} (k : ℕ) (a : A n) : A (n+k) :=
-  -- nat.rec_on k a (λk' a', f a')
+  /-
+    The main effort is to prove that my_tr is a mere proposition.
+    We do this first by induction on a, and then by induction on b
+    On the point level we need to construct
+      (1) a : A n, b : A m ⊢ p a b : i a = i b
+    On the path level for b we need to show that
+      (2) a : A n, b : A m ⊢ p a (f b) ⬝ g b = p a b
+    The path level for a is automatic, since (Πb, a = b) is a mere proposition
 
-  inductive le (a : nat) : nat → Type₀ :=
-  | base : le a a
-  | step : Π {b}, le a b → le a (succ b)
+    For (1) we distinguish the cases n < m and n ≥ m
 
-  local infix `≤` := _root_.le
-  definition lt [reducible] (n m : ℕ) := succ n ≤ m
-  definition ge [reducible] (n m : ℕ) := m ≤ n
-  definition gt [reducible] (n m : ℕ) := succ m ≤ n
-  local infix `<` := _root_.lt
-  local infix `≥` := _root_.ge
-  local infix `>` := _root_.gt
-  attribute le.base [refl]
+    For (2) we distinguish the cases n < m, n = m and m > n
+  -/
 
-definition le.refl (n : ℕ) : n ≤ n := le.base n
-definition is_hprop_le [instance] (n m : ℕ) : is_hprop (n ≤ m) := sorry
-definition neg_add_le_self (n m : ℕ) : ¬n + m ≤ n := sorry
-definition neg_succ_le_self {n : ℕ} : ¬succ n ≤ n := !neg_add_le_self
-definition self_le_succ (n : ℕ) : n ≤ succ n := le.step !le.base
-definition le.trans {n m k : ℕ} (H1 : n ≤ m) (H2 : m ≤ k) : n ≤ k := sorry
-definition le_succ_of_le {n m : ℕ} (H : n ≤ m) : n ≤ succ m := le.trans H !self_le_succ
-definition le_of_succ_le {n m : ℕ} (H : succ n ≤ m) : n ≤ m := le.trans !self_le_succ H
-definition le_of_lt {n m : ℕ} (H : n < m) : n ≤ m := le_of_succ_le H
-definition succ_le_succ {n m : ℕ} (H : n ≤ m) : succ n ≤ succ m :=
-by induction H;reflexivity;exact le.step v_0
-definition pred_le_pred {n m : ℕ} (H' : n ≤ m) : pred n ≤ pred m :=
-by induction H';reflexivity;cases b;exact v_0;exact le.step v_0
-definition le_of_succ_le_succ {n m : ℕ} (H : succ n ≤ succ m) : n ≤ m :=
-pred_le_pred H
-definition le_succ_of_pred_le {n m : ℕ} (H : pred n ≤ m) : n ≤ succ m :=
-by cases n;exact le.step H;exact succ_le_succ H
-definition le_equiv_succ_le_succ (n m : ℕ) : (n ≤ m) ≃ (succ n ≤ succ m) :=
-equiv_of_is_hprop succ_le_succ le_of_succ_le_succ
-definition le_succ_equiv_pred_le (n m : ℕ) : (n ≤ succ m) ≃ (pred n ≤ m) :=
-equiv_of_is_hprop pred_le_pred le_succ_of_pred_le
-definition le.elim {n m : ℕ} (H : n ≤ m) : Σk, n + k = m := sorry
-theorem lt.by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a = b → P) (H3 : b < a → P) : P :=
-sorry
-theorem le.antisymm {n m : ℕ} (H1 : n ≤ m) (H2 : m ≤ n) : n = m := sorry
-definition lt.trans {n m k : ℕ} (H1 : n < m) (H2 : m < k) : n < k := sorry
-theorem lt.irrefl (n : ℕ) : ¬n < n := sorry
-theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
-
-
-  -- theorem le.rec_on_base {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type}
-  --   (C0 : C n (lt.base n))
-  --   (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) :
-  --   le.rec_on !lt.base C0 Cs = C0 :=
-  -- sorry
-
-
-  -- protected definition le.rec_on [recursor] {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type} {m : ℕ}
-  --   (H : n ≤ m) (C0 : C n (lt.base n))
-  --   (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) : C m H :=
-  -- begin
-  --   cases H, exact C0,
-  --   induction a,
-  --   { exact Cs C0},
-  --   { exact Cs v_0},
-  -- end
-
-  -- theorem le.rec_on_base {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type}
-  --   (C0 : C n (lt.base n))
-  --   (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) :
-  --   le.rec_on !lt.base C0 Cs = C0 :=
-  -- sorry
-
-  -- theorem le.rec_on_step {n : ℕ} {C : Π (m : ℕ), n ≤ m → Type}
-  --   (C0 : C n (lt.base n))
-  --   (Cs : Π ⦃m' : ℕ⦄ {H' : n ≤ m'}, C m' H' → C (succ m') (lt.step H')) {m : ℕ} {H : n ≤ m} :
-  --   le.rec_on (lt.step H) C0 Cs = Cs (le.rec_on H C0 Cs) :=
-  -- sorry
-
+  /- point operations -/
 
   definition fr [reducible] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
   begin
@@ -281,14 +201,9 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
     { exact f b},
   end
 
-  -- open sum prod
-  -- theorem le.cases {n m : ℕ} (H : n ≤ succ m)
-  --   : n = succ m ⊎ (n ≤ m × ΣH' : n ≤ m, H = le.step H') :=
-  -- begin
-  --   cases H, left, reflexivity,
-  --   right, split, assumption,
-  --   existsi a, reflexivity
-  -- end
+  /- path operations -/
+
+  definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
 
   definition fr_irrel [reducible] {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
   ap (fr a) !is_hprop.elim
@@ -296,7 +211,7 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
   definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
   begin
     induction H with m H IH,
-    { exfalso, exact neg_succ_le_self H2},
+    { exfalso, exact not_succ_le_self H2},
     { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
       --add some unfold-c's in files
       esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
@@ -304,29 +219,8 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
       eapply le.rec_on (le_of_succ_le_succ H2),
       { intros, esimp [succ_le_succ], apply concat, apply ap (fr a),
         exact is_hprop.elim _ (le.step !le.base), reflexivity},
-      { intros, rewrite [↑fr,↓fr a H,↑succ_le_succ,↓succ_le_succ a_1], exact ap (@f _) !IH}},
+      { intros, rewrite [↑fr,↓fr a H,↓succ_le_succ a_1], exact ap (@f _) !IH}},
   end
-
-  --first induction on H2
-  definition f_fr {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : n ≤ succ m) : f (fr a H) = fr a H2 :=
-  begin
-    exact sorry
-    -- induction H with m H IH,
-    -- { rewrite [is_hprop.elim H2 !self_le_succ]},
-    -- { refine _ ⬝ ap (fr a) (to_left_inv !le_succ_equiv_pred_le H2),
---      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
-
---}
-    -- cases H2 with x H3,
-    -- { exfalso, exact !neg_add_le_self H},
-    -- { rewrite [↑fr,↓fr a H3,-IH]}
-  end
-
-  definition fr_f' {n m : ℕ} (a : A n) (H : succ n ≤ m) : fr a (le_of_succ_le H) = fr (f a) H :=
-  !fr_f
-
-  definition f_fr' {n m : ℕ} (a : A n) (H : n ≤ m) : f (fr a H) = fr a (le_succ_of_le H) :=
-  !f_fr
 
   definition i_fr [reducible] {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
   begin
@@ -335,147 +229,115 @@ theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty := sorry
     { exact !g ⬝ IH},
   end
 
--- --  nat.rec_on k idp (λk' p', glue f (fr k' a) ⬝ p')
---   theorem i_fr_succ {n : ℕ} (k : ℕ) (a : A n) : i_fr (succ k) a = glue f (fr k a) ⬝ i_fr k a :=  idp
-
-  definition eq_constructors_same [reducible] {n : ℕ} (a a' : A n) : i a = i a' :=
+  definition eq_constructors_same {n : ℕ} (a a' : A n) : i a = i a' :=
   calc
-    i a = i (f a) : glue
-        ... = i (f a') : ap i (tr_eq a a')
-        ... = i a' : glue
+    i a = i (f a) : g
+        ... = i (f a') : ap i (f_eq a a')
+        ... = i a' : g
 
+  -- step (1), case n ≥ m
   definition eq_ge {n m : ℕ} (a : A n) (b : A m) (H : n ≥ m) : i a = i b :=
   calc
     i a = i (fr b H) : eq_constructors_same
     ... = i b        : i_fr
 
+  -- step (1), case n < m
   definition eq_lt {n m : ℕ} (a : A n) (b : A m) (H : n < m) : i a = i b :=
   (eq_ge b a (le_of_lt H))⁻¹
 
+  -- step (1), combined
+  definition eq_constructors {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
+  lt_ge_by_cases !eq_lt !eq_ge
 
+  /- 2-dimensional path operations -/
 
+  theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
+    : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
 
-
-check @le.rec
-  theorem i_fr_glue {n m : ℕ} (b : A n) (H1 : n ≤ m) (H2 : succ n ≤ m)
-    : ap i (fr_f b H1 H2) ⬝ i_fr (f b) H2 ⬝ glue f b = i_fr b H1 :=
-  begin
-    induction H1 with m H IH, exfalso, exact neg_succ_le_self H2,
-    cases H2 with x H3,
-    { rewrite [is_hprop.elim H !le.refl,↑fr_f,↑le_of_succ_le_succ,↑pred_le_pred,
-               ↑le_equiv_succ_le_succ,↑equiv_of_is_hprop,↑is_equiv_of_is_hprop,↑i_fr,↑fr],
-
---some le.rec's are not reduced
-      refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), },
-
-    { }
-  end
-
-  theorem eq2_partial {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
+  theorem ap_i_eq_ap_i_same {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
   !is_hset_image_of_is_hprop_image eq_constructors_same
-  theorem ap_tr_eq_f' {n : ℕ} (a a' : A n) : ap i (tr_eq (f a) (f a')) =
-   (glue f (f a)) ⬝ ap i (tr_eq a a') ⬝ (glue f (f a'))⁻¹ :=
-  !eq2_partial ⬝ !glue_ap
-  theorem ap_tr_eq_f {n : ℕ} (a a' : A n)
-    : (glue f (f a))⁻¹ ⬝ ap i (tr_eq (f a) (f a')) ⬝ (glue f (f a')) =
-    ap i (tr_eq a a') :=
-  inv_con_con_eq_of_eq_con_con_inv !ap_tr_eq_f'
-  theorem eq_constructors_same_f' {n : ℕ} (a a' : A n)
-    : !glue⁻¹ ⬝ eq_constructors_same (f a) (f a') ⬝ !glue = eq_constructors_same a a' :=
+
+  theorem ap_f_eq_f' {n : ℕ} (a a' : A n)
+    : ap i (f_eq (f a) (f a')) = g (f a) ⬝ ap i (f_eq a a') ⬝ (g (f a'))⁻¹ :=
+  !ap_i_eq_ap_i_same ⬝ !ap_i_ap_f
+
+  theorem ap_f_eq_f {n : ℕ} (a a' : A n)
+    : (g (f a))⁻¹ ⬝ ap i (f_eq (f a) (f a')) ⬝ g (f a') = ap i (f_eq a a') :=
+  inv_con_con_eq_of_eq_con_con_inv !ap_f_eq_f'
+
+  theorem eq_constructors_same_f {n : ℕ} (a a' : A n)
+    : (g a)⁻¹ ⬝ eq_constructors_same (f a) (f a') ⬝ g a' = eq_constructors_same a a' :=
   begin
    esimp [eq_constructors_same],
    apply (ap (λx, _ ⬝ x ⬝ _)),
-   apply (ap_tr_eq_f a a'),
+   apply (ap_f_eq_f a a'),
   end
-  theorem eq_constructors_same_f {n : ℕ} (a a' : A n) :
-    (glue f a)⁻¹ ⬝ eq_constructors_same (f a) (f a') =
-    eq_constructors_same a a' ⬝ (glue f a')⁻¹ :=
-  eq_con_inv_of_con_eq !eq_constructors_same_f'
 
-  theorem eq_gt_f' {n m : ℕ} (a : A n) (b : A m) (H1 : n ≥ succ m) (H2 : n ≥ m)
-    : eq_ge a (f b) H1 ⬝ glue f b = eq_ge a b H2 :=
+  theorem ap_f_eq_inv {n : ℕ} (a a' : A n) : (ap i (f_eq a a'))⁻¹ = (ap i (f_eq a' a)) :=
+  by rewrite -ap_inv; apply ap_i_eq_ap_i_same
+
+  theorem eq_constructors_same_inv {n : ℕ} (a a' : A n)
+    : (eq_constructors_same a a')⁻¹ = eq_constructors_same a' a :=
+  by rewrite [↑eq_constructors_same,+con_inv,inv_inv,ap_f_eq_inv,con.assoc]
+
+  theorem i_fr_g {n m : ℕ} (b : A n) (H1 : n ≤ m) (H2 : succ n ≤ m)
+    : ap i (fr_f b H1 H2) ⬝ i_fr (f b) H2 ⬝ g b = i_fr b H1 :=
   begin
-    unfold eq_ge, esimp,
-    -- eapply (sigma.rec_on (le.elim H1)), intros k p,
-    -- eapply (sigma.rec_on (le.elim H2)), intros k' p',
-    -- have q : k' = succ k,
-    -- begin refine add.cancel_left _, exact m, exact p' ⬝ p⁻¹ ⬝ !add_succ end,
-    -- cases q, esimp,
+    induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
+    cases H2 with x H3, -- x is unused
+    { rewrite [is_hprop.elim H !le.refl,↑fr_f,
+      ↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], -- some le.rec's are not reduced
+      refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
+      rewrite [↑le.refl,is_hprop_elim_self,▸*,idp_con,is_hprop_elim_self]},
+    { rewrite [↑i_fr,↓i_fr b H,↓i_fr (f b) H3,↓fr (f b) H3,↓fr b H, -IH H3,
+        -con.assoc,-con.assoc,-con.assoc],
+      apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
+      apply ap_i_eq_ap_i_same}
+  end -- the longest 13 lines of my life
 
-  end
-
-
-  theorem eq_gt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≥ succ m) (H2 : n ≥ m)
-    : eq_ge a (f b) H1 ⬝ glue f b = eq_ge a b H2 :=
-  begin
-    -- unfold eq_ge, esimp,
-    -- eapply (sigma.rec_on (le.elim H1)), intros k p,
-    -- eapply (sigma.rec_on (le.elim H2)), intros k' p',
-    -- have q : k' = succ k,
-    -- begin refine add.cancel_left _, exact m, exact p' ⬝ p⁻¹ ⬝ !add_succ end,
-    -- cases q, esimp,
-
-  end
-
-  theorem eq_eq_f {n : ℕ} (a b : A n) (H1 : n < succ n) (H2 : n ≤ n)
-    : eq_lt a (f b) H1 ⬝ glue f b = eq_ge a b H2 :=
-  sorry
-
-  theorem eq_lt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n < succ m) (H2 : n < m)
-    : eq_lt a (f b) H1 ⬝ glue f b  = eq_lt a b H2 :=
-  sorry
-
-  definition eq_constructors_same_con [reducible] {n : ℕ} (a : A n)
-    {a' a'' : A n} (p : a' = a'') : eq_constructors_same a a' = eq_constructors_same a a'' ⬝ ap i p⁻¹ :=
+  definition eq_constructors_same_con [reducible] {n : ℕ} (a : A n) {a' a'' : A n} (p : a' = a'')
+    : eq_constructors_same a a' = eq_constructors_same a a'' ⬝ (ap i p)⁻¹ :=
   by induction p; reflexivity
 
-  definition tr_f {n m : ℕ} (a : A n) (p : n = m) : p ▸ f a = f (p ▸ a) :=
-  eq.rec_on p idp
+  -- step (2), n > m
+  theorem eq_gt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≥ succ m) (H2 : n ≥ m)
+    : eq_ge a (f b) H1 ⬝ g b = eq_ge a b H2 :=
+  begin
+    esimp [eq_ge],
+    let lem := eq_inv_con_of_con_eq (!con.assoc⁻¹ ⬝ i_fr_g b H2 H1),
+    rewrite [con.assoc,lem,-con.assoc], apply ap (λx, x ⬝ _),
+    exact !eq_constructors_same_con⁻¹
+  end
 
---   definition lemma1 {m : ℕ} (n : ℕ) (b : A m)
---     : add_comm (succ m) n ▸ fr n (f b) = f (add_comm m n ▸ fr n b) :=
---   begin
--- --    rewrite (fr_f n b),
---     apply concat, apply (ap (transport _ _)), apply eq_tr_of_pathover !f_fr,
---     -- rewrite -(con_tr (add_succ m n)⁻¹ (add_comm (succ m) n) (f (fr n b)))
---     apply concat, apply inverse, apply con_tr,
---     -- esimp {add_comm}, --doesn't work
---     apply concat, apply (ap (λy, transport A y (f _))),
---     apply (inv_con_cancel_left (add_succ m n) (ap succ (add_comm m n))),
---     apply ap_transport,
---   end
+  theorem eq_eq_f' {n : ℕ} (a b : A n)
+    : eq_lt a (f b) (le.base (succ n)) ⬝ g b = eq_ge a b (le.base n) :=
+  begin
+    esimp [eq_lt,eq_ge,le_of_lt,le_of_succ_le,le.trans,le_succ,i_fr,fr],
+    rewrite [con_inv], rewrite [-eq_constructors_same_f a b,eq_constructors_same_inv]
+  end
 
-  definition apo011_inv_con {A Z : Type} {B : A → Type} (f : Πa, B a → Z) {a a' a'' : A}
-    {b : B a} {b' : B a'} {b'' : B a''} (Ha : a' = a) (Ha' : a' = a'')
-    (Hb : b' =[Ha] b) (Hb' : b' =[Ha'] b'')
-      : (apo011 f Ha Hb)⁻¹ ⬝ apo011 f Ha' Hb' = apo011 f (Ha⁻¹ ⬝ Ha') (Hb⁻¹ᵒ ⬝o Hb') :=
-  by cases Hb; cases Hb'; reflexivity
+  -- step (2), n = m
+  theorem eq_eq_f {n : ℕ} (a b : A n) (H1 : n < succ n) (H2 : n ≤ n)
+    : eq_lt a (f b) H1 ⬝ g b = eq_ge a b H2 :=
+  by rewrite [is_hprop.elim H1 !le.base, is_hprop.elim H2 !le.base, eq_eq_f']
 
---eq_constructors_same (fr m a) (add_comm (succ m) n ▸ fr n b)
--- ⬝ (glue f (add_comm (succ m) n ▸ fr n b))⁻¹ᵖ
-  --sorry
+  theorem eq_lt_f' {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
+    : g b ⬝ eq_ge b a H2 = eq_ge (f b) a H1 :=
+  begin
+    esimp [eq_ge], rewrite [is_hprop.elim H1 (le.step H2),i_fr_step,-con.assoc,-con.assoc], clear H1,
+    apply ap (λx, x ⬝ _),
+    rewrite [↑fr,↓fr a H2], apply con_eq_of_eq_inv_con,
+    rewrite -con.assoc, exact !eq_constructors_same_f⁻¹
+  end
 
-  -- set_option pp.notation false
-  -- set_option pp.implicit true
-  -- set_option pp.universes true
-  -- set_option pp.full_names true
-  -- set_option pp.abbreviations false
-  -- set_option pp.coercions true
-  -- set_option pp.beta false
---  set_option pp.metavar_args true
+  -- step (2), n < m
+  theorem eq_lt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n < succ m) (H2 : n < m)
+    : eq_lt a (f b) H1 ⬝ g b  = eq_lt a b H2 :=
+  by apply inv_con_eq_of_eq_con; apply eq_con_inv_of_con_eq; apply eq_lt_f'
 
-open sum
-theorem lt_or_ge (a b : ℕ) : (a < b) ⊎ (a ≥ b) :=
-lt.by_cases inl (λH, inr (eq.rec_on H !le.refl)) (λH, inr (le_of_lt H))
-
-definition lt_ge_by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a ≥ b → P) : P :=
-sum.rec_on (lt_or_ge a b) H1 H2
-
-  definition eq_constructors [reducible] {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
-  lt_ge_by_cases !eq_lt !eq_ge
-
+  -- step (2), combined
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
-    eq_constructors a (f b) ⬝ glue f b = eq_constructors a b :=
+    eq_constructors a (f b) ⬝ g b = eq_constructors a b :=
   begin
     unfold [eq_constructors,lt_ge_by_cases],
     focus (eapply sum.rec_on (lt_or_ge n (succ m));
@@ -488,21 +350,45 @@ sum.rec_on (lt_or_ge a b) H1 H2
     { apply eq_gt_f},
   end
 
-  definition my_tr_eq1 [reducible] (b : my_tr) {n : ℕ} (a : A n) : i a = b :=
+  -- induction on b
+  definition my_f_eq1 [reducible] (b : my_tr) {n : ℕ} (a : A n) : i a = b :=
   begin
     induction b with m b,
     { apply eq_constructors},
     { apply (equiv.to_inv !pathover_eq_equiv_r), apply eq_constructors_comp_right},
   end
 
-  theorem my_tr_eq2 (a : my_tr) : Πb, a = b :=
+  -- induction on a
+  theorem my_f_eq2 (a : my_tr) : Πb, a = b :=
   begin
     induction a,
-    { intro b, apply my_tr_eq1},
+    { intro b, apply my_f_eq1},
     { apply is_hprop.elimo}
   end
 
-  theorem is_hprop_my_tr : is_hprop my_tr :=
-  is_hprop.mk my_tr_eq2
+  -- final result
+  theorem is_hprop_my_tr : is_hprop my_tr := is_hprop.mk my_f_eq2
+
+  -- defining the recursor is easy
+  private definition rec {P : my_tr → Type} [Pt : Πx, is_hprop (P x)]
+    (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=
+  begin
+    induction x,
+    { induction n with n IH,
+      { exact H a},
+      { induction a,
+        { exact !g⁻¹ ▸ IH a},
+        { apply is_hprop.elimo}}},
+    { apply is_hprop.elimo}
+  end
+
 
 end
+
+definition tr'.{u} (A : Type.{u}) : Type.{u}                                       := @my_tr A
+definition tr {A : Type} : A → tr' A                                               := @i A 0
+definition is_hprop_hte (A : Type) : is_hprop (tr' A)                              := is_hprop_my_tr
+protected definition tr'.rec {A : Type} {P : tr' A → Type}
+  [Pt : Π(x : tr' A), is_hprop (P x)] (H : Π(a : A), P (tr a)) : Π(x : tr' A), P x := @rec A P Pt H
+example {A : Type} {P : tr' A → Type} [Pt : Πaa, is_hprop (P aa)]
+        (H : Πa, P (tr a)) (a : A) : (tr'.rec H) (tr a) = H a                      := by reflexivity
