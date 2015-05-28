@@ -134,30 +134,13 @@ section
   definition tr_eq : tr a = tr a' :=
   eq_of_rel _ star
 
-   protected definition rec [recursor] {P : naive_tr → Type} (Pt : Π(a : A), P (tr a))
+  protected definition rec [recursor] {P : naive_tr → Type} (Pt : Π(a : A), P (tr a))
     (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (x : naive_tr) : P x :=
   begin
     fapply (type_quotient.rec_on x),
     { intro a, apply Pt},
     { intro a a' H, cases H, apply Pe}
   end
-
-  protected definition rec_on [reducible] {P : naive_tr → Type} (x : naive_tr)
-    (Pt : Π(a : A), P (tr a))
-    (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') : P x :=
-  rec Pt Pe x
-
-  theorem rec_tr_eq {P : naive_tr → Type} (Pt : Π(a : A), P (tr a))
-    (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (a a' : A)
-      : apdo (rec Pt Pe) (tr_eq a a') = Pe a a' :=
-  !rec_eq_of_rel
-
-  protected definition elim {P : Type} (Pt : A → P) (Pe : Πa a', Pt a = Pt a') (x : naive_tr) : P :=
-  rec Pt (λa a', pathover_of_eq (Pe a a')) x
-
-  protected definition elim_on [reducible] {P : Type} (x : naive_tr)
-  (Pt : A → P) (Pe : Πa a', Pt a = Pt a') : P :=
-  elim Pt Pe x
 
 end
 end naive_tr
@@ -168,15 +151,11 @@ section
 
   /- basic constructors -/
   private definition A [reducible] (n : ℕ) : Type := nat.rec_on n X (λn' X', naive_tr X')
-  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n) :=  tr a
-  private definition f_eq [reducible] ⦃n : ℕ⦄ (a a' : A n) : f a = f a' := tr_eq a a'
-  private definition i [reducible] := @inclusion _ f
-  private definition my_tr [reducible] := @seq_colim A f
-  private definition g {n : ℕ} (a : A n) := glue f a
-
-  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
-    : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
-  eq.rec_on p !con.right_inv⁻¹
+  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n)        := tr a
+  private definition f_eq [reducible] ⦃n : ℕ⦄ (a a' : A n) : f a = f a'  := tr_eq a a'
+  private definition my_tr [reducible] : Type                            := @seq_colim A f
+  private definition i [reducible] {n : ℕ} (a : A n) : my_tr             := inclusion f a
+  private definition g {n : ℕ} (a : A n)                                 := glue f a
 
   /-
     The main effort is to prove that my_tr is a mere proposition.
@@ -205,7 +184,7 @@ section
 
   definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
 
-  definition fr_irrel [reducible] {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
+  definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
   ap (fr a) !is_hprop.elim
 
   definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
@@ -222,7 +201,7 @@ section
       { intros, rewrite [↑fr,↓fr a H,↓succ_le_succ a_1], exact ap (@f _) !IH}},
   end
 
-  definition i_fr [reducible] {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
+  definition i_fr {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
   begin
     induction H with m H IH,
     { reflexivity},
@@ -250,6 +229,10 @@ section
   lt_ge_by_cases !eq_lt !eq_ge
 
   /- 2-dimensional path operations -/
+
+  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
+    : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
+  eq.rec_on p !con.right_inv⁻¹
 
   theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
     : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
@@ -293,9 +276,9 @@ section
         -con.assoc,-con.assoc,-con.assoc],
       apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
       apply ap_i_eq_ap_i_same}
-  end -- the longest 13 lines of my life
+  end -- this was the longest time I've every spent on 14 lines of text
 
-  definition eq_constructors_same_con [reducible] {n : ℕ} (a : A n) {a' a'' : A n} (p : a' = a'')
+  definition eq_constructors_same_con {n : ℕ} (a : A n) {a' a'' : A n} (p : a' = a'')
     : eq_constructors_same a a' = eq_constructors_same a a'' ⬝ (ap i p)⁻¹ :=
   by induction p; reflexivity
 
@@ -382,7 +365,6 @@ section
         { apply is_hprop.elimo}}},
     { apply is_hprop.elimo}
   end
-
 
 end
 
