@@ -1,24 +1,36 @@
-import types.eq types.pi hit.colimit
+import types.eq types.pi hit.colimit types.nat.hott
 
 open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
 
 /-
   The construction of the propositional from type quotients.
-  A type quotients is a hit with two constructors. Given {A : Type} (R : A → A → Type) we have
-  * class_of : A → type_quotient R
-  * eq_of_rel : Π{a a' : A}, R a a' → a = a' (R explicit)
+  A type quotients is a hit with two constructors. Given {X : Type} (R : X → X → Type) we have
+  * class_of : X → type_quotient R
+  * eq_of_rel : Π{a a' : X}, R a a' → a = a' (R explicit)
 
-  In this file we define the propositional truncation (see very bottom), which, given (A : Type)
+  In this file we define the propositional truncation (see very bottom), which, given (X : Type)
   has constructors
-  * tr : A → my_trunc A
-  * is_hprop_my_trunc : is_hprop (my_trunc A)
+  * tr : X → my_trunc X
+  * is_hprop_my_trunc : is_hprop (my_trunc X)
   and with a recursor which recurses to any family of mere propositions.
 
-  See below for an overview of the proof
+  The construction uses a "one step truncation" of X, with two constructors:
+  * tr : X → one_step_tr X
+  * tr_eq : Π(a b : X), tr a = tr b
+  This is like a truncation, but taking out the recursive part. Then we can repeat this n times:
+    A 0 = X,
+    A (n + 1) = one_step_tr (A n)
+  We have a map
+    f {n : ℕ} : A n → A (n + 1) := tr
+  Then my_trunc is defined as the sequential colimit of (A, f).
+
+  Both the one step truncation and the sequential colimit can be defined a type quotient.
+
+  See below for an overview of the proof that (my_trunc A) is actually a mere proposition.
 -/
 
 
-/- HELPER LEMMAS, which we might want to add to other files -/
+/- HELPER LEMMAS -/
 
   definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
     {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
@@ -29,107 +41,17 @@ open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
     apply H
   end
 
-  theorem is_hprop_elim_self {A : Type} {H : is_hprop A} (x : A) : is_hprop.elim x x = idp :=
-  !is_hprop.elim
-
-  definition is_hset_image_of_is_hprop_image {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
+/-
+  Call a function f weakly constant if Πa a', f a = f a'
+  This theorem states that if f is weakly constant, then ap f is weakly constant.
+-/
+  definition weakly_constant_ap {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
     (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
   have H' : Π{b c : A} (r : b = c), !H⁻¹ ⬝ H a c = ap f r, from
     (λb c r, eq.rec_on r !con.left_inv),
   !H'⁻¹ ⬝ !H'
 
-  inductive le (a : ℕ) : ℕ → Type₀ :=
-  | refl : le a a
-  | step : Π {b}, le a b → le a (succ b)
-
-  local infix `≤` := _root_.le
-  definition lt [reducible] (n m : ℕ) := succ n ≤ m
-  definition ge [reducible] (n m : ℕ) := m ≤ n
-  definition gt [reducible] (n m : ℕ) := succ m ≤ n
-  local infix `<` := _root_.lt
-  local infix `≥` := _root_.ge
-  local infix `>` := _root_.gt
-  attribute le.refl [refl]
-
-definition le_succ (n : ℕ) : n ≤ succ n := by repeat constructor
-definition pred_le (n : ℕ) : pred n ≤ n :=
-by cases n;all_goals (repeat constructor)
-definition le.trans [trans] {n m k : ℕ} (H1 : n ≤ m) (H2 : m ≤ k) : n ≤ k :=
-by induction H2 with n H2 IH;exact H1;exact le.step IH
-definition le_succ_of_le {n m : ℕ} (H : n ≤ m) : n ≤ succ m := le.trans H !le_succ
-definition le_of_succ_le {n m : ℕ} (H : succ n ≤ m) : n ≤ m := le.trans !le_succ H
-definition le_of_lt {n m : ℕ} (H : n < m) : n ≤ m := le_of_succ_le H
-definition succ_le_succ [unfold-c 3] {n m : ℕ} (H : n ≤ m) : succ n ≤ succ m :=
-by induction H;reflexivity;exact le.step v_0
-definition pred_le_pred [unfold-c 3] {n m : ℕ} (H : n ≤ m) : pred n ≤ pred m :=
-by induction H;reflexivity;cases b;exact v_0;exact le.step v_0
-definition le_of_succ_le_succ [unfold-c 3] {n m : ℕ} (H : succ n ≤ succ m) : n ≤ m :=
-pred_le_pred H
-definition le_succ_of_pred_le [unfold-c 1] {n m : ℕ} (H : pred n ≤ m) : n ≤ succ m :=
-by cases n;exact le.step H;exact succ_le_succ H
-definition not_succ_le_self {n : ℕ} : ¬succ n ≤ n :=
-by induction n with n IH;all_goals intros;cases a;apply IH;exact le_of_succ_le_succ a
-definition is_hprop_le [instance] (n m : ℕ) : is_hprop (n ≤ m) :=
-begin
-  assert lem : Π{n m : ℕ} (p : n ≤ m) (q : n = m), p = q ▸ le.refl n,
-  { intros, cases p,
-    { assert H' : q = idp, apply is_hset.elim,
-      cases H', reflexivity},
-    { cases q, exfalso, apply not_succ_le_self a}},
-  apply is_hprop.mk, intro H1 H2, induction H2,
-  { apply lem},
-  { cases H1,
-    { exfalso, apply not_succ_le_self a},
-    { exact ap le.step !v_0}},
-end
-definition le_equiv_succ_le_succ (n m : ℕ) : (n ≤ m) ≃ (succ n ≤ succ m) :=
-equiv_of_is_hprop succ_le_succ le_of_succ_le_succ
-definition le_succ_equiv_pred_le (n m : ℕ) : (n ≤ succ m) ≃ (pred n ≤ m) :=
-equiv_of_is_hprop pred_le_pred le_succ_of_pred_le
-definition zero_le (n : ℕ) : 0 ≤ n :=
-by induction n with n IH;apply le.refl;exact le.step IH
-definition zero_lt_succ (n : ℕ) : 0 < succ n :=
-by induction n with n IH;apply le.refl;exact le.step IH
-definition lt.trans {n m k : ℕ} (H1 : n < m) (H2 : m < k) : n < k :=
-le.trans (le.step H1) H2
-definition le_lt_trans {n m k : ℕ} (H1 : n ≤ m) (H2 : m < k) : n < k :=
-le.trans (succ_le_succ H1) H2
-definition lt_le_trans {n m k : ℕ} (H1 : n < m) (H2 : m ≤ k) : n < k :=
-le.trans H1 H2
-theorem le.antisymm {n m : ℕ} (H1 : n ≤ m) (H2 : m ≤ n) : n = m :=
-begin
-  cases H1 with m' H1',
-  { reflexivity},
-  { cases H2 with n' H2',
-    { reflexivity},
-    { exfalso, apply not_succ_le_self, exact lt.trans H1' H2'}},
-end
-theorem lt.irrefl (n : ℕ) : ¬n < n := not_succ_le_self
-theorem le_lt_antisymm {n m : ℕ} (H1 : n ≤ m) (H2 : m < n) : empty :=
-!lt.irrefl (le_lt_trans H1 H2)
-theorem lt_le_antisymm {n m : ℕ} (H1 : n < m) (H2 : m ≤ n) : empty :=
-le_lt_antisymm H2 H1
-theorem lt.antisymm {n m : ℕ} (H1 : n < m) (H2 : m < n) : empty :=
-le_lt_antisymm (le_of_lt H1) H2
-theorem lt.by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a = b → P) (H3 : b < a → P) : P :=
-begin
-  revert b H1 H2 H3, induction a with a IH,
-  { intros, cases b,
-      exact H2 idp,
-      exact H1 !zero_lt_succ},
-  { intros, cases b with b,
-      exact H3 !zero_lt_succ,
-    { apply IH,
-        intro H, exact H1 (succ_le_succ H),
-        intro H, exact H2 (ap succ H),
-        intro H, exact H3 (succ_le_succ H)}}
-end
-theorem lt_or_ge (a b : ℕ) : (a < b) ⊎ (a ≥ b) :=
-lt.by_cases inl (λH, inr (eq.rec_on H !le.refl)) (λH, inr (le_of_lt H))
-definition lt_ge_by_cases {a b : ℕ} {P : Type} (H1 : a < b → P) (H2 : a ≥ b → P) : P :=
-sum.rec_on (lt_or_ge a b) H1 H2
-
-/- definition of "naive truncation" -/
+/- definition of "one step truncation" -/
 
 namespace one_step_tr
 section
@@ -180,6 +102,7 @@ section
     On the path level (for the induction on b) we need to show that
       (2) a : A n, b : A m ⊢ p a (f b) ⬝ g b = p a b
     The path level for a is automatic, since (Πb, a = b) is a mere proposition
+    Thanks to Egbert Rijke for pointing this out
 
     For (1) we distinguish the cases n < m and n ≥ m
 
@@ -259,7 +182,7 @@ section
     : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
 
   theorem ap_i_eq_ap_i_same {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
-  !is_hset_image_of_is_hprop_image eq_same
+  !weakly_constant_ap eq_same
 
   theorem ap_f_eq_f' {n : ℕ} (a a' : A n)
     : ap i (f_eq (f a) (f a')) = g (f a) ⬝ ap i (f_eq a a') ⬝ (g (f a'))⁻¹ :=
