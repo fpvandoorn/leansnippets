@@ -47,7 +47,7 @@ open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
 -/
   definition weakly_constant_ap {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
     (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
-  have H' : Π{b c : A} (r : b = c), !H⁻¹ ⬝ H a c = ap f r, from
+  have H' : Π{b c : A} (r : b = c), (H a b)⁻¹ ⬝ H a c = ap f r, from
     (λb c r, eq.rec_on r !con.left_inv),
   !H'⁻¹ ⬝ !H'
 
@@ -166,6 +166,7 @@ section
   definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
   ap (fr a) !is_hprop.elim
 
+  -- TODO: the proofs can probably be slightly simplified if H is expressed in terms of H2
   definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
   begin
     induction H with m H IH,
@@ -254,7 +255,8 @@ section
   theorem eq_le_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
     : eq_le a (f b) H1 ⬝ g b  = eq_le a b H2 :=
   begin
-    esimp [eq_le], rewrite [is_hprop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc], clear H1,
+    rewrite [↑eq_le,is_hprop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc],
+    clear H1,
     apply ap (λx, _ ⬝ x),
     rewrite [↑fr,↓fr a H2],
     rewrite -con.assoc, exact !eq_same_f
@@ -270,9 +272,9 @@ section
     eq_constructors a (f b) ⬝ g b = eq_constructors a b :=
   begin
     unfold [eq_constructors,lt_ge_by_cases],
-    focus (eapply sum.rec_on (lt_or_ge n (succ m));
-      all_goals eapply sum.rec_on (lt_or_ge n m);
-      all_goals (intro H1 H2;esimp)),
+    induction lt_or_ge n (succ m) with H2 H2;
+      all_goals induction lt_or_ge n m with H1 H1;
+      all_goals esimp,
     { apply eq_lt_f},
     { assert H : n = m,
         apply le.antisymm, exact le_of_succ_le_succ H2, exact H1,
