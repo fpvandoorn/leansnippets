@@ -24,7 +24,7 @@ open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
     f {n : ℕ} : A n → A (n + 1) := tr
   Then my_trunc is defined as the sequential colimit of (A, f).
 
-  Both the one step truncation and the sequential colimit can be defined a type quotient.
+  Both the one step truncation and the sequential colimit can be defined as type quotient.
 
   See below for an overview of the proof that (my_trunc A) is actually a mere proposition.
 -/
@@ -117,7 +117,7 @@ section
 
   /- point operations -/
 
-  definition fr [reducible] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
+  definition fr [reducible] [unfold-c 4] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
   begin
     induction H with m H b,
     { exact a},
@@ -126,30 +126,11 @@ section
 
   /- path operations -/
 
-  definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
-
-  definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
-  ap (fr a) !is_hprop.elim
-
-  definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
-  begin
-    induction H with m H IH,
-    { exfalso, exact not_succ_le_self H2},
-    { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
-      --add some unfold-c's in files
-      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
-      revert H IH,
-      eapply le.rec_on (le_of_succ_le_succ H2),
-      { intros, esimp [succ_le_succ], apply concat, apply ap (fr a),
-        exact is_hprop.elim _ (le.step !le.refl), reflexivity},
-      { intros, rewrite [↑fr,↓fr a H,↓succ_le_succ a_1], exact ap (@f _) !IH}},
-  end
-
-  definition i_fr {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
+  definition i_fr [unfold-c 4] {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
   begin
     induction H with m H IH,
     { reflexivity},
-    { exact !g ⬝ IH},
+    { exact g (fr a H) ⬝ IH},
   end
 
   definition eq_same {n : ℕ} (a a' : A n) : i a = i a' :=
@@ -172,14 +153,36 @@ section
   definition eq_constructors {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
   lt_ge_by_cases !eq_lt !eq_ge
 
+
+  -- some other path operations needed for 2-dimensional path operations
+  definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
+
+  definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
+  ap (fr a) !is_hprop.elim
+
+  definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
+  begin
+    induction H with m H IH,
+    { exfalso, exact not_succ_le_self H2},
+    { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
+      --add some unfold-c's in files
+      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
+      revert H IH,
+      eapply le.rec_on (le_of_succ_le_succ H2),
+      { intros, esimp [succ_le_succ], apply concat,
+          apply fr_irrel _ _ (le.step !le.refl),
+          reflexivity},
+      { intros, rewrite [↑fr,↓fr a H,↓succ_le_succ a_1], exact ap (@f _) !IH}},
+  end
+
   /- 2-dimensional path operations -/
+
+  theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
+    : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
 
   theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
     : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
   eq.rec_on p !con.right_inv⁻¹
-
-  theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
-    : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
 
   theorem ap_i_eq_ap_i_same {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
   !weakly_constant_ap eq_same
@@ -213,9 +216,10 @@ section
     induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
     cases H2 with x H3, -- x is unused
     { rewrite [is_hprop.elim H !le.refl,↑fr_f,
-      ↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], -- some le.rec's are not reduced
+      ↑le_equiv_succ_le_succ,▸*],
+-- some le.rec's are not reduced if previous line is replaced by "↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], state,"
       refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
-      rewrite [is_hprop_elim_self,▸*,idp_con,is_hprop_elim_self]},
+      rewrite [is_hprop_elim_self,↑fr_irrel,▸*,is_hprop_elim_self]},
     { rewrite [↑i_fr,↓i_fr b H,↓i_fr (f b) H3,↓fr (f b) H3,↓fr b H, -IH H3,
         -con.assoc,-con.assoc,-con.assoc],
       apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
