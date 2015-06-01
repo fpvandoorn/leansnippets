@@ -146,13 +146,19 @@ section
     ... = i b        : i_fr
 
   -- step (1), case n < m
+  -- Note: this is almost eq_ge⁻¹, but not completely.
+  --   This uses eq_same (fr a H) b, while eq_ge⁻¹ uses (eq_same b (fr a H))⁻¹
+  definition eq_le {n m : ℕ} (a : A n) (b : A m) (H : n ≤ m) : i a = i b :=
+  calc
+    i a = i (fr a H) : i_fr
+    ... = i b        : eq_same
+
   definition eq_lt {n m : ℕ} (a : A n) (b : A m) (H : n < m) : i a = i b :=
-  (eq_ge b a (le_of_lt H))⁻¹
+  eq_le a b (le_of_lt H)
 
   -- step (1), combined
   definition eq_constructors {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
   lt_ge_by_cases !eq_lt !eq_ge
-
 
   -- some other path operations needed for 2-dimensional path operations
   definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
@@ -203,13 +209,6 @@ section
    apply (ap_f_eq_f a a'),
   end
 
-  theorem ap_f_eq_inv {n : ℕ} (a a' : A n) : (ap i (f_eq a a'))⁻¹ = (ap i (f_eq a' a)) :=
-  by rewrite -ap_inv; apply ap_i_eq_ap_i_same
-
-  theorem eq_same_inv {n : ℕ} (a a' : A n)
-    : (eq_same a a')⁻¹ = eq_same a' a :=
-  by rewrite [↑eq_same,+con_inv,inv_inv,ap_f_eq_inv,con.assoc]
-
   theorem i_fr_g {n m : ℕ} (b : A n) (H1 : n ≤ m) (H2 : succ n ≤ m)
     : ap i (fr_f b H1 H2) ⬝ i_fr (f b) H2 ⬝ g b = i_fr b H1 :=
   begin
@@ -244,7 +243,7 @@ section
     : eq_lt a (f b) (le.refl (succ n)) ⬝ g b = eq_ge a b (le.refl n) :=
   begin
     esimp [eq_lt,eq_ge,le_of_lt,le_of_succ_le,le.trans,le_succ,i_fr,fr],
-    rewrite [con_inv], rewrite [-eq_same_f a b,eq_same_inv]
+    rewrite [-eq_same_f a b]
   end
 
   -- step (2), n = m
@@ -252,19 +251,19 @@ section
     : eq_lt a (f b) H1 ⬝ g b = eq_ge a b H2 :=
   by rewrite [is_hprop.elim H1 !le.refl, is_hprop.elim H2 !le.refl, eq_eq_f']
 
-  theorem eq_lt_f' {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
-    : g b ⬝ eq_ge b a H2 = eq_ge (f b) a H1 :=
+  theorem eq_le_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
+    : eq_le a (f b) H1 ⬝ g b  = eq_le a b H2 :=
   begin
-    esimp [eq_ge], rewrite [is_hprop.elim H1 (le.step H2),i_fr_step,-con.assoc,-con.assoc], clear H1,
-    apply ap (λx, x ⬝ _),
-    rewrite [↑fr,↓fr a H2], apply con_eq_of_eq_inv_con,
-    rewrite -con.assoc, exact !eq_same_f⁻¹
+    esimp [eq_le], rewrite [is_hprop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc], clear H1,
+    apply ap (λx, _ ⬝ x),
+    rewrite [↑fr,↓fr a H2],
+    rewrite -con.assoc, exact !eq_same_f
   end
 
   -- step (2), n < m
   theorem eq_lt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n < succ m) (H2 : n < m)
     : eq_lt a (f b) H1 ⬝ g b  = eq_lt a b H2 :=
-  by apply inv_con_eq_of_eq_con; apply eq_con_inv_of_con_eq; apply eq_lt_f'
+  eq_le_f a b (le_of_lt H1) (le_of_lt H2)
 
   -- step (2), combined
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
