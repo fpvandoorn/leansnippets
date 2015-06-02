@@ -104,9 +104,10 @@ section
     The path level for a is automatic, since (Πb, a = b) is a mere proposition
     Thanks to Egbert Rijke for pointing this out
 
-    For (1) we distinguish the cases n < m and n ≥ m
+    For (1) we distinguish the cases n ≤ m and n ≥ m,
+      and we prove that the two constructions coincide for n = m
 
-    For (2) we distinguish the cases n < m, n = m and m > n
+    For (2) we distinguish the cases n ≤ m and n > m
 
     During the proof we heavily use induction on inequalities.
     (n ≤ m), or (le n m), is defined as an inductive family:
@@ -145,20 +146,15 @@ section
     i a = i (fr b H) : eq_same
     ... = i b        : i_fr
 
-  -- step (1), case n < m
-  -- Note: this is almost eq_ge⁻¹, but not completely.
-  --   This uses eq_same (fr a H) b, while eq_ge⁻¹ uses (eq_same b (fr a H))⁻¹
+  -- step (1), case n ≤ m
   definition eq_le {n m : ℕ} (a : A n) (b : A m) (H : n ≤ m) : i a = i b :=
   calc
     i a = i (fr a H) : i_fr
     ... = i b        : eq_same
 
-  definition eq_lt {n m : ℕ} (a : A n) (b : A m) (H : n < m) : i a = i b :=
-  eq_le a b (le_of_lt H)
-
   -- step (1), combined
   definition eq_constructors {n m : ℕ} (a : A n) (b : A m) : i a = i b :=
-  lt_ge_by_cases !eq_lt !eq_ge
+  lt_ge_by_cases (λH, eq_le a b (le_of_lt H)) !eq_ge
 
   -- some other path operations needed for 2-dimensional path operations
   definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
@@ -186,6 +182,26 @@ section
 
   theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
     : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
+
+  -- make the next two theorems instances of general theorems about lt_ge_by_cases
+  theorem eq_constructors_le {n m : ℕ} (a : A n) (b : A m) (H : n ≤ m)
+    : eq_constructors a b = eq_le a b H :=
+  begin
+    unfold [eq_constructors,lt_ge_by_cases],
+    induction (lt_or_ge n m) with H2 H2;all_goals esimp,
+    { rewrite [is_hprop.elim H (le_of_lt H2)]},
+    { let p := le.antisymm H H2, cases p,
+      rewrite [is_hprop.elim H (le.refl m), is_hprop.elim H2 (le.refl m)]; exact !idp_con⁻¹},
+  end
+
+  theorem eq_constructors_ge {n m : ℕ} (a : A n) (b : A m) (H : n ≥ m)
+    : eq_constructors a b = eq_ge a b H :=
+  begin
+    unfold [eq_constructors,lt_ge_by_cases],
+    induction (lt_or_ge n m) with H2 H2;all_goals esimp,
+    { exfalso, apply lt.irrefl, exact lt_of_le_of_lt H H2},
+    { rewrite [is_hprop.elim H H2]},
+  end
 
   theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
     : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
@@ -240,18 +256,7 @@ section
     exact !eq_same_con⁻¹
   end
 
-  theorem eq_eq_f' {n : ℕ} (a b : A n)
-    : eq_lt a (f b) (le.refl (succ n)) ⬝ g b = eq_ge a b (le.refl n) :=
-  begin
-    esimp [eq_lt,eq_ge,le_of_lt,le_of_succ_le,le.trans,le_succ,i_fr,fr],
-    rewrite [-eq_same_f a b]
-  end
-
-  -- step (2), n = m
-  theorem eq_eq_f {n : ℕ} (a b : A n) (H1 : n < succ n) (H2 : n ≤ n)
-    : eq_lt a (f b) H1 ⬝ g b = eq_ge a b H2 :=
-  by rewrite [is_hprop.elim H1 !le.refl, is_hprop.elim H2 !le.refl, eq_eq_f']
-
+  -- step (2), n ≤ m
   theorem eq_le_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
     : eq_le a (f b) H1 ⬝ g b  = eq_le a b H2 :=
   begin
@@ -262,25 +267,15 @@ section
     rewrite -con.assoc, exact !eq_same_f
   end
 
-  -- step (2), n < m
-  theorem eq_lt_f {n m : ℕ} (a : A n) (b : A m) (H1 : n < succ m) (H2 : n < m)
-    : eq_lt a (f b) H1 ⬝ g b  = eq_lt a b H2 :=
-  eq_le_f a b (le_of_lt H1) (le_of_lt H2)
-
   -- step (2), combined
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
     eq_constructors a (f b) ⬝ g b = eq_constructors a b :=
   begin
-    unfold [eq_constructors,lt_ge_by_cases],
-    induction lt_or_ge n (succ m) with H2 H2;
-      all_goals induction lt_or_ge n m with H1 H1;
-      all_goals esimp,
-    { apply eq_lt_f},
-    { assert H : n = m,
-        apply le.antisymm, exact le_of_succ_le_succ H2, exact H1,
-      cases H, apply eq_eq_f},
-    { exfalso, apply lt.irrefl m, apply lt.trans, exact H2, exact H1},
-    { apply eq_gt_f},
+    apply @lt_ge_by_cases m n,
+    { intro H, let H2 := le.trans !le_succ H,
+      rewrite [eq_constructors_ge a (f b) H,eq_constructors_ge a b H2,eq_gt_f a b H H2]},
+    { intro H2, let H := le.trans H2 !le_succ,
+      rewrite [eq_constructors_le a (f b) H,eq_constructors_le a b H2,eq_le_f a b H H2]}
   end
 
   -- induction on b
