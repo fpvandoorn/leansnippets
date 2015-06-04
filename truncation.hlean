@@ -1,120 +1,115 @@
-import types.eq types.pi hit.colimit types.nat.hott
+import types.eq types.pi hit.colimit types.nat.hott hit.sphere
 
-open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
-
-/-
-  The construction of the propositional from type quotients.
-  A type quotients is a hit with two constructors. Given {X : Type} (R : X → X → Type) we have
-  * class_of : X → type_quotient R
-  * eq_of_rel : Π{a a' : X}, R a a' → a = a' (R explicit)
-
-  In this file we define the propositional truncation (see very bottom), which, given (X : Type)
-  has constructors
-  * tr : X → my_trunc X
-  * is_hprop_my_trunc : is_hprop (my_trunc X)
-  and with a recursor which recurses to any family of mere propositions.
-
-  The construction uses a "one step truncation" of X, with two constructors:
-  * tr : X → one_step_tr X
-  * tr_eq : Π(a b : X), tr a = tr b
-  This is like a truncation, but taking out the recursive part. Then we can repeat this n times:
-    A 0 = X,
-    A (n + 1) = one_step_tr (A n)
-  We have a map
-    f {n : ℕ} : A n → A (n + 1) := tr
-  Then my_trunc is defined as the sequential colimit of (A, f).
-
-  Both the one step truncation and the sequential colimit can be defined as type quotient.
-
-  See below for an overview of the proof that (my_trunc A) is actually a mere proposition.
--/
+--open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
+open eq type_quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
 
 
-/- HELPER LEMMAS -/
+-- /- HELPER LEMMAS -/
 
-  definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
-    {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
-  begin
-    apply con_eq_of_eq_con_inv,
-    apply inv_con_eq_of_eq_con,
-    rewrite -con.assoc,
-    apply H
-  end
+--   definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
+--     {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
+--   begin
+--     apply con_eq_of_eq_con_inv,
+--     apply inv_con_eq_of_eq_con,
+--     rewrite -con.assoc,
+--     apply H
+--   end
 
-/-
-  Call a function f weakly constant if Πa a', f a = f a'
-  This theorem states that if f is weakly constant, then ap f is weakly constant.
--/
-  definition weakly_constant_ap {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
-    (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
-  have H' : Π{b c : A} (r : b = c), (H a b)⁻¹ ⬝ H a c = ap f r, from
-    (λb c r, eq.rec_on r !con.left_inv),
-  !H'⁻¹ ⬝ !H'
+-- /-
+--   Call a function f weakly constant if Πa a', f a = f a'
+--   This theorem states that if f is weakly constant, then ap f is weakly constant.
+-- -/
+--   definition weakly_constant_ap {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
+--     (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
+--   have H' : Π{b c : A} (r : b = c), (H a b)⁻¹ ⬝ H a c = ap f r, from
+--     (λb c r, eq.rec_on r !con.left_inv),
+--   !H'⁻¹ ⬝ !H'
 
-/- definition of "one step truncation" -/
+/- definition of the delayed one step truncation -/
 
-namespace one_step_tr
+namespace dtr
 section
-  parameters {A : Type}
-  variables (a a' : A)
+  parameters {k : ℕ} {A : Type}
 
-  protected definition R (a a' : A) : Type := unit
-  parameter (A)
-  definition one_step_tr : Type := type_quotient R
-  parameter {A}
-  definition tr : one_step_tr :=
-  class_of R a
+  abbreviation B := A + (S k → A)
+  inductive R : B → B → Type :=
+  | Rmk : Π(s : S k → A) (x : S k), R (inl (s x)) (inr s)
 
-  definition tr_eq : tr a = tr a' :=
-  eq_of_rel _ star
+  definition dtr : Type := type_quotient R --Make explicit after #652
 
-  protected definition rec [recursor] {P : one_step_tr → Type} (Pt : Π(a : A), P (tr a))
-    (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (x : one_step_tr) : P x :=
+  definition tr (a : A) : dtr :=
+  class_of R (inl a)
+
+  definition aux (s : S k → A) : dtr :=
+  class_of R (inr s)
+
+  definition tr_eq (s : S k → A) (x : S k) : tr (s x) = aux s :=
+  !eq_of_rel !R.Rmk
+
+  protected definition rec [recursor] {P : dtr → Type} (Pt : Π(a : A), P (tr a))
+    (Pa : Π(s : S k → A), P (aux s))
+    (Pe : Π(s : S k → A) (x : S k), Pt (s x) =[tr_eq s x] Pa s) (x : dtr) : P x :=
   begin
     fapply (type_quotient.rec_on x),
-    { intro a, apply Pt},
+    { intro a, cases a, apply Pt, apply Pa},
     { intro a a' H, cases H, apply Pe}
   end
 
 end
-end one_step_tr
-open one_step_tr
+end dtr
+open dtr
 
 section
-  parameter {X : Type}
+  parameters {X : Type} {k : ℕ}
 
   /- basic constructors -/
-  private definition A [reducible] (n : ℕ) : Type := nat.rec_on n X (λn' X', one_step_tr X')
+  private definition A [reducible] (n : ℕ) : Type := nat.rec_on n X (λn' X', @dtr k X')
   private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n)        := tr a
-  private definition f_eq [reducible] ⦃n : ℕ⦄ (a a' : A n) : f a = f a'  := tr_eq a a'
+  private definition f_eq [reducible] ⦃n : ℕ⦄ (s : S k → A n) (x : S k) : f (s x) = aux s :=
+  tr_eq s x
+  private definition f_eq2 [reducible] ⦃n : ℕ⦄ (s : S k → A n) (x y : S k) : f (s x) = f (s y) :=
+  tr_eq s x ⬝ (tr_eq s y)⁻¹
   private definition my_tr [reducible] : Type                            := @seq_colim A f
   private definition i [reducible] {n : ℕ} (a : A n) : my_tr             := inclusion f a
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a     := glue f a
 
+
+  -- defining the recursor
+  private definition rec {P : my_tr → Type} [Pt : Πx, is_trunc (k.-2.+1) (P x)]
+    (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=
+  begin
+    induction x,
+    { induction n with n IH,
+      { exact H a},
+      { rewrite ▸@dtr k (A n) at a,
+        induction a,
+        { exact (g a)⁻¹ ▸ IH a},
+        { exact sorry}, -- get inspiration from proof of Th 7.3.2
+        { exact sorry}}},
+    { exact sorry}
+  end
+
+
+  private definition elim {P : Type} [Pt : is_trunc (k.-2.+1) P]
+    (H : X → P) (x : my_tr) : P :=
+  begin
+    induction x,
+    { induction n with n IH,
+      { exact H a},
+      { rewrite ▸@dtr k (A n) at a,
+        induction a,
+        { exact IH a},
+        { },
+        { apply pathover_of_eq, revert s x, }
+}},
+    { }
+  end
+
   /-
-    The main effort is to prove that my_tr is a mere proposition.
-    We prove
-      Π(a b : my_tr), a = b
-    first by induction on a and then by induction on b
-
-    On the point level we need to construct
-      (1) a : A n, b : A m ⊢ p a b : i a = i b
-    On the path level (for the induction on b) we need to show that
-      (2) a : A n, b : A m ⊢ p a (f b) ⬝ g b = p a b
-    The path level for a is automatic, since (Πb, a = b) is a mere proposition
-    Thanks to Egbert Rijke for pointing this out
-
-    For (1) we distinguish the cases n ≤ m and n ≥ m,
-      and we prove that the two constructions coincide for n = m
-
-    For (2) we distinguish the cases n ≤ m and n > m
-
-    During the proof we heavily use induction on inequalities.
-    (n ≤ m), or (le n m), is defined as an inductive family:
-      inductive le (a : ℕ) : ℕ → Type₀ :=
-      | refl : le a a
-      | step : Π {b}, le a b → le a (succ b)
+    To prove: is_trunc (k-1) A
   -/
+
+
 
   /- point operations -/
 
@@ -296,19 +291,6 @@ section
 
   -- final result
   theorem is_hprop_my_tr : is_hprop my_tr := is_hprop.mk my_f_eq2
-
-  -- defining the recursor is easy
-  private definition rec {P : my_tr → Type} [Pt : Πx, is_hprop (P x)]
-    (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=
-  begin
-    induction x,
-    { induction n with n IH,
-      { exact H a},
-      { induction a,
-        { exact !g⁻¹ ▸ IH a},
-        { apply is_hprop.elimo}}},
-    { apply is_hprop.elimo}
-  end
 
 end
 
