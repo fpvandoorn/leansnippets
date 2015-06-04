@@ -1,7 +1,7 @@
 import types.eq types.pi hit.colimit types.nat.hott hit.sphere
 
---open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
-open eq type_quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
+--open eq is_trunc unit quotient seq_colim pi nat equiv sum
+open eq quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
 
 
 -- /- HELPER LEMMAS -/
@@ -35,7 +35,7 @@ section
   inductive R : B → B → Type :=
   | Rmk : Π(s : S k → A) (x : S k), R (inl (s x)) (inr s)
 
-  definition dtr : Type := type_quotient R --Make explicit after #652
+  definition dtr : Type := quotient R --Make explicit after #652
 
   definition tr (a : A) : dtr :=
   class_of R (inl a)
@@ -50,7 +50,7 @@ section
     (Pa : Π(s : S k → A), P (aux s))
     (Pe : Π(s : S k → A) (x : S k), Pt (s x) =[tr_eq s x] Pa s) (x : dtr) : P x :=
   begin
-    fapply (type_quotient.rec_on x),
+    fapply (quotient.rec_on x),
     { intro a, cases a, apply Pt, apply Pa},
     { intro a a' H, cases H, apply Pe}
   end
@@ -73,7 +73,7 @@ section
   private definition i [reducible] {n : ℕ} (a : A n) : my_tr             := inclusion f a
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a     := glue f a
 
-
+exit
   -- defining the recursor
   private definition rec {P : my_tr → Type} [Pt : Πx, is_trunc (k.-2.+1) (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=

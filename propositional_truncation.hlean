@@ -1,11 +1,11 @@
 import types.eq types.pi hit.colimit types.nat.hott
 
-open eq is_trunc unit type_quotient seq_colim pi nat equiv sum
+open eq is_trunc unit quotient seq_colim pi nat equiv sum
 
 /-
   The construction of the propositional from type quotients.
   A type quotients is a hit with two constructors. Given {X : Type} (R : X → X → Type) we have
-  * class_of : X → type_quotient R
+  * class_of : X → quotient R
   * eq_of_rel : Π{a a' : X}, R a a' → a = a' (R explicit)
 
   In this file we define the propositional truncation (see very bottom), which, given (X : Type)
@@ -60,7 +60,7 @@ section
 
   protected definition R (a a' : A) : Type := unit
   parameter (A)
-  definition one_step_tr : Type := type_quotient R
+  definition one_step_tr : Type := quotient R
   parameter {A}
   definition tr : one_step_tr :=
   class_of R a
@@ -71,7 +71,7 @@ section
   protected definition rec [recursor] {P : one_step_tr → Type} (Pt : Π(a : A), P (tr a))
     (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (x : one_step_tr) : P x :=
   begin
-    fapply (type_quotient.rec_on x),
+    fapply (quotient.rec_on x),
     { intro a, apply Pt},
     { intro a a' H, cases H, apply Pe}
   end

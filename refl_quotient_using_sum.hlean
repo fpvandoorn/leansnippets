@@ -7,9 +7,9 @@ Authors: Floris van Doorn
 Quotient of a reflexive relation
 -/
 
-import .circle types.squareover types.pathover
+import hit.circle types.cubical.squareover types.cubical.pathover
 
-open type_quotient eq equiv equiv.ops function circle sum
+open quotient eq equiv equiv.ops function circle sum
 
 section
 variables {A B : Type} (f : A → B) {a : A} {b : B}
@@ -37,7 +37,7 @@ section
   | Rmk' : Π{a a' : A}, R a a' → pre_refl_rel (inl a) (inl a')
   open pre_refl_rel
   local abbreviation R' := pre_refl_rel
-  local abbreviation C := type_quotient R'
+  local abbreviation C := quotient R'
 
   definition pre_refl_quotient_f (a : A) (x : circle) : C :=
   circle.elim_on x (!class_of (inl a)) (!eq_of_rel (Rmk' !ρ))
@@ -48,7 +48,7 @@ section
   open refl_rel
   local abbreviation S := refl_rel
 
-  definition refl_quotient : Type := type_quotient S -- TODO: define this in root namespace
+  definition refl_quotient : Type := quotient S -- TODO: define this in root namespace
 
   definition rclass_of (a : A) : refl_quotient := !class_of (!class_of (inl a))
   definition req_of_rel {a a' : A} (H : R a a') : rclass_of a = rclass_of a' :=
@@ -84,7 +84,7 @@ section
       { esimp, apply sorry/- fibration here:
 (λ (x : circle),
        pathover P
-         (type_quotient.rec
+         (quotient.rec
             (λ (b : sum A A), sum.cases_on b Pc (λ (a : A), transport P (ρaux a base) (Pc a)))
             (λ (b b' : sum A A) (H : R' b b'),
                pre_refl_rel.cases_on H

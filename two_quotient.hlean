@@ -5,9 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn
 -/
 
-import .type_quotient .interval arity
+import hit.quotient hit.interval arity
 
-open type_quotient eq interval
+open quotient eq interval
 exit
 namespace two_quotient
 
@@ -17,14 +17,14 @@ namespace two_quotient
              (Q : Π⦃a a'⦄, R a a' → R a a' → Type)
   variables {a a' : A} {t b : R a a'}
 
-  definition pre_two_quotient := type_quotient R
+  definition pre_two_quotient := quotient R
   local abbreviation B := pre_two_quotient
   inductive two_quotient_rel : B → B → Type :=
   | Rmk : Π{a a' : A} {t : R a a'} {b : R a a'}, Q b t → Π(x : interval),
            two_quotient_rel (interval.elim_on x (!class_of a) (!class_of a') (!eq_of_rel t))
                             (interval.elim_on x (!class_of a) (!class_of a') (!eq_of_rel b))
 
-  definition two_quotient := type_quotient two_quotient_rel
+  definition two_quotient := quotient two_quotient_rel
   local abbreviation C := two_quotient
 
   definition incl0 (a : A) : C := !class_of (!class_of a)
@@ -58,7 +58,7 @@ namespace two_quotient
              (R : A → A → Type)
              (Q : Π⦃a b c d : A⦄, R a b → R c d → R a c → R b c → Type)
 
-  definition pre_two_quotient := type_quotient R
+  definition pre_two_quotient := quotient R
   local abbreviation B := pre_two_quotient
   inductive two_quotient_rel : B → B → Type :=
   | Rs : Π{a b' c d : A} (t : R a b') (b : R c d) (l : R a c) (r : R b' d) (x : interval),

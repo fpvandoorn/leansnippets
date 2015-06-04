@@ -7,9 +7,9 @@ Authors: Floris van Doorn
 Quotient of a reflexive relation
 -/
 
-import .circle types.squareover
+import hit.circle types.cubical.squareover
 
-open type_quotient eq equiv equiv.ops option function circle
+open quotient eq equiv equiv.ops option function circle
 
 section
 variables {A B : Type} (f : A → B) {a : A} {b : B}
@@ -35,7 +35,7 @@ section
   | Rmk' : Π{a a' : A}, R a a' → pre_refl_rel (some a) (some a')
   open pre_refl_rel
   local abbreviation R' := pre_refl_rel
-  local abbreviation C := type_quotient R'
+  local abbreviation C := quotient R'
 
   definition pre_refl_quotient_f (a : A) (x : circle) : C :=
   circle.elim_on x (!class_of (some a)) (!eq_of_rel (Rmk' !ρ))
@@ -46,7 +46,7 @@ section
   open refl_rel
   local abbreviation S := refl_rel
 
-  definition refl_quotient : Type := type_quotient S -- TODO: define this in root namespace
+  definition refl_quotient : Type := quotient S -- TODO: define this in root namespace
   local abbreviation D := refl_quotient
 
   definition rclass_of (a : A) : D := !class_of (!class_of (some a))

@@ -7,9 +7,9 @@ Authors: Floris van Doorn
 Declaration of the torus
 -/
 
-import .circle types.cubeover types.pathover
+import hit.circle types.cubical.cubeover types.cubical.pathover
 
-open type_quotient eq function bool circle equiv
+open quotient eq function bool circle equiv
 
 section
 variables {A B : Type} (f : A → B) {a : A} {b : B}
@@ -34,7 +34,7 @@ namespace torus
   -- | Rtb : Π(x : interval), torus_rel (tt x) (bt x)
   -- | Rlr : Π(x : interval), torus_rel (lt x) (rt x)
   -- open torus_rel
-  --   definition torus := type_quotient torus_rel
+  --   definition torus := quotient torus_rel
 
   -- definition tl : torus := !class_of tl
   -- definition tr : torus := !class_of tr
@@ -64,7 +64,7 @@ namespace torus
   | Rp : pretorus_rel tt tt
   | Rq : pretorus_rel tt tt
 
-  definition pretorus := type_quotient pretorus_rel
+  definition pretorus := quotient pretorus_rel
 
   namespace pretorus
   open pretorus_rel
@@ -90,7 +90,7 @@ namespace torus
   | Rf : Π(x : circle), torus_rel (f x) e
   open torus_rel
 
-  definition torus := type_quotient torus_rel
+  definition torus := quotient torus_rel
   definition base  : torus := class_of torus_rel b
   definition aux   : torus := class_of torus_rel e
   definition loop1 : base = base := ap (class_of torus_rel) p

@@ -3,13 +3,13 @@ import hit.pushout types.nat.basic
 /---------------------------------------------------------------------------------------------------
   show that type quotient preserves equivalence
 ---------------------------------------------------------------------------------------------------/
-namespace type_quotient
+namespace quotient
   open equiv.ops equiv
   universe variables u v
   variables {A B : Type.{u}} {R : A → A → Type.{v}} {S : B → B → Type.{v}}
 
-  definition type_quotient_equiv (f : A ≃ B) (g : Π(a a' : A), R a a' ≃ S (f a) (f a'))
-    : type_quotient R ≃ type_quotient S :=
+  definition quotient_equiv (f : A ≃ B) (g : Π(a a' : A), R a a' ≃ S (f a) (f a'))
+    : quotient R ≃ quotient S :=
   begin
     revert S g, eapply (equiv.rec_on_ua_idp f), esimp, intro S g,
     have H : R = S,
@@ -17,7 +17,7 @@ namespace type_quotient
          eapply (equiv.rec_on_ua_idp (g a a')), reflexivity,
     cases H, reflexivity
   end
-end type_quotient
+end quotient
 
 /---------------------------------------------------------------------------------------------------
   test of pushouts: show that the pushout of the diagram

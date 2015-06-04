@@ -1,8 +1,8 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
-import types.eq arity types.pi hit.colimit types.nat.hott types.square
+import types.eq types.pi hit.colimit
 
-open eq is_trunc unit type_quotient seq_colim is_equiv funext pi nat equiv
+open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
 
   definition eq_of_homotopy_tr {A : Type} {B : A → Type} {C : Πa, B a → Type}
     {f g : Πa, B a} {H : f ∼ g} {a : A} (c : C a (f a)) :

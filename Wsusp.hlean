@@ -1,6 +1,6 @@
-import hit.type_quotient types.W
+import hit.quotient types.W
 
-open type_quotient Wtype
+open quotient Wtype
 
 -- The definition of something similar to case of W-suspensions using type quotients.
 -- The special case is the case where the second argument of "sup" has codomain W(A, B) instead of W(A, B, C, l, r)
@@ -16,7 +16,7 @@ section
   Rmk : Π(c : C) (t : B (l c) → D) (s : B (r c) → D), R (sup (l c) t) (sup (r c) s)
 
   parameter (B)
-  definition Wsusp : Type := type_quotient R
+  definition Wsusp : Type := quotient R
   parameter {B}
   definition hsup (a : A) (t : B a → W a, B a) : Wsusp :=
   class_of R (sup a t)
@@ -27,7 +27,7 @@ section
   -- protected definition rec [recursor] {P : Wsusp → Type} (Pt : Π(a : A), P (tr a))
   --   (Pe : Π(a a' : A), Pt a =[tr_eq a a'] Pt a') (x : Wsusp) : P x :=
   -- begin
-  --   fapply (type_quotient.rec_on x),
+  --   fapply (quotient.rec_on x),
   --   { intro a, apply Pt},
   --   { intro a a' H, cases H, apply Pe}
   -- end
