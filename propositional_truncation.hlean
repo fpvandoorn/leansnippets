@@ -186,22 +186,11 @@ section
   -- make the next two theorems instances of general theorems about lt_ge_by_cases
   theorem eq_constructors_le {n m : ℕ} (a : A n) (b : A m) (H : n ≤ m)
     : eq_constructors a b = eq_le a b H :=
-  begin
-    unfold [eq_constructors,lt_ge_by_cases],
-    induction (lt_or_ge n m) with H2 H2;all_goals esimp,
-    { rewrite [is_hprop.elim H (le_of_lt H2)]},
-    { let p := le.antisymm H H2, cases p,
-      rewrite [is_hprop.elim H (le.refl m), is_hprop.elim H2 (le.refl m)]; exact !idp_con⁻¹},
-  end
+  lt_ge_by_cases_le H (λp, by cases p; exact !idp_con)
 
   theorem eq_constructors_ge {n m : ℕ} (a : A n) (b : A m) (H : n ≥ m)
     : eq_constructors a b = eq_ge a b H :=
-  begin
-    unfold [eq_constructors,lt_ge_by_cases],
-    induction (lt_or_ge n m) with H2 H2;all_goals esimp,
-    { exfalso, apply lt.irrefl, exact lt_of_le_of_lt H H2},
-    { rewrite [is_hprop.elim H H2]},
-  end
+  by apply lt_ge_by_cases_ge
 
   theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
     : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
