@@ -1,6 +1,6 @@
 import types.eq types.pi hit.colimit types.nat.hott hit.sphere
 
---open eq is_trunc unit quotient seq_colim pi nat equiv sum
+--open unit pi equiv sum
 open eq quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
 
 
@@ -37,7 +37,7 @@ section
 
   definition dtr : Type := quotient R --Make explicit after #652
 
-  definition tr (a : A) : dtr :=
+  definition tr [constructor] (a : A) : dtr :=
   class_of R (inl a)
 
   definition aux (s : S k → A) : dtr :=
@@ -57,6 +57,9 @@ section
 
 end
 end dtr
+attribute dtr.rec [unfold-c 7]
+
+
 open dtr
 
 section
@@ -64,7 +67,7 @@ section
 
   /- basic constructors -/
   private definition A [reducible] (n : ℕ) : Type := nat.rec_on n X (λn' X', @dtr k X')
-  private definition f [reducible] ⦃n : ℕ⦄ (a : A n) : A (succ n)        := tr a
+  private definition f [reducible] [constructor] ⦃n : ℕ⦄ (a : A n) : A (succ n)        := tr a
   private definition f_eq [reducible] ⦃n : ℕ⦄ (s : S k → A n) (x : S k) : f (s x) = aux s :=
   tr_eq s x
   private definition f_eq2 [reducible] ⦃n : ℕ⦄ (s : S k → A n) (x y : S k) : f (s x) = f (s y) :=
@@ -73,7 +76,7 @@ section
   private definition i [reducible] {n : ℕ} (a : A n) : my_tr             := inclusion f a
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a     := glue f a
 
-exit
+
   -- defining the recursor
   private definition rec {P : my_tr → Type} [Pt : Πx, is_trunc (k.-2.+1) (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=
@@ -81,35 +84,41 @@ exit
     induction x,
     { induction n with n IH,
       { exact H a},
-      { rewrite ▸@dtr k (A n) at a,
+      { --▸@dtr k (A n) at a,
         induction a,
         { exact (g a)⁻¹ ▸ IH a},
-        { exact sorry}, -- get inspiration from proof of Th 7.3.2
-        { exact sorry}}},
-    { exact sorry}
-  end
-
-
-  private definition elim {P : Type} [Pt : is_trunc (k.-2.+1) P]
-    (H : X → P) (x : my_tr) : P :=
-  begin
-    induction x,
-    { induction n with n IH,
-      { exact H a},
-      { rewrite ▸@dtr k (A n) at a,
-        induction a,
-        { exact IH a},
+        { exact f_eq s base ▸ !g⁻¹ ▸ IH (s (base))},
+        { apply pathover_of_tr_eq, apply map_sphere_constant_of_is_trunc}}},
+    { induction n with n IH; all_goals esimp at *,
+      { apply tr_pathover} ,
+      { induction a; all_goals esimp at *,
+        { clear IH, },
         { },
-        { apply pathover_of_eq, revert s x, }
-}},
-    { }
+        { }}
+
+
+}
   end
+
+exit
+--   private definition elim {P : Type} [Pt : is_trunc (k.-2.+1) P]
+--     (H : X → P) (x : my_tr) : P :=
+--   begin
+--     induction x,
+--     { induction n with n IH,
+--       { exact H a},
+--       { rewrite ▸@dtr k (A n) at a,
+--         induction a,
+--         { exact IH a},
+--         { },
+--         { apply pathover_of_eq, revert s x, }
+-- }},
+--     { }
+--   end
 
   /-
-    To prove: is_trunc (k-1) A
+    To prove: is_trunc (k-1) my_tr
   -/
-
-
 
   /- point operations -/
 
