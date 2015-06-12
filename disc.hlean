@@ -11,7 +11,7 @@ import hit.circle types.cubical.cubeover types.cubical.pathover
 open quotient eq function bool circle equiv
 
 section
-variables {A B : Type} {f : A → B} {a a' : A} {b b' : B}
+variables {A B C : Type} {f : A → B} {a a' : A} {b b' : B}
 
 definition ap_eq_idp_of_contractible (H : Πa, f a = b) (p : a = a) : ap f p = idp :=
 begin
@@ -19,15 +19,36 @@ begin
   rewrite [ap_con_eq_con_ap,ap_constant,idp_con]
 end
 
-definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) (p : a = a) : q = idp :=
+definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
 !elim_loop⁻¹ ⬝ (@cancel_right _ _ _ _ _ _ (H base)
   (ap_con_eq_con_ap H loop ⬝ ap (λx, _ ⬝ x) !ap_constant ⬝ !idp_con⁻¹))
 
 
-definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) (p : a = a)
-  : ap f q = idp :=
-ap (ap f) !elim_loop⁻¹ ⬝ !ap_compose⁻¹ ⬝ (@cancel_right _ _ _ _ _ _ (H base)
+definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
+ap (ap f) !elim_loop⁻¹ ⬝
+!ap_compose⁻¹ ⬝
+(cancel_right --(H base)
   (ap_con_eq_con_ap H loop ⬝ ap (λx, _ ⬝ x) !ap_constant ⬝ !idp_con⁻¹))
+
+-- definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
+-- ap (ap f) !elim_loop⁻¹ ⬝
+-- !ap_compose⁻¹ ⬝
+-- begin check_expr square_of_pathover_eq (apdo H loop), check_expr ap_con_eq_con_ap H loop end ⬝
+-- ap_constant loop _
+
+-- check @ap_constant
+
+definition ap02_eq2_of_circle_eq (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)
+ : square (eq2_of_circle_eq (λx, ap g (H x))) (ap02 g (eq2_of_circle_eq H)) !ap_compose idp :=
+sorry
+
+-- definition ap_con_eq_con_ap_loop /-{q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)-/ (p) (q) :
+--   ap_con_eq_con_ap (circle.rec p q) loop = q :=
+-- sorry
+
+-- definition eq2_of_circle_eq_circle_rec (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) (p : f a' = b) (r : pathover (λx, f (circle.elim a' q x) = b) p loop p)
+--  : square (eq2_of_circle_eq (circle.rec _ (pathover_eq (_)))) _ _ _ :=
+-- sorry
 
 end
 
@@ -83,8 +104,15 @@ namespace disc
   definition lp : base = base := ap (class_of disc_rel) l
   definition fill' (x : S¹) : class_of disc_rel (f x) = aux := eq_of_rel disc_rel (Rf x)
   definition fill  : lp = idp :=
-  eq2_of_circle_eq fill' l
+  eq2_of_circle_eq fill'
 
+  -- definition fill2' (x : S¹) : circle.elim base lp x = aux :=
+  -- circle.rec_on x (eq_of_rel disc_rel (Rf circle.base)) (pathover_eq begin rewrite [ap_constant,elim_loop], apply square_of_eq, refine !idp_con⁻¹ ⬝ ap (λx, x ⬝ _) _, end )
+
+  -- definition fill2  : lp = idp :=
+  -- eq2_of_circle_eq' fill2'
+
+    -- necesarry for proofs of fill/fill' in torus:
     --,+ap_con at H, +ap_inv at H
     -- apply eq_con_of_con_inv_eq,
     -- rewrite [-idp_con loop2 at {2}],
@@ -108,8 +136,6 @@ namespace disc
   --   ap (λx, b = f x) p = ap (eq b) (ap f p) :=
   -- by cases p;exact idp
 
-  -- set_option pp.notation false
-  -- set_option pp.implicit true
   protected definition elim {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) (x : disc) : P :=
   begin
@@ -119,15 +145,22 @@ namespace disc
       { exact Pb},
       { exact Pl}},
     { cases H, clear a a', induction x,
-        { reflexivity},
-        { unfold f, apply pathover_eq,
-          rewrite [ap_compose (circle.elim b l) (predisc.elim Pb Pb Pl),elim_loop,▸*,elim_l,ap_constant],
-          apply hdeg_square, exact Pf}},
+      { reflexivity},
+      { unfold f, apply pathover_eq, apply hdeg_square,
+        exact ap_compose (circle.elim b l) (predisc.elim Pb Pb Pl) loop ⬝
+              ap _ !elim_loop ⬝
+              !elim_l ⬝
+              Pf ⬝
+              !ap_constant⁻¹}},
   end
 
   definition elim_lp {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) lp = Pl :=
+  -- by unfold lp; refine !ap_compose⁻¹ ⬝ _
+--  by unfold lp; refine !ap_compose⁻¹ ⬝ _;esimp [function.compose,disc.elim]
   by unfold lp; exact !ap_compose⁻¹ ⬝ !elim_l
+
+  print disc.elim
 exit
   definition elim_fill {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pb Pl Pf) idp :=
