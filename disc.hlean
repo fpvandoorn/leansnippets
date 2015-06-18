@@ -20,7 +20,7 @@ begin
 end
 
 definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
-!elim_loop⁻¹ ⬝ (@cancel_right _ _ _ _ _ _ (H base)
+!elim_loop⁻¹ ⬝ (cancel_right --(H base)
   (ap_con_eq_con_ap H loop ⬝ ap (λx, _ ⬝ x) !ap_constant ⬝ !idp_con⁻¹))
 
 
@@ -156,16 +156,12 @@ namespace disc
 
   definition elim_lp {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) lp = Pl :=
-  -- by unfold lp; refine !ap_compose⁻¹ ⬝ _
---  by unfold lp; refine !ap_compose⁻¹ ⬝ _;esimp [function.compose,disc.elim]
-  by unfold lp; exact !ap_compose⁻¹ ⬝ !elim_l
-
-  print disc.elim
+  !ap_compose⁻¹ ⬝ !elim_l
 exit
   definition elim_fill {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pb Pl Pf) idp :=
   begin
-    rewrite [↑[/-disc.elim,-/fill,fill']]
+    rewrite [↑[fill,fill',disc.elim]]
   end
 exit
   protected definition rec {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)

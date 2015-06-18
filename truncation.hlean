@@ -92,9 +92,9 @@ section
     { induction n with n IH; all_goals esimp at *,
       { apply tr_pathover} ,
       { induction a; all_goals esimp at *,
-        { clear IH, },
-        { },
-        { }}
+        { clear IH, apply sorry},
+        { apply sorry},
+        { apply sorry}}
 
 
 }

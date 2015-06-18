@@ -1,11 +1,11 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
-import types.eq types.pi hit.colimit
+import types.eq types.pi hit.colimit types.cubical.square
 
 open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
 
   definition eq_of_homotopy_tr {A : Type} {B : A → Type} {C : Πa, B a → Type}
-    {f g : Πa, B a} {H : f ∼ g} {a : A} (c : C a (f a)) :
+    {f g : Πa, B a} {H : f ~ g} {a : A} (c : C a (f a)) :
       eq_of_homotopy H ▸ c = H a ▸ c :=
   begin
     apply (homotopy.rec_on H),
@@ -14,7 +14,7 @@ open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
   end
 
   definition eq_of_homotopy_tr2 {A : Type} {B : A → Type} {C : Πa', B a' → Type}
-    {f g : Πa, B a} (H : f ∼ g) (c : Πa, C a (f a)) (a : A) :
+    {f g : Πa, B a} (H : f ~ g) (c : Πa, C a (f a)) (a : A) :
      (transport _ (eq_of_homotopy H) c) a = H a ▸ c a  :=
   begin
     apply (homotopy.rec_on H),
@@ -26,11 +26,11 @@ open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
     : ap f p = idp :=
   ap (ap f) q
 
-  definition ap_transport {A : Type} {B : A → Type} {f g : A → A} (p : f ∼ g) {i : A → A}
+  definition ap_transport {A : Type} {B : A → Type} {f g : A → A} (p : f ~ g) {i : A → A}
     (h : Πa, B a → B (i a)) (a : A) (b : B (f a)) : ap i (p a) ▸ h (f a) b = h (g a) (p a ▸ b) :=
   homotopy.rec_on p (λq, eq.rec_on q idp)
 
-  definition ap_pathover {A : Type} {B : A → Type} {f g : A → A} (p : f ∼ g) {i : A → A}
+  definition ap_pathover {A : Type} {B : A → Type} {f g : A → A} (p : f ~ g) {i : A → A}
     (h : Πa, B a → B (i a)) (a : A) (b : B (f a)) (b' : B (g a))
     (r : pathover B b (p a) b') : pathover B (h (f a) b) (ap i (p a)) (h (g a) b') :=
   by induction p; induction r using idp_rec_on; exact idpo
