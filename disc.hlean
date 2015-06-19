@@ -19,28 +19,22 @@ begin
   rewrite [ap_con_eq_con_ap,ap_constant,idp_con]
 end
 
-definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
-!elim_loop⁻¹ ⬝ (cancel_right --(H base)
-  (ap_con_eq_con_ap H loop ⬝ ap (λx, _ ⬝ x) !ap_constant ⬝ !idp_con⁻¹))
+  definition ap_eq_idp {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b) {x : A}
+    (q : x = x) : ap f q = idp :=
+  cancel_right (ap_con_eq p q ⬝ !idp_con⁻¹)
 
+definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
+!elim_loop⁻¹ ⬝ ap_eq_idp H _
 
 definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
-ap (ap f) !elim_loop⁻¹ ⬝
-!ap_compose⁻¹ ⬝
-(cancel_right --(H base)
-  (ap_con_eq_con_ap H loop ⬝ ap (λx, _ ⬝ x) !ap_constant ⬝ !idp_con⁻¹))
-
--- definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
--- ap (ap f) !elim_loop⁻¹ ⬝
--- !ap_compose⁻¹ ⬝
--- begin check_expr square_of_pathover_eq (apdo H loop), check_expr ap_con_eq_con_ap H loop end ⬝
--- ap_constant loop _
-
--- check @ap_constant
+(ap02 f (elim_loop a' q))⁻¹ ⬝ (ap_compose f (circle.elim a' q) loop)⁻¹ ⬝ ap_eq_idp H loop
 
 definition ap02_eq2_of_circle_eq (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)
- : square (eq2_of_circle_eq (λx, ap g (H x))) (ap02 g (eq2_of_circle_eq H)) !ap_compose idp :=
-sorry
+ : square (eq2_of_circle_eq (λx, (ap g) (H x))) (ap02 g (eq2_of_circle_eq H))
+     (ap_compose g f q) idp :=
+begin
+  exact sorry
+end
 
 -- definition ap_con_eq_con_ap_loop /-{q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)-/ (p) (q) :
 --   ap_con_eq_con_ap (circle.rec p q) loop = q :=
@@ -65,8 +59,9 @@ namespace disc
   definition b [constructor] : predisc := class_of predisc_rel tt
   definition e [constructor] : predisc := class_of predisc_rel ff
   definition l : b = b    := eq_of_rel predisc_rel Rl
-  definition f (x : S¹) : predisc :=
+  definition f [reducible] (x : S¹) : predisc :=
   circle.elim_on x b l
+
 
   protected definition rec [recursor] [unfold-c 5] {P : predisc → Type}
     (Pb : P b) (Pe : P e) (Pl : Pb =[l] Pb) (x : predisc) : P x :=
@@ -84,7 +79,7 @@ namespace disc
     : apdo (predisc.rec Pb Pe Pl) l = Pl :=
   !rec_eq_of_rel
 
-  theorem elim_l {P : Type} (Pb : P) (Pe : P) (Pl : Pb = Pb)
+  theorem elim_l {P : Type} {Pb Pe : P} (Pl : Pb = Pb)
     : ap (predisc.elim Pb Pe Pl) l = Pl :=
   begin
     apply eq_of_fn_eq_fn_inv !(pathover_constant l),
@@ -98,13 +93,37 @@ namespace disc
   | Rf : Π(x : circle), disc_rel (f x) e
   open disc_rel
 
+  -- Naturality of [ap] with constant function over a loop
+  definition ap_weakly_constant [unfold-c 8] {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
+    {x y : A} (q : x = y) : ap f q = p x ⬝ (p y)⁻¹ :=
+  by induction q;exact !con.right_inv⁻¹
+
+
+  definition ap_ap_weakly_constant {A B C : Type} {g : B → C} {f : A → B} {b : B}
+    (p : Πx, f x = b) {x y : A} (q : x = y)
+    : ap (ap g) (ap_weakly_constant p q) = (ap_compose g f q)⁻¹ ⬝
+  ap_weakly_constant (λa, ap g (p a)) q ⬝ whisker_left _ !ap_inv⁻¹ ⬝ !ap_con⁻¹ :=
+  begin
+    induction q,
+    esimp,
+--    refine ap inverse (!ap_con_right_inv⁻¹) ⬝ _
+      apply sorry
+  end
+
   definition disc := quotient disc_rel
-  definition base  : disc := class_of disc_rel b
-  definition aux   : disc := class_of disc_rel e
-  definition lp : base = base := ap (class_of disc_rel) l
-  definition fill' (x : S¹) : class_of disc_rel (f x) = aux := eq_of_rel disc_rel (Rf x)
+  private definition i [reducible] : predisc → disc := class_of disc_rel
+  definition base  : disc := i b
+  definition aux   : disc := i e
+  definition lp : base = base := ap i l
+  definition fill' (x : S¹) : i (f x) = aux := eq_of_rel disc_rel (Rf x)
   definition fill  : lp = idp :=
-  eq2_of_circle_eq fill'
+  (ap02 i (elim_loop b l))⁻¹ ⬝
+  (ap_compose i (circle.elim b l) loop)⁻¹ ⬝
+  ap_weakly_constant fill' loop ⬝
+  !con.right_inv
+
+  -- definition fill : lp = idp :=
+  -- eq2_of_circle_eq fill'
 
   -- definition fill2' (x : S¹) : circle.elim base lp x = aux :=
   -- circle.rec_on x (eq_of_rel disc_rel (Rf circle.base)) (pathover_eq begin rewrite [ap_constant,elim_loop], apply square_of_eq, refine !idp_con⁻¹ ⬝ ap (λx, x ⬝ _) _, end )
@@ -112,7 +131,7 @@ namespace disc
   -- definition fill2  : lp = idp :=
   -- eq2_of_circle_eq' fill2'
 
-    -- necesarry for proofs of fill/fill' in torus:
+    -- necessary for proofs of fill/fill' in torus:
     --,+ap_con at H, +ap_inv at H
     -- apply eq_con_of_con_inv_eq,
     -- rewrite [-idp_con loop2 at {2}],
@@ -144,24 +163,62 @@ namespace disc
       { exact Pb},
       { exact Pb},
       { exact Pl}},
-    { cases H, clear a a', induction x,
-      { reflexivity},
-      { unfold f, apply pathover_eq, apply hdeg_square,
-        exact ap_compose (circle.elim b l) (predisc.elim Pb Pb Pl) loop ⬝
+    { induction H, induction x,
+      { exact idpath Pb},
+      { exact abstract begin unfold f, apply pathover_eq, apply hdeg_square,
+        exact ap_compose (predisc.elim Pb Pb Pl) (circle.elim b l) loop ⬝
               ap _ !elim_loop ⬝
               !elim_l ⬝
               Pf ⬝
-              !ap_constant⁻¹}},
+              !ap_constant⁻¹ end end}},
   end
 
-  definition elim_lp {P : Type} (Pb : P) (Pl : Pb = Pb)
+  definition elim_lp {P : Type} {Pb : P} {Pl : Pb = Pb}
     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) lp = Pl :=
   !ap_compose⁻¹ ⬝ !elim_l
+
+--   definition foo {A B C : Type} (f : A → B) (g : B → C) {x y : A} {p q : x = y} (r : p = q) :
+--     ap (g ∘ f) p = ap g (ap f p) :=
+--   begin
+--     check_expr ap_con_eq_con_ap (ap_compose f g) r, apply sorry
+--   end
+-- check (class_of disc_rel : predisc → disc)
+
+
+-- --definition mysorry (A : Type) : A := sorry
+
+--   definition elim_fill'_base {P : Type} {Pb : P} {Pl : Pb = Pb}
+--     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) (fill' circle.base) = idpath Pb :=
+--   begin
+--     rewrite [↑disc.elim, ↑fill'],
+--     krewrite [elim_eq_of_rel],
+--   end
+
+--   definition elim_fill' {P : Type} {Pb : P} {Pl : Pb = Pb}
+--     (Pf : Pl = idp) (x : circle) : apd (λx, ap (disc.elim Pb Pl Pf) (fill' x)) loop = sorry :=
+--   begin
+--     rewrite [↑disc.elim, ↑fill'],
+-- --    krewrite [▸*],
+--   end
+
+
 exit
-  definition elim_fill {P : Type} (Pb : P) (Pl : Pb = Pb)
-    (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pb Pl Pf) idp :=
+  definition elim_fill {P : Type} {Pb : P} {Pl : Pb = Pb}
+    (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pf) idp :=
   begin
-    rewrite [↑[fill,fill',disc.elim]]
+    esimp [fill,disc.elim,ap02],
+    rewrite [+ap_con (ap _)]
+    -- refine ((ap02_eq2_of_circle_eq (disc.elim Pb Pl Pf) fill')⁻¹ᵛ ⬝v _),
+    -- esimp [eq2_of_circle_eq,function.compose,disc.elim,ap02,ap_eq_idp,ap_con_eq,fill'],
+    -- check_expr (ap02 (disc.elim Pb Pl Pf ∘ class_of disc_rel) (elim_loop b l))⁻¹,
+    -- check_expr (idp : disc.elim Pb Pl Pf ∘ class_of disc_rel = predisc.elim Pb Pb Pl),
+    -- assert H : ap (disc.elim Pb Pl Pf) (fill' circle.base) = sorry,
+    -- { }
+    --rewrite [elim_eq_of_rel],
+    --esimp [elim_loop,ap02]
+    -- check_expr ap_con_eq_con_ap (ap_compose (disc.elim Pb Pl Pf) (class_of disc_rel)) (elim_loop b l)
+    --rewrite [ap_compose]
+    --rewrite [elim_eq_of_rel],
   end
 exit
   protected definition rec {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)

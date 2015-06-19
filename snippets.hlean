@@ -1,7 +1,8 @@
 import hit.pushout types.nat.basic
 
 /---------------------------------------------------------------------------------------------------
-  show that type quotient preserves equivalence
+  Show that type quotient preserves equivalence.
+  Can this be done without univalence?
 ---------------------------------------------------------------------------------------------------/
 namespace quotient
   open equiv.ops equiv
@@ -20,7 +21,7 @@ namespace quotient
 end quotient
 
 /---------------------------------------------------------------------------------------------------
-  test of pushouts: show that the pushout of the diagram
+  Test of pushouts: show that the pushout of the diagram
     1 <- 0 -> 1
   is equivalent to 2.
 ---------------------------------------------------------------------------------------------------/
@@ -50,8 +51,8 @@ namespace pushout
 end pushout
 
 /---------------------------------------------------------------------------------------------------
-  (part of) encode-decode proof to characterize the equality type of the natural numbers
-  this is not needed in the library, since we use Hedberg's Theorem to show that the natural numbers
+  (Part of) encode-decode proof to characterize the equality type of the natural numbers.
+  This is not needed in the library, since we use Hedberg's Theorem to show that the natural numbers
   is a set
 ---------------------------------------------------------------------------------------------------/
 namespace nat
@@ -107,8 +108,8 @@ namespace nat
 end nat
 
 /---------------------------------------------------------------------------------------------------
-  (part of) encode-decode proof to characterize < on nat, to show that it is a mere proposition
-  in types.nat.hott there is a simpler proof
+  (Part of) encode-decode proof to characterize < on nat, to show that it is a mere proposition.
+  In types.nat.hott there is a simpler proof
 ---------------------------------------------------------------------------------------------------/
 
 namespace nat
@@ -167,7 +168,7 @@ end lt
 end nat
 
 /---------------------------------------------------------------------------------------------------
-  [WIP] try to see whether having a list of paths is useful
+  [WIP] Try to see whether having a list of paths is useful
 ---------------------------------------------------------------------------------------------------/
 
 namespace lpath
@@ -178,7 +179,7 @@ namespace lpath
 
   open lpath.lpath
 
-  protected definition elim {A : Type} : Π{a : A} {b : A} {n : ℕ} (l : lpath a b n), a = b
+  protected definition elim {A : Type} : Π{a b : A} {n : ℕ} (l : lpath a b n), a = b
   | elim (lidp a) := idp
   | elim (cons p l) := elim l ⬝ p
 end lpath
