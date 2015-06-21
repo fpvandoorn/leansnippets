@@ -6,35 +6,35 @@ Authors: Floris van Doorn
 Declaration of the disc
 -/
 
-import hit.circle types.cubical.cubeover types.cubical.pathover
+import hit.circle types.cubical.squareover
 
-open quotient eq function bool circle equiv
+open quotient eq function bool circle equiv sigma
 
 section
 variables {A B C : Type} {f : A → B} {a a' : A} {b b' : B}
 
-definition ap_eq_idp_of_contractible (H : Πa, f a = b) (p : a = a) : ap f p = idp :=
-begin
-  apply @cancel_right _ _ _ _ _ _ (H a),
-  rewrite [ap_con_eq_con_ap,ap_constant,idp_con]
-end
+-- definition ap_eq_idp_of_weakly_constant (H : Πa, f a = b) (p : a = a) : ap f p = idp :=
+-- begin
+--   apply @cancel_right _ _ _ _ _ _ (H a),
+--   rewrite [ap_con_eq_con_ap,ap_constant,idp_con]
+-- end
 
-  definition ap_eq_idp {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b) {x : A}
-    (q : x = x) : ap f q = idp :=
-  cancel_right (ap_con_eq p q ⬝ !idp_con⁻¹)
+  -- definition ap_eq_idp {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b) {x : A}
+  --   (q : x = x) : ap f q = idp :=
+  -- cancel_right (ap_con_eq p q ⬝ !idp_con⁻¹)
 
-definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
-!elim_loop⁻¹ ⬝ ap_eq_idp H _
+-- definition eq2_of_circle_eq' {q : b' = b'} (H : Πx, circle.elim b' q x = b) : q = idp :=
+-- !elim_loop⁻¹ ⬝ ap_eq_idp H _
 
-definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
-(ap02 f (elim_loop a' q))⁻¹ ⬝ (ap_compose f (circle.elim a' q) loop)⁻¹ ⬝ ap_eq_idp H loop
+-- definition eq2_of_circle_eq {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) : ap f q = idp :=
+-- (ap02 f (elim_loop a' q))⁻¹ ⬝ (ap_compose f (circle.elim a' q) loop)⁻¹ ⬝ ap_eq_idp H loop
 
-definition ap02_eq2_of_circle_eq (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)
- : square (eq2_of_circle_eq (λx, (ap g) (H x))) (ap02 g (eq2_of_circle_eq H))
-     (ap_compose g f q) idp :=
-begin
-  exact sorry
-end
+-- definition ap02_eq2_of_circle_eq (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)
+--  : square (eq2_of_circle_eq (λx, (ap g) (H x))) (ap02 g (eq2_of_circle_eq H))
+--      (ap_compose g f q) idp :=
+-- begin
+--   exact sorry
+-- end
 
   theorem ap_con_right_inv_sq {A B : Type} {a1 a2 : A} (f : A → B) (p : a1 = a2) :
     square (ap (ap f) (con.right_inv p))
@@ -54,14 +54,24 @@ end
     {x y : A} (q : x = y) : ap f q = p x ⬝ (p y)⁻¹ :=
   by induction q;exact !con.right_inv⁻¹
 
-  definition ap_ap_weakly_constant {A B C : Type} {g : B → C} {f : A → B} {b : B}
+  definition ap_weakly_constant_eq {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
+    {x y : A} (q : x = y) :
+      ap_weakly_constant p q =
+      eq_con_inv_of_con_eq ((eq_of_square (square_of_pathover (apdo p q)))⁻¹ ⬝
+      whisker_left (p x) (ap_constant q b)) :=
+  begin
+    induction q, esimp, generalize (p x), intro p, cases p, apply idpath idp
+  end
+
+  definition ap_ap_weakly_constant {A B C : Type} (g : B → C) {f : A → B} {b : B}
     (p : Πx, f x = b) {x y : A} (q : x = y) :
     square (ap (ap g) (ap_weakly_constant p q))
            (ap_weakly_constant (λa, ap g (p a)) q)
            (ap_compose g f q)⁻¹
            (!ap_con ⬝ whisker_left _ !ap_inv) :=
   begin
-    induction q, rewrite [↑ap_compose,ap_inv], apply hinverse, apply ap_con_right_inv_sq,
+    induction q, esimp, generalize (p x), intro p, cases p, apply ids
+--    induction q, rewrite [↑ap_compose,ap_inv], apply hinverse, apply ap_con_right_inv_sq,
   end
 
   definition ap_ap_compose {A B C D : Type} (h : C → D) (g : B → C) (f : A → B)
@@ -80,24 +90,28 @@ end
            (ap_compose g f q) :=
   natural_square (ap_compose g f) r
 
---     : ap (ap g) (ap_weakly_constant p q) = (ap_compose g f q)⁻¹ ⬝
---   ap_weakly_constant (λa, ap g (p a)) q ⬝ (!ap_con ⬝ whisker_left _ !ap_inv)⁻¹ :=
---   begin
---     induction q,
---     esimp,
--- --    refine ap inverse (!ap_con_right_inv⁻¹) ⬝ _
---       apply sorry
---   end
+-- definition naturality_apdo {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+--   (H : f ~ g) (p : a = a₂)
+--   : squareover B vrfl (apdo f p) (apdo g p)
+--                       (pathover_idp_of_eq (H a)) (pathover_idp_of_eq (H a₂)) :=
+-- by induction p;esimp;exact hrflo
+
+definition naturality_apdo_eq {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+  (H : f ~ g) (p : a = a₂)
+  : apdo f p = concato_eq (eq_concato (H a) (apdo g p)) (H a₂)⁻¹ :=
+begin
+  induction p, esimp,
+  generalizes [H a, g a], intro ga Ha, induction Ha,
+  reflexivity
+end
+
+  theorem eq_con_inv_of_con_eq_whisker_left {A : Type} {a a2 a3 : A}
+    {p : a = a2} {q q' : a2 = a3} {r : a = a3} (s' : q = q') (s : p ⬝ q' = r) :
+    eq_con_inv_of_con_eq (whisker_left p s' ⬝ s)
+      = eq_con_inv_of_con_eq s ⬝ whisker_left r (inverse2 s')⁻¹ :=
+  by induction s';induction q;induction s;reflexivity
 
 
-
--- definition ap_con_eq_con_ap_loop /-{q : a' = a'} (H : Πx, f (circle.elim a' q x) = b)-/ (p) (q) :
---   ap_con_eq_con_ap (circle.rec p q) loop = q :=
--- sorry
-
--- definition eq2_of_circle_eq_circle_rec (g : B → C) {q : a' = a'} (H : Πx, f (circle.elim a' q x) = b) (p : f a' = b) (r : pathover (λx, f (circle.elim a' q x) = b) p loop p)
---  : square (eq2_of_circle_eq (circle.rec _ (pathover_eq (_)))) _ _ _ :=
--- sorry
 
 end
 
@@ -114,7 +128,7 @@ namespace disc
   definition b [constructor] : predisc := class_of predisc_rel tt
   definition e [constructor] : predisc := class_of predisc_rel ff
   definition l : b = b    := eq_of_rel predisc_rel Rl
-  definition f [reducible] : S¹ → predisc :=
+  definition f [unfold-c 1] : S¹ → predisc :=
   circle.elim b l
 
 
@@ -149,9 +163,9 @@ namespace disc
   open disc_rel
 
   definition disc := quotient disc_rel
-  private definition i : predisc → disc := class_of disc_rel
-  definition base : disc := i b
-  definition aux  : disc := i e
+  private definition i [constructor] : predisc → disc := class_of disc_rel
+  definition base [constructor] : disc := i b
+  definition aux  [constructor] : disc := i e
   definition lp : base = base := ap i l
   definition fill' (x : S¹) : i (f x) = aux := eq_of_rel disc_rel (Rf x)
   definition fill  : lp = idp :=
@@ -160,16 +174,7 @@ namespace disc
   ap_weakly_constant fill' loop ⬝
   !con.right_inv
 
-  local attribute disc i base aux lp fill' [reducible]
-
-  -- definition fill : lp = idp :=
-  -- eq2_of_circle_eq fill'
-
-  -- definition fill2' (x : S¹) : circle.elim base lp x = aux :=
-  -- circle.rec_on x (eq_of_rel disc_rel (Rf circle.base)) (pathover_eq begin rewrite [ap_constant,elim_loop], apply square_of_eq, refine !idp_con⁻¹ ⬝ ap (λx, x ⬝ _) _, end )
-
-  -- definition fill2  : lp = idp :=
-  -- eq2_of_circle_eq' fill2'
+  local attribute disc f i base aux lp fill' [reducible]
 
     -- necessary for proofs of fill/fill' in torus:
     --,+ap_con at H, +ap_inv at H
@@ -177,25 +182,113 @@ namespace disc
     -- rewrite [-idp_con loop2 at {2}],
     -- apply eq_con_of_con_inv_eq,
 
+  protected definition elim [unfold-c 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
+    (Pf : Pl = idp) (x : disc) : P :=
+  begin
+    induction x,
+    { induction a,
+      { exact Pb},
+      { exact Pb},
+      { exact Pl}},
+    { exact abstract begin induction H, induction x,
+      { exact idpath Pb},
+      { unfold f, apply pathover_eq, apply hdeg_square,
+        exact abstract ap_compose (predisc.elim Pb Pb Pl) f loop ⬝
+              ap _ !elim_loop ⬝
+              !elim_l ⬝
+              Pf ⬝
+              !ap_constant⁻¹ end} end end},
+  end
+
+  local attribute disc.elim [reducible]
+
+  definition elim_lp {P : Type} {Pb : P} {Pl : Pb = Pb}
+    (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) lp = Pl :=
+  !ap_compose⁻¹ ⬝ !elim_l
+
+  definition elim_fill'_base {P : Type} {Pb : P} {Pl : Pb = Pb}
+    (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) (fill' circle.base) = idpath Pb :=
+  !elim_eq_of_rel
+
+  theorem right_inv_eq_idp {A : Type} {a : A} {p : a = a} (r : p = idpath a) :
+    con.right_inv p = r ◾ inverse2 r :=
+  by cases r;reflexivity
+
+  definition elim_fill {P : Type} {Pb : P} {Pl : Pb = Pb}
+    (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pf) idp :=
+  begin
+    esimp [fill,ap02],
+    rewrite [+ap_con (ap _),▸*,-ap_compose (ap _) (ap i),+ap_inv],
+    xrewrite [eq_top_of_square
+               ((ap_compose_natural (disc.elim Pb Pl Pf) i (elim_loop b l))⁻¹ʰ⁻¹ᵛ ⬝h
+               (ap_ap_compose (disc.elim Pb Pl Pf) i f loop)⁻¹ʰ⁻¹ᵛ ⬝h
+               ap_ap_weakly_constant (disc.elim Pb Pl Pf) fill' loop ⬝h
+               ap_con_right_inv_sq (disc.elim Pb Pl Pf) (fill' circle.base)),
+               ↑[elim_lp]],
+    apply whisker_tl,
+    rewrite [ap_weakly_constant_eq,naturality_apdo_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
+            square_of_pathover_concato_eq,square_of_pathover_eq_concato,
+            eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
+    --rewriting here with
+    --    to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P Pb Pl Pf))
+    -- takes ~11 seconds
+    apply eq_vconcat,
+    { apply ap (λx, _ ⬝ eq_con_inv_of_con_eq ((_ ⬝ x ⬝ _)⁻¹ ⬝ _) ⬝ _),
+      transitivity _, apply ap eq_of_square,
+        apply to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P Pb Pl Pf)),
+      transitivity _, apply eq_of_square_hdeg_square,
+      unfold elim_1, reflexivity},
+    rewrite [+con_inv,whisker_left_inv,+inv_inv,-whisker_right_inv,
+             con.assoc (whisker_left _ _),con.assoc _ (whisker_right _ _),▸*,
+             whisker_right_con_whisker_left _ !ap_constant],
+    xrewrite [-con.assoc _ _ (whisker_right _ _)],
+    rewrite [con.assoc _ _ (whisker_left _ _),idp_con_whisker_left,▸*,
+             con.assoc _ !ap_constant⁻¹,con.left_inv],
+    xrewrite [eq_con_inv_of_con_eq_whisker_left,▸*],
+    rewrite [+con.assoc _ _ !con.right_inv,right_inv_eq_idp (elim_fill'_base Pf),↑[whisker_left]],
+    xrewrite [con2_con_con2],
+    rewrite [idp_con,↑elim_fill'_base,con.left_inv,whisker_right_inv,↑whisker_right],
+    xrewrite [con.assoc _ _ (_ ◾ _)],
+    rewrite [con.left_inv,▸*,-+con.assoc,con.assoc _⁻¹,↑[disc.elim,function.compose],con.left_inv,
+             ▸*,↑b,con.left_inv,idp_con],
+    apply square_of_eq, reflexivity
+  end
+
+  -- protected definition rec_of_elim_sigma {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)
+  --   (Pf : Pl =[fill] idpo) (x : disc) : Σx, P x :=
+  -- begin
+  -- refine disc.elim _ _ _ x,
+  --     { exact ⟨base, Pb⟩},
+  --     { exact sigma_eq lp Pl},
+  --     { exact sigma_eq2 (!sigma_eq_pr1 ⬝ fill) (!sigma_eq_pr2 ⬝o Pf)}
+  -- end
+
+  -- protected definition rec_of_elim {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)
+  --   (Pf : Pl =[fill] idpo) (x : disc) : P x :=
+  -- _ ▸ pr2 (disc.rec_of_elim_sigma Pb Pl Pf x)
 
 
-  -- definition heq_of_pathover {A : Type} {a a₂ : A} (B : A → Type) {p : a = a₂}
-  -- {b : B a} {b₂ : B a₂} (q : b =[ p ] b₂) : b =[ ap B p ] b₂ :=
-  -- pathover_ap _ _ q
 
-  -- definition ap_eq {A B : Type} (f g : A → B) {a a' : A} (p : a = a') :
-  --   ap (λx, f x = g x) p = ap011 eq (ap f p) (ap g p) :=
-  -- by cases p;exact idp
+--  set_option pp.notation false
+  protected definition rec {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)
+    (Pf : Pl =[fill] idpo)
+    (x : disc) : P x :=
+  begin
+    induction x,
+    { induction a,
+      { exact Pb},
+      { exact transport P (fill' circle.base) Pb},
+      { apply to_inv !(pathover_compose P), exact Pl}},
+    { exact abstract begin induction H, induction x,
+      { esimp, apply pathover_tr},
+      { apply pathover_pathover_fl, apply sorry} end end},
+  end
+exit
+      { esimp, induction x,
+        { unfold f, apply pathover_tr},
+        { /-apply pathover_pathover_fl,-/ apply sorry}}
 
-  -- definition ap_eq_l {A B : Type} (f : A → B) {a a' : A} (p : a = a') (b : B) :
-  --   ap (λx, f x = b) p = ap010 eq (ap f p) b :=
-  -- by cases p;exact idp
-
-  -- definition ap_eq_r {A B : Type} (f : A → B) {a a' : A} (p : a = a') (b : B) :
-  --   ap (λx, b = f x) p = ap (eq b) (ap f p) :=
-  -- by cases p;exact idp
-
-  protected definition elim {P : Type} (Pb : P) (Pl : Pb = Pb)
+  protected definition elim [unfold-c 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) (x : disc) : P :=
   begin
     induction x,
@@ -206,84 +299,15 @@ namespace disc
     { induction H, induction x,
       { exact idpath Pb},
       { exact abstract begin unfold f, apply pathover_eq, apply hdeg_square,
-        exact ap_compose (predisc.elim Pb Pb Pl) f loop ⬝
+        exact abstract ap_compose (predisc.elim Pb Pb Pl) f loop ⬝
               ap _ !elim_loop ⬝
               !elim_l ⬝
               Pf ⬝
-              !ap_constant⁻¹ end end}},
+              !ap_constant⁻¹ end end end}},
   end
 
-  definition elim_lp {P : Type} {Pb : P} {Pl : Pb = Pb}
-    (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) lp = Pl :=
-  !ap_compose⁻¹ ⬝ !elim_l
-
---   definition foo {A B C : Type} (f : A → B) (g : B → C) {x y : A} {p q : x = y} (r : p = q) :
---     ap (g ∘ f) p = ap g (ap f p) :=
---   begin
---     check_expr ap_con_eq_con_ap (ap_compose f g) r, apply sorry
---   end
--- check (class_of disc_rel : predisc → disc)
 
 
--- --definition mysorry (A : Type) : A := sorry
-
---   definition elim_fill'_base {P : Type} {Pb : P} {Pl : Pb = Pb}
---     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) (fill' circle.base) = idpath Pb :=
---   begin
---     rewrite [↑disc.elim, ↑fill'],
---     krewrite [elim_eq_of_rel],
---   end
-
---   definition elim_fill' {P : Type} {Pb : P} {Pl : Pb = Pb}
---     (Pf : Pl = idp) (x : circle) : apd (λx, ap (disc.elim Pb Pl Pf) (fill' x)) loop = sorry :=
---   begin
---     rewrite [↑disc.elim, ↑fill'],
--- --    krewrite [▸*],
---   end
-
--- check natural_square (ap_compose _ _) _
-  --set_option pp.implicit true
-  definition elim_fill {P : Type} {Pb : P} {Pl : Pb = Pb}
-    (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pf) idp :=
-  begin
-    esimp [fill,ap02],
-    rewrite [+ap_con (ap _),▸*,-ap_compose (ap (disc.elim Pb Pl Pf)) (ap i) (elim_loop b l)⁻¹, ap_inv (ap _)],
-    rewrite [eq_top_of_square ((ap_compose_natural _ _ _)⁻¹ᵛ)],
-   xrewrite [eq_top_of_square ((ap_ap_compose (disc.elim Pb Pl Pf) i f loop)⁻¹ʰ⁻¹ᵛ)], --eq_top_of_square ((ap_compose_natural _ _ _)⁻¹ᵛ)
-    check_expr (ap_compose_natural (disc.elim Pb Pl Pf) i (elim_loop b l))⁻¹ᵛ ⬝h
-     (_)⁻¹ᵛ ⬝h
-     (ap_ap_compose (disc.elim Pb Pl Pf) i f loop)⁻¹ʰ⁻¹ᵛ,
-    check_expr (ap_compose (disc.elim Pb Pl Pf) i l),
-    check_expr (ap_compose (disc.elim Pb Pl Pf) i (ap f loop)),
-  end
-    -- refine ((ap02_eq2_of_circle_eq (disc.elim Pb Pl Pf) fill')⁻¹ᵛ ⬝v _),
-    -- esimp [eq2_of_circle_eq,function.compose,disc.elim,ap02,ap_eq_idp,ap_con_eq,fill'],
-    -- check_expr (ap02 (disc.elim Pb Pl Pf ∘ class_of disc_rel) (elim_loop b l))⁻¹,
-    -- check_expr (idp : disc.elim Pb Pl Pf ∘ class_of disc_rel = predisc.elim Pb Pb Pl),
-    -- assert H : ap (disc.elim Pb Pl Pf) (fill' circle.base) = sorry,
-    -- { }
-    --rewrite [elim_eq_of_rel],
-    --esimp [elim_loop,ap02]
-    -- check_expr ap_con_eq_con_ap (ap_compose (disc.elim Pb Pl Pf) (class_of disc_rel)) (elim_loop b l)
-    --rewrite [ap_compose]
-    --rewrite [elim_eq_of_rel],
-
-exit
-  protected definition rec {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)
-    (Pf : pathover _ Pl fill idpo)
-    (x : disc) : P x :=
-  begin
-    induction x,
-    { induction a,
-      { exact Pb},
-      { exact transport P (fill'' circle.base) Pb},
-      { apply to_inv !(pathover_compose P), exact Pl1},
-      { apply to_inv !(pathover_compose P), exact Pl2}},
-    { cases H, clear a a',
-      { esimp, induction x,
-        { unfold f, apply pathover_tr},
-        { /-apply pathover_pathover_fl,-/ apply sorry}}},
-  end
 
   example {P : disc → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb) (Pl2 : Pb =[loop2] Pb)
           (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2) : disc.rec Pb Pl1 Pl2 Pf base = Pb := idp
