@@ -155,9 +155,9 @@ namespace two_quotient
   open two_quotient_rel
   definition two_quotient := quotient two_quotient_rel
   local abbreviation D := two_quotient
-  local abbreviation i [constructor] := class_of two_quotient_rel
+  local abbreviation i := class_of two_quotient_rel
   definition incl0 [constructor] (a : A) : D := i (j a)
-  definition aux [constructor] (q : Q r) : D := i (pre_aux q)
+  definition aux (q : Q r) : D := i (pre_aux q)
   definition incl1 (s : R a a') : incl0 a = incl0 a' := ap i (e s)
   definition incl2' (q : Q r) (x : S¹) : i (f q x) = aux q :=
   eq_of_rel two_quotient_rel (Rmk q x)
@@ -169,8 +169,9 @@ namespace two_quotient
   !con.right_inv
 
   local attribute two_quotient f i incl0 aux incl1 incl2' [reducible]
+  local attribute i aux [constructor]
 
-  protected definition elim [unfold-c 8] {P : Type} (P0 : A → P)
+  protected definition elim {P : Type} (P0 : A → P)
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
     (x : D) : P :=
   begin
@@ -188,6 +189,12 @@ namespace two_quotient
               P2 q ⬝
               !ap_constant⁻¹ end} end end},
   end
+  local attribute elim [unfold-c 8]
+
+  protected definition elim_on {P : Type} (x : D) (P0 : A → P)
+    (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
+     : P :=
+  elim P0 P1 P2 x
 
   definition elim_incl1 {P : Type} {P0 : A → P}
     {P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a'}
@@ -253,3 +260,9 @@ check_expr empty,
 
 end
 end two_quotient
+
+--attribute two_quotient.j [constructor] --TODO
+attribute /-two_quotient.rec-/ two_quotient.elim [unfold-c 8] [recursor 8]
+--attribute two_quotient.elim_type [unfold-c 9]
+attribute /-two_quotient.rec_on-/ two_quotient.elim_on [unfold-c 5]
+--attribute two_quotient.elim_type_on [unfold-c 6]
