@@ -8,7 +8,7 @@ Declaration of the reduced suspension
 
 import .two_quotient types.pointed
 
-open two_quotient eq unit equiv equiv.ops pointed
+open two_quotient eq unit pointed
 
 namespace red_susp
 section

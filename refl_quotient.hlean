@@ -9,7 +9,7 @@ Quotient of a reflexive relation
 
 import hit.circle types.cubical.squareover .two_quotient
 
-open quotient eq equiv equiv.ops function circle two_quotient
+open eq two_quotient
 
 namespace refl_quotient
 section
