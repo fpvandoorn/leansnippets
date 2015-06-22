@@ -5,9 +5,94 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn
 -/
 
-import hit.circle .disc
+import hit.circle
 
-open quotient eq circle sum sigma equiv
+open quotient eq circle sum sigma equiv function
+
+section
+variables {A B C : Type} {f : A → B} {a a' : A} {b b' : B}
+
+  theorem ap_con_right_inv_sq {A B : Type} {a1 a2 : A} (f : A → B) (p : a1 = a2) :
+    square (ap (ap f) (con.right_inv p))
+           (con.right_inv (ap f p))
+           (ap_con f p p⁻¹ ⬝ whisker_left _ (ap_inv f p))
+           idp :=
+  by cases p;apply hrefl
+
+  theorem ap_con_left_inv_sq {A B : Type} {a1 a2 : A} (f : A → B) (p : a1 = a2) :
+    square (ap (ap f) (con.left_inv p))
+           (con.left_inv (ap f p))
+           (ap_con f p⁻¹ p ⬝ whisker_right (ap_inv f p) _)
+           idp :=
+  by cases p;apply vrefl
+
+  definition ap_weakly_constant [unfold-c 8] {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
+    {x y : A} (q : x = y) : ap f q = p x ⬝ (p y)⁻¹ :=
+  by induction q;exact !con.right_inv⁻¹
+
+  definition ap_weakly_constant_eq {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
+    {x y : A} (q : x = y) :
+      ap_weakly_constant p q =
+      eq_con_inv_of_con_eq ((eq_of_square (square_of_pathover (apdo p q)))⁻¹ ⬝
+      whisker_left (p x) (ap_constant q b)) :=
+  begin
+    induction q, esimp, generalize (p x), intro p, cases p, apply idpath idp
+  end
+
+  definition ap_ap_weakly_constant {A B C : Type} (g : B → C) {f : A → B} {b : B}
+    (p : Πx, f x = b) {x y : A} (q : x = y) :
+    square (ap (ap g) (ap_weakly_constant p q))
+           (ap_weakly_constant (λa, ap g (p a)) q)
+           (ap_compose g f q)⁻¹
+           (!ap_con ⬝ whisker_left _ !ap_inv) :=
+  begin
+    induction q, esimp, generalize (p x), intro p, cases p, apply ids
+--    induction q, rewrite [↑ap_compose,ap_inv], apply hinverse, apply ap_con_right_inv_sq,
+  end
+
+  definition ap_ap_compose {A B C D : Type} (h : C → D) (g : B → C) (f : A → B)
+    {x y : A} (p : x = y) :
+    square (ap_compose (h ∘ g) f p)
+           (ap (ap h) (ap_compose g f p))
+           (ap_compose h (g ∘ f) p)
+           (ap_compose h g (ap f p)) :=
+  by induction p;exact ids
+
+  definition ap_compose_natural {A B C : Type} (g : B → C) (f : A → B)
+    {x y : A} {p q : x = y} (r : p = q) :
+    square (ap (ap (g ∘ f)) r)
+           (ap (ap g ∘ ap f) r)
+           (ap_compose g f p)
+           (ap_compose g f q) :=
+  natural_square (ap_compose g f) r
+
+-- definition naturality_apdo {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+--   (H : f ~ g) (p : a = a₂)
+--   : squareover B vrfl (apdo f p) (apdo g p)
+--                       (pathover_idp_of_eq (H a)) (pathover_idp_of_eq (H a₂)) :=
+-- by induction p;esimp;exact hrflo
+
+definition naturality_apdo_eq {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+  (H : f ~ g) (p : a = a₂)
+  : apdo f p = concato_eq (eq_concato (H a) (apdo g p)) (H a₂)⁻¹ :=
+begin
+  induction p, esimp,
+  generalizes [H a, g a], intro ga Ha, induction Ha,
+  reflexivity
+end
+
+  theorem eq_con_inv_of_con_eq_whisker_left {A : Type} {a a2 a3 : A}
+    {p : a = a2} {q q' : a2 = a3} {r : a = a3} (s' : q = q') (s : p ⬝ q' = r) :
+    eq_con_inv_of_con_eq (whisker_left p s' ⬝ s)
+      = eq_con_inv_of_con_eq s ⬝ whisker_left r (inverse2 s')⁻¹ :=
+  by induction s';induction q;induction s;reflexivity
+
+  theorem right_inv_eq_idp {A : Type} {a : A} {p : a = a} (r : p = idpath a) :
+    con.right_inv p = r ◾ inverse2 r :=
+  by cases r;reflexivity
+
+end
+
 
 namespace two_quotient
 
@@ -21,16 +106,9 @@ namespace two_quotient
 
   inductive pre_two_quotient_rel : B → B → Type :=
   | pre_Rmk {} : Π⦃a a'⦄ (r : R a a'), pre_two_quotient_rel (inl a) (inl a')
-  --BUG: if {} not provided, the alias for incl is wrong
+  --BUG: if {} not provided, the alias for pre_Rmk is wrong
 
   definition pre_two_quotient := quotient pre_two_quotient_rel
-
-  -- open pre_two_quotient_rel
-  -- definition b [constructor] : pre_two_quotient := class_of pre_two_quotient_rel tt
-  -- definition e [constructor] : pre_two_quotient := class_of pre_two_quotient_rel ff
-  -- definition l : b = b    := eq_of_rel pre_two_quotient_rel Rl
-  -- definition f [unfold-c 1] : S¹ → pre_two_quotient :=
-  -- circle.elim b l
 
   open pre_two_quotient_rel
   local abbreviation C := quotient pre_two_quotient_rel
@@ -38,7 +116,7 @@ namespace two_quotient
   private definition pre_aux [constructor] (q : Q r) : C :=
   class_of pre_two_quotient_rel (inr ⟨a, r, q⟩)
   private definition e (s : R a a') : j a = j a' := eq_of_rel _ (pre_Rmk s)
-  private definition f [unfold-c 1] (q : Q r) : S¹ → C :=
+  private definition f [unfold-c 7] (q : Q r) : S¹ → C :=
   circle.elim (j a) (e r)
 
   private definition pre_rec [unfold-c 8] {P : C → Type}
@@ -90,7 +168,7 @@ namespace two_quotient
   ap_weakly_constant (incl2' q) loop ⬝
   !con.right_inv
 
-  local attribute f two_quotient i incl0 aux incl1 incl2' [reducible]
+  local attribute two_quotient f i incl0 aux incl1 incl2' [reducible]
 
   protected definition elim [unfold-c 8] {P : Type} (P0 : A → P)
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
@@ -111,43 +189,45 @@ namespace two_quotient
               !ap_constant⁻¹ end} end end},
   end
 
-  local attribute two_quotient.elim [reducible]
-
-  definition elim_incl1 {P : Type} (P0 : A → P)
-    (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
+  definition elim_incl1 {P : Type} {P0 : A → P}
+    {P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a'}
+    (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
     ⦃a a' : A⦄ (s : R a a') : ap (elim P0 P1 P2) (incl1 s) = P1 s :=
   !ap_compose⁻¹ ⬝ !elim_e
 
-  definition elim_incl2'_incl0 {P : Type} (P0 : A → P)
-    (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
+  definition elim_incl2'_incl0 {P : Type} {P0 : A → P}
+    {P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a'}
+    (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
     ⦃a : A⦄ ⦃r : R a a⦄ (q : Q r) : ap (elim P0 P1 P2) (incl2' q base) = idpath (P0 a) :=
   !elim_eq_of_rel
-
-  definition elim_incl2 {P : Type} (P0 : A → P)
-    (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
-    : square (ap02 (two_quotient.elim P0 P1 P2) incl2) P2 (elim_incl1 P) idp :=
+--  set_option pp.implicit true
+  theorem elim_incl2 {P : Type} (P0 : A → P)
+    (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp) ⦃a : A⦄ ⦃r : R a a⦄ (q : Q r)
+    : square (ap02 (elim P0 P1 P2) (incl2 q)) (P2 q) (elim_incl1 P2 r) idp :=
   begin
+check_expr empty,
     esimp [incl2,ap02],
     rewrite [+ap_con (ap _),▸*,-ap_compose (ap _) (ap i),+ap_inv],
     xrewrite [eq_top_of_square
-               ((ap_compose_natural (two_quotient.elim Pb Pl Pf) i (elim_loop b l))⁻¹ʰ⁻¹ᵛ ⬝h
-               (ap_ap_compose (two_quotient.elim Pb Pl Pf) i f loop)⁻¹ʰ⁻¹ᵛ ⬝h
-               ap_ap_weakly_constant (two_quotient.elim Pb Pl Pf) incl2' loop ⬝h
-               ap_con_right_inv_sq (two_quotient.elim Pb Pl Pf) (incl2' circle.incl0)),
+               ((ap_compose_natural (elim P0 P1 P2) i (elim_loop (j a) (e r)))⁻¹ʰ⁻¹ᵛ ⬝h
+               (ap_ap_compose (elim P0 P1 P2) i (f q) loop)⁻¹ʰ⁻¹ᵛ ⬝h
+               ap_ap_weakly_constant (elim P0 P1 P2) (incl2' q) loop ⬝h
+               ap_con_right_inv_sq (elim P0 P1 P2) (incl2' q base)),
                ↑[elim_incl1]],
     apply whisker_tl,
-    rewrite [ap_weakly_constant_eq,naturality_apdo_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
-            square_of_pathover_concato_eq,square_of_pathover_eq_concato,
+check_expr empty,
+    rewrite [ap_weakly_constant_eq],
+    xrewrite [naturality_apdo_eq (λx, !elim_eq_of_rel) loop],
+    rewrite [↑elim_2,rec_loop,square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
-    --rewriting here with
-    --    to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P Pb Pl Pf))
-    -- takes ~11 seconds
+check_expr empty,
     apply eq_vconcat,
     { apply ap (λx, _ ⬝ eq_con_inv_of_con_eq ((_ ⬝ x ⬝ _)⁻¹ ⬝ _) ⬝ _),
       transitivity _, apply ap eq_of_square,
-        apply to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P Pb Pl Pf)),
+        apply to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P A R Q P0 P1 a r q P2)),
       transitivity _, apply eq_of_square_hdeg_square,
       unfold elim_1, reflexivity},
+check_expr empty,
     rewrite [+con_inv,whisker_left_inv,+inv_inv,-whisker_right_inv,
              con.assoc (whisker_left _ _),con.assoc _ (whisker_right _ _),▸*,
              whisker_right_con_whisker_left _ !ap_constant],
@@ -155,14 +235,21 @@ namespace two_quotient
     rewrite [con.assoc _ _ (whisker_left _ _),idp_con_whisker_left,▸*,
              con.assoc _ !ap_constant⁻¹,con.left_inv],
     xrewrite [eq_con_inv_of_con_eq_whisker_left,▸*],
-    rewrite [+con.assoc _ _ !con.right_inv,right_inv_eq_idp (elim_incl2'_incl0 Pf),↑[whisker_left]],
+check_expr empty,
+    rewrite [+con.assoc _ _ !con.right_inv,
+             right_inv_eq_idp (
+               (λ(x : ap (elim P0 P1 P2) (incl2' q base) = idpath
+               (elim P0 P1 P2 (class_of two_quotient_rel (f q base)))), x)
+                (elim_incl2'_incl0 P2 q)),
+             ↑[whisker_left]],
     xrewrite [con2_con_con2],
     rewrite [idp_con,↑elim_incl2'_incl0,con.left_inv,whisker_right_inv,↑whisker_right],
     xrewrite [con.assoc _ _ (_ ◾ _)],
-    rewrite [con.left_inv,▸*,-+con.assoc,con.assoc _⁻¹,↑[two_quotient.elim,function.compose],con.left_inv,
-             ▸*,↑b,con.left_inv,idp_con],
+    rewrite [con.left_inv,▸*,-+con.assoc,con.assoc _⁻¹,↑[elim,function.compose],con.left_inv,
+             ▸*,↑j,con.left_inv,idp_con],
+check_expr empty,
     apply square_of_eq, reflexivity
   end
 
-
+end
 end two_quotient

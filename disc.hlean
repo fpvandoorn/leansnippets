@@ -8,7 +8,7 @@ Declaration of the disc
 
 import hit.circle types.cubical.squareover
 
-open quotient eq function bool circle equiv sigma
+open quotient eq function bool circle equiv
 
 section
 variables {A B C : Type} {f : A → B} {a a' : A} {b b' : B}
@@ -111,7 +111,9 @@ end
       = eq_con_inv_of_con_eq s ⬝ whisker_left r (inverse2 s')⁻¹ :=
   by induction s';induction q;induction s;reflexivity
 
-
+  theorem right_inv_eq_idp {A : Type} {a : A} {p : a = a} (r : p = idpath a) :
+    con.right_inv p = r ◾ inverse2 r :=
+  by cases r;reflexivity
 
 end
 
@@ -210,11 +212,7 @@ namespace disc
     (Pf : Pl = idp) : ap (disc.elim Pb Pl Pf) (fill' circle.base) = idpath Pb :=
   !elim_eq_of_rel
 
-  theorem right_inv_eq_idp {A : Type} {a : A} {p : a = a} (r : p = idpath a) :
-    con.right_inv p = r ◾ inverse2 r :=
-  by cases r;reflexivity
-
-  definition elim_fill {P : Type} {Pb : P} {Pl : Pb = Pb}
+  theorem elim_fill {P : Type} {Pb : P} {Pl : Pb = Pb}
     (Pf : Pl = idp) : square (ap02 (disc.elim Pb Pl Pf) fill) Pf (elim_lp Pf) idp :=
   begin
     esimp [fill,ap02],
