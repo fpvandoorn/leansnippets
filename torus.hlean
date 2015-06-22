@@ -7,7 +7,7 @@ Authors: Floris van Doorn
 Declaration of the torus
 -/
 
-import hit.circle types.cubical.cubeover types.cubical.pathover
+import hit.circle types.cubical.cubeover
 
 open quotient eq function bool circle equiv
 
