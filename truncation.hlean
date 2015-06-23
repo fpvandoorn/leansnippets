@@ -25,7 +25,7 @@ open eq quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
 --     (λb c r, eq.rec_on r !con.left_inv),
 --   !H'⁻¹ ⬝ !H'
 
-/- definition of the delayed one step truncation -/
+/- definition of the one step n-truncation -/
 
 namespace dtr
 section
