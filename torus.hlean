@@ -18,7 +18,7 @@ namespace torus
   local postfix `⁻¹ʳ`:(max+10) := @equiv_closure.symm unit.{0} torus_R star star
 
   inductive torus_Q : Π⦃x : unit.{0}⦄, equiv_closure torus_R x x → Type :=
-  | Qmk : torus_Q ((of_rel ff) ⬝r (of_rel tt) ⬝r (of_rel ff ⬝r of_rel tt)⁻¹ʳ)
+  | Qmk : torus_Q ((of_rel ff) ⬝r (of_rel tt) ⬝r (of_rel tt ⬝r of_rel ff)⁻¹ʳ)
 
   definition torus := two_quotient_ext torus_R torus_Q
   definition base  : torus := incl0 _ _ star
@@ -26,12 +26,7 @@ namespace torus
   definition loop2 : base = base := incl1 _ _ tt
   set_option pp.implicit true
   definition fill  : loop1 ⬝ loop2 ⬝ (loop2 ⬝ loop1)⁻¹ = idp :=
-  begin
-    refine (_ ⬝ incl2 _ _ torus_Q.Qmk),
-    esimp [inclt,two_quotient_ext.et,equiv_closure.elim],
-    rewrite [+ap_con,ap_inv,ap_con,↑[loop1,loop2,incl1]],
-apply sorry
-  end
+  incl2 _ _ torus_Q.Qmk
 exit
   set_option pp.notation false
   protected definition rec {P : torus → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
