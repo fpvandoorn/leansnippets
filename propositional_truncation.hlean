@@ -58,7 +58,7 @@ section
   parameters {A : Type}
   variables (a a' : A)
 
-  protected definition R (a a' : A) : Type := unit
+  protected definition R (a a' : A) : Type₀ := unit
   parameter (A)
   definition one_step_tr : Type := quotient R
   parameter {A}

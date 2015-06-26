@@ -391,7 +391,7 @@ namespace two_quotient_ext
   --   {e' : Π⦃a a' : A⦄, R a a' → g (f a) = g (f a')}
   --   (p : Π⦃a a' : A⦄ (s : R a a'), ap g (e s) = e' s) (t : T a a')
 
-
+exit
   -- set_option pp.implicit true
   theorem elim_incl2 {P : Type} (P0 : A → P)
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a')
