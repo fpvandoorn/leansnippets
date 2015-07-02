@@ -70,12 +70,6 @@ namespace disc
 
   local attribute disc f i base aux lp fill' [reducible]
 
-    -- necessary for proofs of fill/fill' in torus:
-    --,+ap_con at H, +ap_inv at H
-    -- apply eq_con_of_con_inv_eq,
-    -- rewrite [-idp_con loop2 at {2}],
-    -- apply eq_con_of_con_inv_eq,
-
   protected definition elim [unfold-c 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) (x : disc) : P :=
   begin
