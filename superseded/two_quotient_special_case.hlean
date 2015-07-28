@@ -31,10 +31,10 @@ namespace two_quotient
   private definition pre_aux [constructor] (q : Q r) : C :=
   class_of pre_two_quotient_rel (inr ⟨a, r, q⟩)
   private definition e (s : R a a') : j a = j a' := eq_of_rel _ (pre_Rmk s)
-  private definition f [unfold-c 7] (q : Q r) : S¹ → C :=
+  private definition f [unfold 7] (q : Q r) : S¹ → C :=
   circle.elim (j a) (e r)
 
-  private definition pre_rec [unfold-c 8] {P : C → Type}
+  private definition pre_rec [unfold 8] {P : C → Type}
     (Pj : Πa, P (j a)) (Pa : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P (pre_aux q))
     (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a =[e s] Pj a') (x : C) : P x :=
   begin
@@ -45,7 +45,7 @@ namespace two_quotient
     { induction H, esimp, apply Pe},
   end
 
-  private definition pre_elim [unfold-c 8] {P : Type} (Pj : A → P)
+  private definition pre_elim [unfold 8] {P : Type} (Pj : A → P)
     (Pa : Π⦃a : A⦄ ⦃r : R a a⦄, Q r → P) (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a = Pj a') (x : C)
     : P :=
   pre_rec Pj Pa (λa a' s, pathover_of_eq (Pe s)) x
@@ -104,7 +104,7 @@ namespace two_quotient
               P2 q ⬝
               !ap_constant⁻¹ end} end end},
   end
-  local attribute elim [unfold-c 8]
+  local attribute elim [unfold 8]
 
   protected definition elim_on {P : Type} (x : D) (P0 : A → P)
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a') (P2 : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P1 r = idp)
@@ -178,7 +178,7 @@ end
 end two_quotient
 
 attribute two_quotient.incl0 [constructor]
-attribute /-two_quotient.rec-/ two_quotient.elim [unfold-c 8] [recursor 8]
---attribute two_quotient.elim_type [unfold-c 9]
-attribute /-two_quotient.rec_on-/ two_quotient.elim_on [unfold-c 5]
---attribute two_quotient.elim_type_on [unfold-c 6]
+attribute /-two_quotient.rec-/ two_quotient.elim [unfold 8] [recursor 8]
+--attribute two_quotient.elim_type [unfold 9]
+attribute /-two_quotient.rec_on-/ two_quotient.elim_on [unfold 5]
+--attribute two_quotient.elim_type_on [unfold 6]

@@ -1,4 +1,4 @@
-import hit.pushout types.nat.basic
+import hit.pushout types.nat.basic types.pointed
 
 /---------------------------------------------------------------------------------------------------
   Show that type quotient preserves equivalence.
@@ -183,3 +183,20 @@ namespace lpath
   | elim (lidp a) := idp
   | elim (cons p l) := elim l ⬝ p
 end lpath
+
+/---------------------------------------------------------------------------------------------------
+  apn is weakly constant
+---------------------------------------------------------------------------------------------------/
+
+namespace apn
+  open eq pointed nat
+
+  definition weakly_constant_apn {A B : Pointed} {n : ℕ} {f : map₊ A B} (p : Ω[n] A)
+    (H : Π(a : A), f a = pt) : apn n f p = pt :=
+  begin
+    induction n with n IH,
+    { unfold [apn, Iterated_loop_space] at *, apply H},
+    { exact sorry}
+  end
+
+end apn

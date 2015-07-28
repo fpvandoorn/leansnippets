@@ -57,7 +57,7 @@ section
 
 end
 end dtr
-attribute dtr.rec [unfold-c 7]
+attribute dtr.rec [unfold 7]
 
 
 open dtr

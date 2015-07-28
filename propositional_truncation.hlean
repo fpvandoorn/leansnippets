@@ -1,4 +1,4 @@
-import types.eq types.pi hit.colimit types.nat.hott
+import types.eq types.pi hit.colimit types.nat.hott hit.trunc types.cubical.square
 
 open eq is_trunc unit quotient seq_colim pi nat equiv sum
 
@@ -78,8 +78,8 @@ section
     { intro a, apply Pt},
     { intro a a' H, cases H, apply Pe}
   end
-
 end
+  definition n_step_tr (A : Type) (n : ℕ) : Type := nat.rec_on n A (λn' A', one_step_tr A')
 end one_step_tr
 open one_step_tr
 
@@ -135,7 +135,7 @@ section
 
   /- point operations -/
 
-  definition fr [reducible] [unfold-c 4] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
+  definition fr [reducible] [unfold 4] {n m : ℕ} (a : A n) (H : n ≤ m) : A m :=
   begin
     induction H with m H b,
     { exact a},
@@ -144,7 +144,7 @@ section
 
   /- path operations -/
 
-  definition i_fr [unfold-c 4] {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
+  definition i_fr [unfold 4] {n m : ℕ} (a : A n) (H : n ≤ m) : i (fr a H) = i a :=
   begin
     induction H with m H IH,
     { reflexivity},
@@ -185,7 +185,7 @@ section
     induction H with m H IH,
     { exfalso, exact not_succ_le_self H2},
     { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
-      --TODO: add some unfold-c's in files
+      --TODO: add some unfold attributes in files
       esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
       revert H IH,
       eapply le.rec_on (le_of_succ_le_succ H2),
@@ -197,8 +197,8 @@ section
 
   /- 2-dimensional path operations -/
 
-  theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m)
-    : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H := idp
+  theorem i_fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : i_fr a (le.step H) = g (fr a H) ⬝ i_fr a H :=
+  idp
 
   theorem eq_constructors_le {n m : ℕ} (a : A n) (b : A m) (H : n ≤ m)
     : eq_constructors a b = eq_le a b H :=
@@ -208,8 +208,7 @@ section
     : eq_constructors a b = eq_ge a b H :=
   by apply lt_ge_by_cases_ge
 
-  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
-    : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
+  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a') : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
   eq.rec_on p !con.right_inv⁻¹
 
   theorem ap_i_eq_ap_i_same {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
@@ -240,9 +239,8 @@ section
       ↑le_equiv_succ_le_succ,▸*],
 -- BUG(?): some le.rec's are not reduced if previous line is replaced by "↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], state,"
       refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
-      rewrite [is_hprop_elim_self,↑fr_irrel,▸*,is_hprop_elim_self]},
-    { rewrite [↑i_fr,↓i_fr b H,↓i_fr (f b) H3,↓fr (f b) H3,↓fr b H, -IH H3,
-        -con.assoc,-con.assoc,-con.assoc],
+      rewrite [is_hprop_elim_self,↑fr_irrel,is_hprop_elim_self]},
+    { rewrite [↑i_fr,-IH H3,-con.assoc,-con.assoc,-con.assoc],
       apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
       apply ap_i_eq_ap_i_same}
   end
@@ -302,28 +300,9 @@ section
   -- final result
   theorem is_hprop_truncX : is_hprop truncX := is_hprop.mk eq_general
 
-  -- some other recursors we get from this construction:
-  definition truncX.elim2 {P : Type} (ff : Π{n}, A n → P)
-    (coh : Π(n : ℕ) (a : A n), ff (f a) = ff a) (x : truncX) : P :=
-  begin
-    induction x,
-    { exact ff a},
-    { apply coh}
-  end
-
-  definition truncX.rec2 {P : truncX → Type} (ff : Π{n} (a : A n), P (i a))
-    (coh : Π(n : ℕ) (a : A n), ff (f a) =[g a] ff a)
-    (x : truncX) : P x :=
-  begin
-    induction x,
-    { exact ff a},
-    { apply coh}
-  end
-
-
 end
 
-namespace hide
+namespace my_trunc
 definition trunc.{u} (A : Type.{u}) : Type.{u}                        := @truncX A
 definition tr {A : Type} : A → trunc A                                := @i A 0
 definition is_hprop_trunc (A : Type) : is_hprop (trunc A)             := is_hprop_truncX
@@ -333,4 +312,56 @@ definition trunc.rec {A : Type} {P : trunc A → Type}
 
 example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
         (H : Πa, P (tr a)) (a : A) : (trunc.rec H) (tr a) = H a       := by reflexivity
-end hide
+
+  -- some other recursors we get from this construction:
+  definition trunc.elim2 {A P : Type} (h : Π{n}, n_step_tr A n → P)
+    (coh : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) (x : trunc A) : P :=
+  begin
+    induction x,
+    { exact h a},
+    { apply coh}
+  end
+
+  definition trunc.rec2 {A : Type} {P : truncX → Type} (h : Π{n} (a : n_step_tr A n), P (i a))
+    (coh : Π(n : ℕ) (a : n_step_tr A n), h (f a) =[g a] h a)
+    (x : trunc A) : P x :=
+  begin
+    induction x,
+    { exact h a},
+    { apply coh}
+  end
+
+  open sigma
+  definition elim2_equiv {A P : Type} : (trunc A → P) ≃
+      Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a :=
+  begin
+    fapply equiv.MK,
+    { intro h, fconstructor,
+      { intro n a, refine h (i a)},
+      { intro n a, exact ap h (g a)}},
+    { intro x a, induction x with h p, induction a,
+        exact h a,
+        apply p},
+    { intro x, induction x with h p, fapply sigma_eq,
+      { reflexivity},
+      { esimp, apply pathover_idp_of_eq, apply eq_of_homotopy2, intro n a, rewrite elim_glue}},
+    { intro h, apply eq_of_homotopy, intro a, esimp, induction a,
+        esimp,
+        apply pathover_eq, apply hdeg_square, esimp, rewrite elim_glue}
+  end
+
+  -- the constructed truncation is equivalent to the "standard" propositional truncation
+  -- (called _root_.trunc below, because it lives in the root namespace)
+  open trunc
+  attribute trunc.rec [recursor]
+  attribute is_hprop_trunc [instance]
+  definition trunc_equiv (A : Type) : trunc A ≃ _root_.trunc -1 A :=
+  begin
+    fapply equiv.MK,
+    { intro x, refine trunc.rec _ x, intro a, exact trunc.tr a},
+    { intro x, refine _root_.trunc.rec _ x, intro a, exact tr a},
+    { intro x, induction x with a, reflexivity},
+    { intro x, induction x with a, reflexivity}
+  end
+
+end my_trunc

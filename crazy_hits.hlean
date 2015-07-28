@@ -1,17 +1,21 @@
 import hit.circle
-open circle eq int nat prod sum equiv function
+open circle eq int nat prod sum equiv function equiv.ops is_trunc
 
 /---------------------------------------------------------------------------------------------------
-W-suspension X with
-A = bool
-B ff = empty
-B tt = S¹
-one equality: sup ff _ = sup ff _
----- or ----
+We use the Licata trick to define
 HIT X :=
 | b : X
 | s : (S¹ → X) → X
 | p : b = b
+--------
+this is a W-suspension X with
+A = bool
+B ff = empty
+B tt = S¹
+one equality: sup ff _ = sup ff _
+--------
+Note: we don't (and can't in Lean) actually hide the recursor for the "wrong" datatype X,
+  so we have to be careful not to use X.rec or induction x for (x : X)
 ---------------------------------------------------------------------------------------------------/
 namespace hide
   inductive X :=
@@ -20,22 +24,21 @@ namespace hide
   open X
   axiom p : b = b
 
---Π(x : S¹), P _
-  definition rec [unfold-c 5] {P : X → Type} (Pb : P b) (Ps : Π(f : S¹ → X), (Π(x : S¹), P (f x)) →  P (s f))
+  definition rec [unfold 5] {P : X → Type} (Pb : P b) (Ps : Π(f : S¹ → X), (Π(x : S¹), P (f x)) →  P (s f))
     (Pp : Pb =[p] Pb) (x : X) : P x :=
   X.rec_on x Pb Ps
 
   axiom rec_p {P : X → Type} (Pb : P b) (Ps : Π(f : S¹ → X), (Π(x : S¹), P (f x)) →  P (s f))
     (Pp : Pb =[p] Pb) : apdo (rec Pb Ps Pp) p = Pp
 
-  definition elim [unfold-c 5] {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
+  definition elim [unfold 5] {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
     (Pp : Pb = Pb) (x : X) : P :=
   rec Pb Ps (pathover_of_eq Pp) x
 
   theorem elim_p {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
-    (Pp : Pb = Pb) : ap (elim Pb Ps Pp) p = Pp := sorry
+    (Pp : Pb = Pb) : ap (elim Pb Ps Pp) p = Pp := sorry -- easy to proof, but I'm too lazy
 
-  abbreviation Y := ℕ × S¹ ⊎ ℕ × ℤ × ℕ
+  -- abbreviation Y := ℕ × S¹ ⊎ ℕ × ℤ × ℕ
   inductive Ztree :=
   | leaf : Ztree
   | node : ℤ → Ztree → Ztree
@@ -63,19 +66,19 @@ namespace hide
 --     { exact ap inl (prod_eq idp loop)},
 --   end
 
-  definition ψ₁ (n : ℕ) : X :=
-  begin
-    induction n with n x,
-      exact b,
-      exact s (λz, x)
-  end
+  -- definition ψ₁ (n : ℕ) : X :=
+  -- begin
+  --   induction n with n x,
+  --     exact b,
+  --     exact s (λz, x)
+  -- end
 
-  definition pψ (n : ℕ) : ψ₁ n = ψ₁ n :=
-  begin
-    induction n with n q,
-      exact p,
-      exact ap (λx, s (λz, x)) q,
-  end
+  -- definition pψ (n : ℕ) : ψ₁ n = ψ₁ n :=
+  -- begin
+  --   induction n with n q,
+  --     exact p,
+  --     exact ap (λx, s (λz, x)) q,
+  -- end
 
   definition px (x : X) : x = x :=
   begin
@@ -85,17 +88,17 @@ namespace hide
     { apply pathover_eq, rewrite +ap_id, exact square_of_eq idp}
   end
 
-  definition ψY (y : Y) : X :=
-  begin
-    induction y with y y,
-    { induction y with n z, induction z,
-      { exact ψ₁ n},
-      { exact pψ n}},
-    { induction y with n y, induction y with m k,
-      induction k with k x,
-      { apply s, intro z, induction z, exact ψ₁ n, apply pψ},
-      { apply s, intro z, exact x}}
-  end
+  -- definition ψY (y : Y) : X :=
+  -- begin
+  --   induction y with y y,
+  --   { induction y with n z, induction z,
+  --     { exact ψ₁ n},
+  --     { exact pψ n}},
+  --   { induction y with n y, induction y with m k,
+  --     induction k with k x,
+  --     { apply s, intro z, induction z, exact ψ₁ n, apply pψ},
+  --     { apply s, intro z, exact x}}
+  -- end
 
   section
   open equiv sigma sigma.ops
@@ -171,12 +174,32 @@ namespace hide
       { exact sorry}}
   end
 end hide
-exit
+
+/---------------------------------------------------------------------------------------------------
+Question:
+Is
+HIT ntree :=
+| leaf : ntree
+| node : (ℕ → ntree) → ntree
+| nirr : Π(f : ℕ ≃ ℕ) (g : ℕ → ntree), node (g ∘ f) = node g
+| tru  : is_hset ntree
+the set-truncation of
+HIT tree :=
+| leaf : tree
+| node : (ℕ → tree) → tree
+| irr  : Π(f : ℕ ≃ ℕ) (g : ℕ → tree), node (g ∘ f) = node g
+---------------------------------------------------------------------------------------------------/
+
+namespace hide2
+
+  inductive ntree :=
+  | leaf : ntree
+  | node : (ℕ → ntree) → ntree
+  open ntree
+
+  constant nirr : Π(f : ℕ ≃ ℕ) (g : ℕ → ntree), node (g ∘ f) = node g
+  constant tru : is_hset ntree
 
 
 
-    { induction z,
-      { apply s, intro z, induction z,
-        { exact x},
-        { apply power !px n}},
-      { apply px}}
+end hide2

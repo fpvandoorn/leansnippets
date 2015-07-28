@@ -60,7 +60,10 @@ section
   definition pρ (a : A) : req_of_rel (ρ a) = idp :=
   assert H : Π (a' : A), ap (class_of S ∘ f a') loop = idp, from
     λa', ap_eq_idp_of_contractible (class_of S ∘ f a') (ρaux a') loop,
-  by rewrite [-H,ap_compose,↑f,↑pre_refl_quotient_f,↑circle.elim_on,elim_loop]
+  begin
+    xrewrite [-H],
+    rewrite [ap_compose,↑f,↑pre_refl_quotient_f,↑circle.elim_on,elim_loop]
+  end
 
   definition sρ (a : A) : square (req_of_rel (ρ a)) idp idp idp :=
   square_of_eq !pρ

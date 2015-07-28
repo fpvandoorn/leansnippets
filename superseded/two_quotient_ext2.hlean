@@ -31,7 +31,7 @@ variables {A B C : Type} {f : A → B} {a a' a₁ a₂ a₃ a₄ : A} {b b' : B}
 
 -- move to types.eq
 
-  definition ap_weakly_constant [unfold-c 8] {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
+  definition ap_weakly_constant [unfold 8] {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
     {x y : A} (q : x = y) : ap f q = p x ⬝ (p y)⁻¹ :=
   by induction q;exact !con.right_inv⁻¹
 
@@ -212,23 +212,14 @@ namespace two_quotient_ext
     induction t,
     { unfold [ap_st_closure_elim_h,st_closure.elim],
       apply square_of_eq, exact !con.right_inv ⬝ !con.left_inv⁻¹},
-    { rewrite [↑st_closure.elim,↓st_closure.elim e r,
+    { rewrite [↑st_closure.elim,
                ↑ap_st_closure_elim_h,
-               ↓ap_st_closure_elim_h e p r,
-               ↓ap_st_closure_elim_h e (λa a' s, ap_compose h g (e s)) r,
-               ↓ap_st_closure_elim_h e' (λa a' s, (ap (ap h) (p s))⁻¹) r,
                ap_con (ap h)],
       refine (transpose !ap_compose_inv)⁻¹ᵛ ⬝h _,
       rewrite [con_inv,inv_inv,-inv2_inv],
       exact !ap_inv2 ⬝v square_inv2 v_0},
-    { rewrite [↑st_closure.elim,↓st_closure.elim e r, ↓st_closure.elim e r',
+    { rewrite [↑st_closure.elim,
                ↑ap_st_closure_elim_h,
-               ↓ap_st_closure_elim_h e p r,
-               ↓ap_st_closure_elim_h e (λa a' s, ap_compose h g (e s)) r,
-               ↓ap_st_closure_elim_h e' (λa a' s, (ap (ap h) (p s))⁻¹) r,
-               ↓ap_st_closure_elim_h e p r',
-               ↓ap_st_closure_elim_h e (λa a' s, ap_compose h g (e s)) r',
-               ↓ap_st_closure_elim_h e' (λa a' s, (ap (ap h) (p s))⁻¹) r',
                ap_con (ap h)],
       refine (transpose !ap_compose_con)⁻¹ᵛ ⬝h _,
       rewrite [con_inv,inv_inv,con2_inv],
@@ -273,10 +264,10 @@ namespace two_quotient_ext
   class_of pre_two_quotient_ext_rel (inr ⟨a, r, q⟩)
   protected definition e (s : R a a') : j a = j a' := eq_of_rel _ (pre_Rmk s)
   protected definition et (t : T a a') : j a = j a' := st_closure.elim e t
-  protected definition f [unfold-c 7] (q : Q r) : S¹ → C :=
+  protected definition f [unfold 7] (q : Q r) : S¹ → C :=
   circle.elim (j a) (et r)
 
-  protected definition pre_rec [unfold-c 8] {P : C → Type}
+  protected definition pre_rec [unfold 8] {P : C → Type}
     (Pj : Πa, P (j a)) (Pa : Π⦃a : A⦄ ⦃r : T a a⦄ (q : Q r), P (pre_aux q))
     (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a =[e s] Pj a') (x : C) : P x :=
   begin
@@ -287,7 +278,7 @@ namespace two_quotient_ext
     { induction H, esimp, apply Pe},
   end
 
-  protected definition pre_elim [unfold-c 8] {P : Type} (Pj : A → P)
+  protected definition pre_elim [unfold 8] {P : Type} (Pj : A → P)
     (Pa : Π⦃a : A⦄ ⦃r : T a a⦄, Q r → P) (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a = Pj a') (x : C)
     : P :=
   pre_rec Pj Pa (λa a' s, pathover_of_eq (Pe s)) x
@@ -359,7 +350,7 @@ namespace two_quotient_ext
               !ap_constant⁻¹ end
 } end end},
   end
-  local attribute elim [unfold-c 8]
+  local attribute elim [unfold 8]
 
   protected definition elim_on {P : Type} (x : D) (P0 : A → P)
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a = P0 a')
@@ -470,7 +461,7 @@ end st_closure
 end two_quotient_ext
 
 --attribute two_quotient_ext.j [constructor] --TODO
-attribute /-two_quotient_ext.rec-/ two_quotient_ext.elim [unfold-c 8] [recursor 8]
---attribute two_quotient_ext.elim_type [unfold-c 9]
-attribute /-two_quotient_ext.rec_on-/ two_quotient_ext.elim_on [unfold-c 5]
---attribute two_quotient_ext.elim_type_on [unfold-c 6]
+attribute /-two_quotient_ext.rec-/ two_quotient_ext.elim [unfold 8] [recursor 8]
+--attribute two_quotient_ext.elim_type [unfold 9]
+attribute /-two_quotient_ext.rec_on-/ two_quotient_ext.elim_on [unfold 5]
+--attribute two_quotient_ext.elim_type_on [unfold 6]
