@@ -22,11 +22,11 @@ namespace disc
   definition b [constructor] : predisc := class_of predisc_rel tt
   definition e [constructor] : predisc := class_of predisc_rel ff
   definition l : b = b    := eq_of_rel predisc_rel Rl
-  definition f [unfold-c 1] : S¹ → predisc :=
+  definition f [unfold 1] : S¹ → predisc :=
   circle.elim b l
 
 
-  protected definition rec [recursor] [unfold-c 5] {P : predisc → Type}
+  protected definition rec [recursor] [unfold 5] {P : predisc → Type}
     (Pb : P b) (Pe : P e) (Pl : Pb =[l] Pb) (x : predisc) : P x :=
   begin
     induction x with c,
@@ -34,7 +34,7 @@ namespace disc
     { cases H, exact Pl},
   end
 
-  protected definition elim [recursor 5] [unfold-c 5] {P : Type}
+  protected definition elim [recursor 5] [unfold 5] {P : Type}
     (Pb : P) (Pe : P) (Pl : Pb = Pb) (x : predisc) : P :=
   predisc.rec Pb Pe (pathover_of_eq Pl) x
 
@@ -70,7 +70,7 @@ namespace disc
 
   local attribute disc f i base aux lp fill' [reducible]
 
-  protected definition elim [unfold-c 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
+  protected definition elim [unfold 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) (x : disc) : P :=
   begin
     induction x,
@@ -80,7 +80,7 @@ namespace disc
       { exact Pl}},
     { exact abstract begin induction H, induction x,
       { exact idpath Pb},
-      { unfold f, apply pathover_eq, apply hdeg_square,
+      { unfold f, apply eq_pathover, apply hdeg_square,
         exact abstract ap_compose (predisc.elim Pb Pb Pl) f loop ⬝
               ap _ !elim_loop ⬝
               !elim_l ⬝
@@ -119,7 +119,7 @@ namespace disc
     apply eq_vconcat,
     { apply ap (λx, _ ⬝ eq_con_inv_of_con_eq ((_ ⬝ x ⬝ _)⁻¹ ⬝ _) ⬝ _),
       transitivity _, apply ap eq_of_square,
-        apply to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P Pb Pl Pf)),
+        apply to_right_inv !eq_pathover_equiv_square (hdeg_square (elim_1 P Pb Pl Pf)),
       transitivity _, apply eq_of_square_hdeg_square,
       unfold elim_1, reflexivity},
     rewrite [+con_inv,whisker_left_inv,+inv_inv,-whisker_right_inv,
@@ -152,7 +152,7 @@ namespace disc
   -- _ ▸ pr2 (disc.rec_of_elim_sigma Pb Pl Pf x)
 
 
-
+exit
 --  set_option pp.notation false
   protected definition rec {P : disc → Type} (Pb : P base) (Pl : Pb =[lp] Pb)
     (Pf : Pl =[fill] idpo)
@@ -172,7 +172,7 @@ exit
         { unfold f, apply pathover_tr},
         { /-apply pathover_pathover_fl,-/ apply sorry}}
 
-  protected definition elim [unfold-c 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
+  protected definition elim [unfold 5] {P : Type} (Pb : P) (Pl : Pb = Pb)
     (Pf : Pl = idp) (x : disc) : P :=
   begin
     induction x,

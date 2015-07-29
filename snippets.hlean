@@ -78,7 +78,7 @@ namespace nat
       { contradiction}},
     { intro m p, cases m with m,
       { contradiction},
-      { rewrite [↑nat.code, ↓nat.code n m], apply IH, injection p, assumption}},
+      { rewrite [↑nat.code], apply IH, injection p, assumption}},
   end
 
   protected definition decode {n m : ℕ} (q : nat.code n m) : n = m :=
@@ -136,7 +136,7 @@ namespace lt
       { exact star}},
     { intro m p, cases m with m,
       { exfalso, apply !not_lt_zero p},
-      { rewrite [↑lt.code, ↓lt.code n m], apply IH, apply lt_of_succ_lt_succ p}},
+      { rewrite [↑lt.code], apply IH, apply lt_of_succ_lt_succ p}},
   end
 
   protected definition decode {n m : ℕ} (q : lt.code n m) : n < m :=
@@ -200,3 +200,46 @@ namespace apn
   end
 
 end apn
+
+/---------------------------------------------------------------------------------------------------
+  two quotient eliminator is unique
+---------------------------------------------------------------------------------------------------/
+
+
+ --  set_option pp.notation false
+ --  protected theorem elim_unique {P : Type} (f : D → P) (d : D) :
+ --    elim (λa, f (incl0 a))
+ --         (λa a' s, ap f (incl1 s))
+ --         (λa r q, !ap_e_closure_elim⁻¹ ⬝ ap (ap f) (incl2 q))
+ --         d = f d :=
+ --  begin
+ --    induction d,
+ --    { refine (pre_rec _ _ _ a),
+ --      { clear a, intro a, reflexivity},
+ --      { clear a, intro a r q, rewrite [↑incl0,↓i], exact ap f (incl2' q base)},
+ --      { clear a, intro a a' s, esimp,
+ --        apply eq_pathover, apply hdeg_square,
+ --        rewrite [elim_e,ap_compose f (class_of simple_two_quotient_rel)]}},
+ --    { induction H, esimp, apply eq_pathover, induction x,
+ --      { esimp, rewrite [↓pre_two_quotient], esimp, rewrite [↓incl2' q base],
+ --        /- PREVIOUS REWRITE FAILS -/
+ --        xrewrite [elim_incl2'], apply square_of_eq, reflexivity},
+ --      { esimp, apply sorry --apply square_pathover,
+
+
+ -- }}
+ --  end
+/-
+exit
+  begin
+    { exact abstract begin induction H, induction x,
+      { exact idpath (P0 a)},
+      { unfold f, apply eq_pathover, apply hdeg_square,
+        exact abstract ap_compose (pre_elim P0 _ P1) (f q) loop ⬝
+              ap _ !elim_loop ⬝
+              !elim_et ⬝
+              P2 q ⬝
+              !ap_constant⁻¹ end
+} end end},
+  end
+-/

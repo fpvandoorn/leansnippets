@@ -36,7 +36,7 @@ namespace hide
   rec Pb Ps (pathover_of_eq Pp) x
 
   theorem elim_p {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
-    (Pp : Pb = Pb) : ap (elim Pb Ps Pp) p = Pp := sorry -- easy to proof, but I'm too lazy
+    (Pp : Pb = Pb) : ap (elim Pb Ps Pp) p = Pp := sorry -- easy to prove
 
   -- abbreviation Y := ℕ × S¹ ⊎ ℕ × ℤ × ℕ
   inductive Ztree :=
@@ -85,7 +85,7 @@ namespace hide
     refine rec _ _ _ x,
     { exact p},
     { intro f q, exact ap s (eq_of_homotopy q)},
-    { apply pathover_eq, rewrite +ap_id, exact square_of_eq idp}
+    { apply eq_pathover, rewrite +ap_id, exact square_of_eq idp}
   end
 
   -- definition ψY (y : Y) : X :=
@@ -110,7 +110,7 @@ namespace hide
     { intro q, fapply sigma_eq, reflexivity, esimp, apply pathover_idp_of_eq, apply elim_loop},
     { intro f, esimp, /-not fully simplified-/ apply eq_of_homotopy, intro z, esimp, induction z,
         reflexivity,
-        esimp, apply pathover_eq, apply hdeg_square, esimp, apply elim_loop},
+        esimp, apply eq_pathover, apply hdeg_square, esimp, apply elim_loop},
   end
   end
 
@@ -153,7 +153,7 @@ namespace hide
     refine (rec _ _ _ x),
     { reflexivity},
     { intros f q, rewrite [↑[φ]/-,↓φ (f base) FAILS-/], apply sorry},
-    { apply pathover_eq, apply hdeg_square, rewrite [ap_id, ap_compose ψ φ,↑φ,elim_p],
+    { apply eq_pathover, apply hdeg_square, rewrite [ap_id, ap_compose ψ φ,↑φ,elim_p],
       apply sorry}
   end
 
@@ -164,7 +164,7 @@ namespace hide
     induction w with w z, induction w with n zz q,
     { esimp [ψ], induction z,
       { reflexivity},
-      { apply pathover_eq, apply hdeg_square, rewrite [ap_compose φ,elim_loop,↑φ,elim_p]}},
+      { apply eq_pathover, apply hdeg_square, rewrite [ap_compose φ,elim_loop,↑φ,elim_p]}},
     { induction z,
       { rewrite [ψnode,φs], apply prod_eq,
         { esimp, apply ap011 Ztree.node,

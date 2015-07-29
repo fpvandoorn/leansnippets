@@ -97,7 +97,7 @@ namespace two_quotient
       { exact P1}},
     { exact abstract begin induction H, induction x,
       { exact idpath (P0 a)},
-      { unfold f, apply pathover_eq, apply hdeg_square,
+      { unfold f, apply eq_pathover, apply hdeg_square,
         exact abstract ap_compose (pre_elim P0 _ P1) (f q) loop ⬝
               ap _ !elim_loop ⬝
               !elim_e ⬝
@@ -147,7 +147,7 @@ check_expr empty,
     apply eq_vconcat,
     { apply ap (λx, _ ⬝ eq_con_inv_of_con_eq ((_ ⬝ x ⬝ _)⁻¹ ⬝ _) ⬝ _),
       transitivity _, apply ap eq_of_square,
-        apply to_right_inv !pathover_eq_equiv_square (hdeg_square (elim_1 P A R Q P0 P1 a r q P2)),
+        apply to_right_inv !eq_pathover_equiv_square (hdeg_square (elim_1 P A R Q P0 P1 a r q P2)),
       transitivity _, apply eq_of_square_hdeg_square,
       unfold elim_1, reflexivity},
 check_expr empty,

@@ -42,7 +42,7 @@ section
   definition pre_refl_quotient_f (a : A) (x : circle) : C :=
   circle.elim_on x (!class_of (inl a)) (!eq_of_rel (Rmk' !ρ))
   local abbreviation f := pre_refl_quotient_f
-  local attribute pre_refl_quotient_f f [unfold-c 5]
+  local attribute pre_refl_quotient_f f [unfold 5]
   inductive refl_rel : C → C → Type :=
   | Rmk {} : Π(a : A) (x : circle), refl_rel (f a x) (!class_of (inr a))
   open refl_rel
@@ -123,7 +123,7 @@ end
 end refl_quotient
 
 attribute refl_quotient.rclass_of [constructor]
-attribute refl_quotient.rec /-refl_quotient.elim-/ [unfold-c 8] [recursor 8]
+attribute refl_quotient.rec /-refl_quotient.elim-/ [unfold 8] [recursor 8]
 -- attribute refl_quotient.elim_type [unfold-c 7]
-attribute refl_quotient.rec_on /-refl_quotient.elim_on-/ [unfold-c 5]
+attribute refl_quotient.rec_on /-refl_quotient.elim_on-/ [unfold 5]
 -- attribute refl_quotient.elim_type_on [unfold-c 4]

@@ -347,7 +347,7 @@ example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
       { esimp, apply pathover_idp_of_eq, apply eq_of_homotopy2, intro n a, rewrite elim_glue}},
     { intro h, apply eq_of_homotopy, intro a, esimp, induction a,
         esimp,
-        apply pathover_eq, apply hdeg_square, esimp, rewrite elim_glue}
+        apply eq_pathover, apply hdeg_square, esimp, rewrite elim_glue}
   end
 
   -- the constructed truncation is equivalent to the "standard" propositional truncation

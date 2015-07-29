@@ -342,7 +342,7 @@ namespace two_quotient_ext
       { exact P1}},
     { exact abstract begin induction H, induction x,
       { exact idpath (P0 a)},
-      { unfold f, apply pathover_eq, apply hdeg_square,
+      { unfold f, apply eq_pathover, apply hdeg_square,
         exact abstract ap_compose (pre_elim P0 _ P1) (f q) loop ⬝
               ap _ !elim_loop ⬝
               !elim_et ⬝
