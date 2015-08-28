@@ -7,7 +7,7 @@ Authors: Floris van Doorn
 Quotient of a reflexive relation
 -/
 
-import hit.circle types.cubical.squareover
+import hit.circle cubical.squareover
 
 open quotient eq equiv equiv.ops function circle sum
 

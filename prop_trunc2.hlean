@@ -1,6 +1,6 @@
 -- more things related to the propositional truncation file
 
-import .propositional_truncation types.cubical.squareover
+import .propositional_truncation cubical.squareover
 
 open one_step_tr equiv eq sigma
 

@@ -1,6 +1,6 @@
 /- NOT FOR BLESSED REPOSITORY -/
 
-import types.eq types.pi hit.colimit types.cubical.square
+import types.eq types.pi hit.colimit cubical.square
 
 open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
 

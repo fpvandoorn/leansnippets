@@ -6,7 +6,7 @@ Authors: Floris van Doorn
 Declaration of the disc
 -/
 
-import hit.circle types.cubical.squareover types.eq2
+import hit.circle cubical.squareover eq2
 
 open quotient eq function bool circle equiv
 

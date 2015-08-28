@@ -1,17 +1,13 @@
 /-
 Copyright (c) 2015 Floris van Doorn. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Floris van Doorn
+Authors: Floris van Doorn, Egbert Rijke
 -/
-import hit.quotient types.nat cubical.squareover types.arrow
+import hit.quotient .sequence cubical.squareover types.arrow
 
 open eq nat sigma sigma.ops quotient equiv equiv.ops pi is_trunc is_equiv
 
 namespace seq_colim
-
-  definition seq_diagram [class] (A : ℕ → Type) : Type := Π⦃n⦄, A n → A (succ n)
-  -- structure seq_diagram [class] (A : ℕ → Type) : Type :=
-  -- (f : Πn, A n → A (succ n))
 
   section
   parameters (A : ℕ → Type) [f : seq_diagram A]
@@ -24,7 +20,6 @@ namespace seq_colim
   open seq_rel
   local abbreviation R := seq_rel
 
-  -- TODO: define this in root namespace
   definition seq_colim : Type :=
   quotient seq_rel
 
@@ -99,56 +94,9 @@ attribute seq_colim.elim_type_on [unfold 3]
 
 namespace seq_colim
 
-
-  structure Seq_diagram : Type :=
-    (carrier : ℕ → Type)
-    (struct : seq_diagram carrier)
-
-  protected abbreviation Mk [constructor] := Seq_diagram.mk
-  attribute Seq_diagram.carrier [coercion]
-  attribute Seq_diagram.struct [instance] [priority 10000] [coercion]
-
   variables {A : ℕ → Type} [f : seq_diagram A]
   variables {n : ℕ} (a : A n)
   include f
-
-  definition rep (k : ℕ) (a : A n) : A (n + k) :=
-  by induction k;exact a;exact f v_0
-
-  definition rep_f (k : ℕ) (a : A n) : rep k (f a) =[succ_add n k] f (rep k a) :=
-  begin
-    induction k with k IH,
-    { esimp [succ_add], constructor},
-    { esimp [succ_add,add_succ], apply to_fun !pathover_compose,
-      exact apo f IH}
-  end
-
-  definition f_rep (k : ℕ) (a : A n) : f (rep k a) = rep (succ k) a := idp
-
-  variable (A)
-  definition shift_diag [instance] [unfold-full] : seq_diagram (λn, A (succ n)) :=
-  λn a, f a
-
-  definition kshift_diag [instance] [unfold-full] [priority 800] (k : ℕ)
-    : seq_diagram (λn, A (k + n)) :=
-  λn a, f a
-
-  -- definition shift_diag [instance] [unfold-full] (k : ℕ) : seq_diagram (λn, A (k + n)) :=
-  -- λn a, f a
-
-  -- definition shift_up (k : ℕ) (a : seq_colim A) : seq_colim (λn, A (k + n)) :=
-  -- begin
-  --   induction a,
-  --   { },
-  --   { }
-  -- end
-
-  -- definition shift_down (k : ℕ) (a : seq_colim (λn, A (k + n))) : seq_colim A :=
-  -- begin
-  --   induction a,
-  --   { exact ι a},
-  --   { exact glue a}
-  -- end
 
   variable {A}
   definition shift_up (a : seq_colim A) : seq_colim (λk, A (succ k)) :=
@@ -168,8 +116,22 @@ namespace seq_colim
     { exact ι a},
     { exact glue a}
   end
+
+  -- definition kshift_up (k : ℕ) (a : seq_colim A) : seq_colim (λn, A (k + n)) :=
+  -- begin
+  --   induction a,
+  --   { },
+  --   { }
+  -- end
+
+  -- definition kshift_down (k : ℕ) (a : seq_colim (λn, A (k + n))) : seq_colim A :=
+  -- begin
+  --   induction a,
+  --   { exact ι a},
+  --   { exact glue a}
+  -- end
+
   variable (A)
---  set_option pp.implicit true
   definition shift_equiv [constructor] : seq_colim A ≃ seq_colim (λn, A (succ n)) :=
   equiv.MK shift_up
            shift_down
@@ -196,144 +158,9 @@ namespace seq_colim
            end
 
   variable {A}
-  section over
-  universe variable v
-  variable (P : Π⦃n⦄, A n → Type.{v})
-
-  definition seq_diagram_over [class] : Type := Π⦃n⦄ {a : A n}, P a → P (f a)
-
-  variable [g : seq_diagram_over P]
-  include g
-  definition seq_diagram_of_over [instance] {n : ℕ} (a : A n)
-    : seq_diagram (λk, P (rep k a)) :=
-  λk p, g p
-
-  definition seq_diagram_sigma [instance] : seq_diagram (λn, Σ(x : A n), P x) :=
-  λn v, ⟨f v.1, g v.2⟩
-
-  theorem f_rep_equiv_rep_f
-    : seq_colim (λk, P (rep (succ k) a)) ≃
-    @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
-  sorry
-  -- begin
-  --   fapply equiv.MK,
-  --   { intro x, induction x with k b k b,
-  --     { apply ι, exact (rep_f k a)⁻¹ᵒ ▸o b},
-  --     { let H := @glue (λk, P (rep (succ k) a)) _ _ b,
-  --       exact sorry}},
-  --   { intro x, induction x with k b k b,
-  --     { apply ι, exact rep_f k a ▸o b},
-  --     { exact sorry}}, -- unfold rep_f fails
-  --   { intro x, induction x with k b k b,
-  --        esimp, exact sorry,
-  --        exact sorry},
-  --   { intro x, induction x with k b k b,
-  --        esimp, exact sorry,
-  --        exact sorry},
-  -- end
-
-  -- alternative proof using induction on k
-  -- theorem f_rep_equiv_rep_f'
-  --   : seq_colim (λk, P (rep (succ k) a)) ≃
-  --   @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
-  -- begin
-  --   fapply equiv.MK,
-  --   { intro x, induction x with k b k b,
-  --     { revert a b, induction k with k IH, all_goals intro a b,
-  --         apply ι, change (P (rep 0 (f a))), exact b,
-  --         apply ι, change (P (rep (succ k) (f a))), exact sorry},
-  --     { exact sorry}},
-  --   { intro x, induction x with k b k b,
-  --       apply ι, exact rep_f k a ▸o b,
-  --       exact sorry},
-  --   { intro x, induction x with k b k b,
-  --        esimp, exact sorry,
-  --        exact sorry},
-  --   { intro x, induction x with k b k b,
-  --        esimp, exact sorry,
-  --        exact sorry},
-  -- end
-
-  theorem rep_rep_equiv (l : ℕ)
-    : @seq_colim (λk, P (rep (succ k) a)) _ ≃
-    @seq_colim (λk, P (rep k (rep l a))) (seq_diagram_of_over P _) :=
-  sorry
-
-  -- definition f_rep_equiv_rep_f'
-  --   : seq_colim (λk, P (rep (succ k) a)) ≃
-  --   @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over _ _) :=
-  -- begin
-
-  -- end
-
-  definition seq_colim_over [unfold 5] (x : seq_colim A) : Type.{v} :=
-  begin
-    -- assert H : Πn (a : A n), seq_diagram (λk, @P (n + k) (rep k a)),
-    -- { intro n a k p, exact g p},
-    fapply seq_colim.elim_type_on x,
-    { intro n a, exact seq_colim (λk, P (rep k a))},
-    { intro n a, symmetry,
-      -- assert H : seq_colim (λk, P (rep k a)) ≃ seq_colim (λk, P (rep (succ k) a)),
-      -- { apply shift_equiv},
-      refine !shift_equiv ⬝e !f_rep_equiv_rep_f}
-  end
-
-  -- needed for seq_colim_over2
-  definition glue_tr_g (p : P a) : transport (seq_colim_over P) (glue a)
-    (@ι _ (seq_diagram_of_over P (f a)) 0 (g p)) = @ι _ _ 0 p :=
-  sorry
-
---  set_option pp.notation false
-  variable {P}
-  definition seq_colim_over1 (v : Σ(x : seq_colim A), seq_colim_over P x)
-    : seq_colim (λn, Σ(x : A n), P x) :=
-  begin
-    induction v with a p,
-    induction a,
-    { esimp at p, induction p with k p,
-      { exact ι ⟨rep k a, p⟩},
-      { apply glue}},
-    { esimp, apply arrow_pathover_left, intro x, esimp at x,
-      induction x with k p k p,
-      { esimp, apply pathover_of_tr_eq, exact sorry},
-      { exact sorry}}
-  end
-
---  set_option pp.implicit true
---  set_option pp.notation false
-  definition seq_colim_over2 --(H : Π⦃n⦄ {a : A n} (p : P a), sorry)
-    (a : seq_colim (λn, Σ(x : A n), P x)) :
-    Σ(x : seq_colim A), seq_colim_over P x :=
-  begin
-  induction a with n v n v,
-  { induction v with a p, exact ⟨ι a, @ι _ _ 0 p⟩},
-  { induction v with a p, esimp [seq_diagram_sigma], fapply sigma_eq,
-      apply glue,
-      esimp, apply pathover_of_eq_tr, exact sorry}
-  end
-
-  variable (P)
-  definition seq_colim_over_equiv [constructor]
-    : (Σ(x : seq_colim A), seq_colim_over P x) ≃ seq_colim (λn, Σ(x : A n), P x) :=
-  equiv.MK seq_colim_over1
-           seq_colim_over2
-           sorry
-           sorry
-
-  end over
-
-  variable (A)
-  definition arrow_left_diag [instance] [unfold-full] (X : Type)
-    : seq_diagram (λn, X → A n) :=
-  λn g x, f (g x)
-
-  variable {A}
-  definition arrow_colim_of_colim_arrow {X : Type} (g : seq_colim (λn, X → A n)) (x : X) :
-    seq_colim A :=
-  begin induction g with n g n g, exact ι (g x), exact glue (g x) end
 
   /- functorial action and equivalences -/
-
+  section functor
   variables {A' : ℕ → Type} [f' : seq_diagram A']
   variables (g : Π{n}, A n → A' n) (p : Π⦃n⦄ (a : A n), g (f a) = f' (g a))
   include p
@@ -414,7 +241,6 @@ namespace seq_colim
   end
   include f
 
---  set_option pp.notation false
   definition is_equiv_seq_colim_rec (P : seq_colim A → Type) :
     is_equiv (seq_colim_rec_unc :
       (Σ(Pincl : Π ⦃n : ℕ⦄ (a : A n), P (ι a)),
@@ -430,25 +256,118 @@ namespace seq_colim
       apply eq_of_homotopy2, intros n a, apply rec_glue},
   end
 
+  end functor
+
+  /- colimits of dependent sequences, sigma's commute with colimits -/
+
+  section over
+
+  universe variable v
+  variables (P : Π⦃n⦄, A n → Type.{v}) [g : seq_diagram_over P]
+  include g
+
+  theorem f_rep_equiv_rep_f
+    : seq_colim (λk, P (rep (succ k) a)) ≃
+    @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
+  sorry
+  -- begin
+  --   fapply equiv.MK,
+  --   { intro x, induction x with k b k b,
+  --     { apply ι, exact (rep_f k a)⁻¹ᵒ ▸o b},
+  --     { let H := @glue (λk, P (rep (succ k) a)) _ _ b,
+  --       exact sorry}},
+  --   { intro x, induction x with k b k b,
+  --     { apply ι, exact rep_f k a ▸o b},
+  --     { exact sorry}}, -- unfold rep_f fails
+  --   { intro x, induction x with k b k b,
+  --        esimp, exact sorry,
+  --        exact sorry},
+  --   { intro x, induction x with k b k b,
+  --        esimp, exact sorry,
+  --        exact sorry},
+  -- end
+
+  -- alternative proof using induction on k
+  -- theorem f_rep_equiv_rep_f'
+  --   : seq_colim (λk, P (rep (succ k) a)) ≃
+  --   @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
+  -- begin
+  --   fapply equiv.MK,
+  --   { intro x, induction x with k b k b,
+  --     { revert a b, induction k with k IH, all_goals intro a b,
+  --         apply ι, change (P (rep 0 (f a))), exact b,
+  --         apply ι, change (P (rep (succ k) (f a))), exact sorry},
+  --     { exact sorry}},
+  --   { intro x, induction x with k b k b,
+  --       apply ι, exact rep_f k a ▸o b,
+  --       exact sorry},
+  --   { intro x, induction x with k b k b,
+  --        esimp, exact sorry,
+  --        exact sorry},
+  --   { intro x, induction x with k b k b,
+  --        esimp, exact sorry,
+  --        exact sorry},
+  -- end
+
+  -- theorem rep_rep_equiv (l : ℕ)
+  --   : @seq_colim (λk, P (rep (succ k) a)) _ ≃
+  --   @seq_colim (λk, P (rep k (rep l a))) (seq_diagram_of_over P _) :=
+  -- sorry
+
+  -- definition f_rep_equiv_rep_f'
+  --   : seq_colim (λk, P (rep (succ k) a)) ≃
+  --   @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over _ _) :=
+  -- begin
+
+  -- end
+
+  definition seq_colim_over [unfold 5] (x : seq_colim A) : Type.{v} :=
+  begin
+    fapply seq_colim.elim_type_on x,
+    { intro n a, exact seq_colim (λk, P (rep k a))},
+    { intro n a, symmetry,
+      refine !shift_equiv ⬝e !f_rep_equiv_rep_f}
+  end
+
+  -- needed for seq_colim_over2
+  definition glue_tr_g (p : P a) : transport (seq_colim_over P) (glue a)
+    (@ι _ (seq_diagram_of_over P (f a)) 0 (g p)) = @ι _ _ 0 p :=
+  sorry
+
+--  set_option pp.notation false
+  variable {P}
+  definition seq_colim_over1 (v : Σ(x : seq_colim A), seq_colim_over P x)
+    : seq_colim (λn, Σ(x : A n), P x) :=
+  begin
+    induction v with a p,
+    induction a,
+    { esimp at p, induction p with k p,
+      { exact ι ⟨rep k a, p⟩},
+      { apply glue}},
+    { esimp, apply arrow_pathover_left, intro x, esimp at x,
+      induction x with k p k p,
+      { esimp, apply pathover_of_tr_eq, exact sorry},
+      { exact sorry}}
+  end
+
+  definition seq_colim_over2 (a : seq_colim (λn, Σ(x : A n), P x)) :
+    Σ(x : seq_colim A), seq_colim_over P x :=
+  begin
+  induction a with n v n v,
+  { induction v with a p, exact ⟨ι a, @ι _ _ 0 p⟩},
+  { induction v with a p, esimp [seq_diagram_sigma], fapply sigma_eq,
+      apply glue,
+      esimp, apply pathover_of_eq_tr, exact sorry}
+  end
+
+  variable (P)
+  definition seq_colim_over_equiv [constructor]
+    : (Σ(x : seq_colim A), seq_colim_over P x) ≃ seq_colim (λn, Σ(x : A n), P x) :=
+  equiv.MK seq_colim_over1
+           seq_colim_over2
+           sorry
+           sorry
+
+  end over
+
 end seq_colim
-
-open seq_colim
-
-variable (X : Type)
-
-definition omega_compact [class] : Type := Π(A : ℕ → Type) [f : seq_diagram A],
-  is_equiv (arrow_colim_of_colim_arrow : seq_colim (λn, X → A n) → (X → seq_colim A))
-
-exit
-
-namespace omega_compact
-
-  definition omega_compact_of_is_hprop [H : is_hprop X] : omega_compact X :=
-  λA f, is_equiv_of_equiv_of_homotopy
-    (calc
-      (X → seq_colim A) ≃ (X → seq_colim (λ (n : ℕ), X → A n))
-        : arrow_equiv_arrow_right' (λx : X, _)
-      ... ≃ seq_colim (λ (n : ℕ), X → A n) : sorry)⁻¹ᵉ
-    sorry
-
-end omega_compact

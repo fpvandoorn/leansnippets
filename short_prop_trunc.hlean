@@ -1,4 +1,4 @@
-import types.eq types.pi hit.colimit types.nat.hott hit.trunc types.cubical.square types.hprop_trunc
+import types.eq types.pi hit.colimit types.nat.hott hit.trunc cubical.square hprop_trunc
 
 open eq is_trunc unit quotient seq_colim pi nat equiv sum
 
