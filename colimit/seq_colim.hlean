@@ -216,11 +216,12 @@ namespace seq_colim
                  apply transpose, apply square_of_pathover, apply apdo}
              end
 
+  omit p
+  variables {f f'}
   definition seq_colim_equiv (g : Π{n}, A n ≃ A' n)
     (p : Π⦃n⦄ (a : A n), g (f a) = f' (g a)) : seq_colim A ≃ seq_colim A' :=
   equiv.mk _ (is_equiv_seq_colim_functor @g p)
 
-  omit p
   definition seq_colim_rec_unc [unfold 4] {P : seq_colim A → Type}
     (v : Σ(Pincl : Π ⦃n : ℕ⦄ (a : A n), P (ι a)),
                    Π ⦃n : ℕ⦄ (a : A n), Pincl (f a) =[ glue a ] Pincl a)
@@ -256,6 +257,11 @@ namespace seq_colim
       apply eq_of_homotopy2, intros n a, apply rec_glue},
   end
 
+  definition equiv_seq_colim_rec (P : seq_colim A → Type) :
+    (Σ(Pincl : Π ⦃n : ℕ⦄ (a : A n), P (ι a)),
+       Π ⦃n : ℕ⦄ (a : A n), Pincl (f a) =[ glue a ] Pincl a) ≃ (Π (aa : seq_colim A), P aa) :=
+  equiv.mk _ !is_equiv_seq_colim_rec
+
   end functor
 
   /- colimits of dependent sequences, sigma's commute with colimits -/
@@ -269,7 +275,8 @@ namespace seq_colim
   theorem f_rep_equiv_rep_f
     : seq_colim (λk, P (rep (succ k) a)) ≃
     @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
-  sorry
+  sorry --seq_colim_equiv _ _
+
   -- begin
   --   fapply equiv.MK,
   --   { intro x, induction x with k b k b,

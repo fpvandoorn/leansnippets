@@ -66,6 +66,9 @@ namespace seq_colim
   definition seq_diagram_sigma [instance] : seq_diagram (λn, Σ(x : A n), P x) :=
   λn v, ⟨f v.1, g v.2⟩
 
+  theorem rep_f_equiv (k : ℕ) : P (rep (succ k) a) ≃ P (rep k (f a)) :=
+  equiv_of_eq (apo011 P _ (rep_f k a))⁻¹
+
   end over
 
 end seq_colim
