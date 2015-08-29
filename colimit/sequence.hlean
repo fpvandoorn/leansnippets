@@ -26,14 +26,14 @@ namespace seq_colim
   variables {n : ℕ} (a : A n)
   include f
 
-  definition rep (k : ℕ) (a : A n) : A (n + k) :=
+  definition rep [reducible] (k : ℕ) (a : A n) : A (n + k) :=
   by induction k;exact a;exact f v_0
 
   definition rep_f (k : ℕ) (a : A n) : rep k (f a) =[succ_add n k] rep (succ k) a :=
   begin
     induction k with k IH,
     { esimp [succ_add], constructor},
-    { esimp [succ_add,add_succ], apply to_fun !pathover_compose,
+    { esimp [succ_add,add_succ], apply pathover_ap,
       exact apo f IH}
   end
 
@@ -59,15 +59,15 @@ namespace seq_colim
 
   variable [g : seq_diagram_over P]
   include g
-  definition seq_diagram_of_over [instance] {n : ℕ} (a : A n)
+  definition seq_diagram_of_over [instance] [unfold-full] {n : ℕ} (a : A n)
     : seq_diagram (λk, P (rep k a)) :=
   λk p, g p
 
   definition seq_diagram_sigma [instance] : seq_diagram (λn, Σ(x : A n), P x) :=
   λn v, ⟨f v.1, g v.2⟩
 
-  theorem rep_f_equiv (k : ℕ) : P (rep (succ k) a) ≃ P (rep k (f a)) :=
-  equiv_of_eq (apo011 P _ (rep_f k a))⁻¹
+  theorem rep_f_equiv [constructor] (k : ℕ) : P (rep (succ k) a) ≃ P (rep k (f a)) :=
+  equiv_of_eq (apo011 P _ (rep_f k a)⁻¹ᵒ)
 
   end over
 
