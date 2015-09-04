@@ -101,25 +101,21 @@ namespace seq_colim
   variables {n : ℕ} (a : A n)
   include f
 
-  definition rep_glue (k : ℕ) : @ι _ _ _ (rep k a) = ι a := -- why are the underscores needed here?
+  definition rep_glue (k : ℕ) : @ι _ _ _ (rep k a) = ι a :=
   begin
     induction k with k IH,
     { reflexivity},
     { exact glue (rep k a) ⬝ IH}
   end
 
-  definition shift_up (a : seq_colim A) : seq_colim (λk, A (succ k)) :=
+  definition shift_up [unfold 3] (a : seq_colim A) : seq_colim (λk, A (succ k)) :=
   begin
     induction a,
-    { induction n with n IH,
-        exact ι (f a),
-        clear IH, exact ι a},
-    { induction n with n IH,
-        reflexivity,
-        clear IH, esimp, exact glue a}
+    { exact ι (f a)},
+    { exact glue (f a)}
   end
 
-  definition shift_down (a : seq_colim (λn, A (succ n))) : seq_colim A :=
+  definition shift_down [unfold 3] (a : seq_colim (λn, A (succ n))) : seq_colim A :=
   begin
     induction a,
     { exact ι a},
@@ -146,24 +142,19 @@ namespace seq_colim
            shift_down
            abstract begin
              intro a, induction a,
-             { reflexivity},
-             { apply eq_pathover, apply hdeg_square,
-               rewrite [ap_id,ap_compose shift_up shift_down,↑shift_down,
-                        @elim_glue (λk, A (succ k)) _],
-               apply elim_glue}
+             { esimp, exact glue a},
+             { apply eq_pathover,
+               rewrite [▸*, ap_id, ap_compose shift_up shift_down, ↑shift_down,
+                        @elim_glue (λk, A (succ k)) _, ↑shift_up],
+               apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
            end end
            abstract begin
              intro a, induction a,
-             { induction n with n IH,
-               { esimp [shift_up,shift_down], exact glue a},
-               { clear IH, reflexivity}},
-             { induction n with n IH,
-               { esimp, apply eq_pathover, apply square_of_eq,
-                 rewrite [ap_id,ap_compose shift_down shift_up,↑shift_up,@elim_glue A _,▸*]},
-               { clear IH, esimp, apply eq_pathover, apply square_of_eq,
-                 rewrite [ap_id,ap_compose shift_down shift_up,↑shift_up,
-                          @elim_glue A _,↑[shift_down],idp_con],
-                 symmetry, apply elim_glue}},
+             { exact glue a},
+             { apply eq_pathover,
+               rewrite [▸*, ap_id, ap_compose shift_down shift_up, ↑shift_up,
+                        @elim_glue A _, ↑shift_down],
+               apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
            end end
 
   variable {A}
@@ -318,8 +309,6 @@ namespace seq_colim
     exact !seq_colim_over_glue
   end
 
-  -- set_option pp.implicit true
-  -- set_option pp.notation false
   definition change_over_rep (k : ℕ) (p : P (rep k a)) : pathover (seq_colim_over P)
     (@ι _ (seq_diagram_of_over P (rep k a)) 0 p) (rep_glue a k) (@ι _ _ k p) :=
   begin
@@ -331,10 +320,6 @@ namespace seq_colim
     }
   end
 
-  -- definition foo (p : P a) : pathover (seq_colim_over P)
-  --   (@ι _ (seq_diagram_of_over P (f a)) 0 (g p)) (glue a) (@ι _ _ 0 p) :=
-  -- concato_eq !change_over (glue p)
-
   definition sigma_colim_of_colim_sigma (a : seq_colim (λn, Σ(x : A n), P x)) :
     Σ(x : seq_colim A), seq_colim_over P x :=
   begin
@@ -345,8 +330,6 @@ namespace seq_colim
       esimp, exact concato_eq !change_over (glue p)}
   end
 
-  -- set_option pp.implicit true
-  -- set_option pp.notation false
   theorem is_equiv_sigma_colim_of_colim_sigma :
     is_equiv (sigma_colim_of_colim_sigma
       : seq_colim (λn, Σ(x : A n), P x) → Σ(x : seq_colim A), seq_colim_over P x) :=
@@ -369,11 +352,8 @@ namespace seq_colim
         { esimp, exact sorry},
         { esimp, exact sorry}},
       { induction v with a' p', esimp, exact sorry}}
---      { apply is_hprop.elimo}},
---    { apply is_hprop.elimo}
   end
 
---  set_option pp.notation false
   variable {P}
   definition colim_sigma_of_sigma_colim (v : Σ(x : seq_colim A), seq_colim_over P x)
     : seq_colim (λn, Σ(x : A n), P x) :=

@@ -132,13 +132,13 @@ section
     esimp [inclt,e_closure.elim,function.compose],
     xrewrite [eq_top_of_square (elim_incl2 R Q Pe @(groupoid_quotient_R.rec Pp)
                                  (groupoid_quotient_Q.rec Pid Pcomp Pinv) (Qrefl a))],
-    esimp [elim_inclt]
+    esimp [elim_inclt], exact sorry
   end
 end
 end groupoid_quotient
 
-attribute groupoid_quotient.base [constructor]
-attribute /-groupoid_quotient.rec-/ groupoid_quotient.elim [unfold 6] [recursor 6]
+attribute groupoid_quotient.elt [constructor]
+--attribute /-groupoid_quotient.rec-/ groupoid_quotient.elim [unfold 8] [recursor 8]
 --attribute groupoid_quotient.elim_type [unfold 9]
-attribute /-groupoid_quotient.rec_on-/ groupoid_quotient.elim_on [unfold 2]
+--attribute /-groupoid_quotient.rec_on-/ groupoid_quotient.elim_on [unfold 2]
 --attribute groupoid_quotient.elim_type_on [unfold 6]

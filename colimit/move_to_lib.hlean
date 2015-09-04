@@ -22,6 +22,7 @@ variables {A A' : Type} {B B' : A → Type} {C : Π⦃a⦄, B a → Type}
     (f : Π⦃a : A⦄ (b : B a), C b → C' b) (c : C b) : f b₂ (q ▸o c) = (q ▸o (f b c)) :=
   by induction q;reflexivity
 
+  -- TODO: prove for generalized apo
   definition apo_tro (C : Π⦃a⦄, B' a → Type) (f : Π⦃a⦄, B a → B' a) (q : b =[p] b₂)
     (c : C (f b)) : apo f q ▸o c = q ▸o c :=
   by induction q; reflexivity
@@ -35,6 +36,7 @@ variables {A A' : Type} {B B' : A → Type} {C : Π⦃a⦄, B a → Type}
     : (pathover_ap B' f q)⁻¹ᵒ ▸o c = q⁻¹ᵒ ▸o c :=
   by induction q; reflexivity
 
+  -- TODO: prove for generalized apo
   definition apo_invo (f : Πa, B a → B' a) {Ha : a = a₂} (Hb : b =[Ha] b₂)
       : (apo f Hb)⁻¹ᵒ = apo f Hb⁻¹ᵒ :=
   by induction Hb; reflexivity
