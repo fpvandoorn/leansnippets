@@ -24,14 +24,15 @@ namespace seq_colim
   quotient seq_rel
 
   parameters {A f}
---  variable (n)
-  -- do we want to make n explicit for ι, because 'ι a' is ambiguous for a : A n. It can be 'ι n a' or 'ι 0 a' in a shifted sequence
-  definition inclusion : seq_colim :=
+  variable (n)
+  -- do we want to make n explicit for ι? 'ι a' is ambiguous for a : A n. It can be 'ι n a' or 'ι 0 a' in a shifted sequence
+  definition inclusion [constructor] : seq_colim :=
   class_of R ⟨n, a⟩
 
-  abbreviation ι := @inclusion
+  abbreviation ι' [constructor] := @inclusion
+  variable {n}
+  abbreviation ι [constructor] [parsing-only] := @inclusion n
 
---  variable {n}
   definition glue : ι (f a) = ι a :=
   eq_of_rel seq_rel (Rmk a)
 
@@ -122,19 +123,33 @@ namespace seq_colim
     { exact glue a}
   end
 
-  -- definition kshift_up (k : ℕ) (a : seq_colim A) : seq_colim (λn, A (k + n)) :=
+  -- definition kshift_up (k : ℕ) (a : seq_colim A) : @seq_colim (λn, A (k + n)) (kshift_diag A k) :=
   -- begin
   --   induction a,
-  --   { },
-  --   { }
+  --   { apply ι' n, refine my.add.comm n k ▸ rep k a},
+  --   { exact sorry}
   -- end
 
-  -- definition kshift_down (k : ℕ) (a : seq_colim (λn, A (k + n))) : seq_colim A :=
+  -- definition kshift_down (k : ℕ) (a : @seq_colim (λn, A (k + n)) (kshift_diag A k)) : seq_colim A :=
   -- begin
   --   induction a,
   --   { exact ι a},
   --   { exact glue a}
   -- end
+
+  definition kshift_up' (k : ℕ) (a : seq_colim A) : @seq_colim (λn, A (n + k)) (kshift_diag' A k) :=
+  begin
+    induction a,
+    { apply ι' n, exact rep k a},
+    { exact sorry}
+  end
+
+  definition kshift_down' (k : ℕ) (a : @seq_colim (λn, A (n + k)) (kshift_diag' A k)) : seq_colim A :=
+  begin
+    induction a,
+    { exact ι a},
+    { esimp, exact sorry}
+  end
 
   variable (A)
   definition shift_equiv [constructor] : seq_colim A ≃ seq_colim (λn, A (succ n)) :=
@@ -155,6 +170,52 @@ namespace seq_colim
                rewrite [▸*, ap_id, ap_compose shift_down shift_up, ↑shift_up,
                         @elim_glue A _, ↑shift_down],
                apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
+           end end
+
+  -- definition kshift_equiv [constructor] (k : ℕ)
+  --   : seq_colim A ≃ @seq_colim (λn, A (k + n)) (kshift_diag A k) :=
+  -- equiv.MK (kshift_up k)
+  --          (kshift_down k)
+  --          abstract begin
+  --            intro a, exact sorry,
+  --            -- induction a,
+  --            -- { esimp, exact glue a},
+  --            -- { apply eq_pathover,
+  --            --   rewrite [▸*, ap_id, ap_compose shift_up shift_down, ↑shift_down,
+  --            --            @elim_glue (λk, A (succ k)) _, ↑shift_up],
+  --            --   apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
+  --          end end
+  --          abstract begin
+  --            intro a, exact sorry
+  --            -- induction a,
+  --            -- { exact glue a},
+  --            -- { apply eq_pathover,
+  --            --   rewrite [▸*, ap_id, ap_compose shift_down shift_up, ↑shift_up,
+  --            --            @elim_glue A _, ↑shift_down],
+  --            --   apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
+  --          end end
+
+  definition kshift_equiv' [constructor] (k : ℕ)
+    : seq_colim A ≃ @seq_colim (λn, A (n + k)) (kshift_diag' A k) :=
+  equiv.MK (kshift_up' k)
+           (kshift_down' k)
+           abstract begin
+             intro a, exact sorry,
+             -- induction a,
+             -- { esimp, exact glue a},
+             -- { apply eq_pathover,
+             --   rewrite [▸*, ap_id, ap_compose shift_up shift_down, ↑shift_down,
+             --            @elim_glue (λk, A (succ k)) _, ↑shift_up],
+             --   apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
+           end end
+           abstract begin
+             intro a, exact sorry
+             -- induction a,
+             -- { exact glue a},
+             -- { apply eq_pathover,
+             --   rewrite [▸*, ap_id, ap_compose shift_down shift_up, ↑shift_up,
+             --            @elim_glue A _, ↑shift_down],
+             --   apply square_of_eq, apply whisker_right, exact !elim_glue⁻¹}
            end end
 
   variable {A}
@@ -230,7 +291,6 @@ namespace seq_colim
   by induction v with Pincl Pglue ;exact seq_colim.rec Pincl Pglue
 
   omit f
-  --set_option pp.notation false
   definition eq_pathover_dep {A : Type} {B : A → Type} {a a' : A}
     {f g : Πa, B a} {p : a = a'} {q : f a = g a} {r : f a' = g a'}
     (s : squareover B !hrfl (pathover_idp_of_eq q) (pathover_idp_of_eq r) (apdo f p) (apdo g p))
@@ -274,17 +334,33 @@ namespace seq_colim
   include g
 
   definition f_rep_equiv_rep_f
-    : seq_colim (λk, P (rep (succ k) a)) ≃
+    : @seq_colim (λk, P (rep (succ k) a)) _ ≃
     @seq_colim (λk, P (rep k (f a))) (seq_diagram_of_over P (f a)) :=
   seq_colim_equiv (rep_f_equiv a P) abstract (λk p,
-  begin
-    esimp,
-    rewrite [+my.cast_apo011],
-    refine _ ⬝ (my.fn_tro_eq_tro_fn (rep_f k a)⁻¹ᵒ g p)⁻¹,
-    rewrite [↑rep_f,↓rep_f k a],
-    refine !my.pathover_ap_invo_tro ⬝ _,
-    rewrite [my.apo_invo,my.apo_tro]
-  end) end
+    begin
+      esimp,
+      rewrite [+my.cast_apo011],
+      refine _ ⬝ (my.fn_tro_eq_tro_fn (rep_f k a)⁻¹ᵒ g p)⁻¹,
+      rewrite [↑rep_f,↓rep_f k a],
+      refine !my.pathover_ap_invo_tro ⬝ _,
+      rewrite [my.apo_invo,my.apo_tro]
+    end) end
+
+  set_option class.trace_instances true
+  definition rep_equiv_rep_rep (l : ℕ)
+    : @seq_colim (λk, P (rep (k + l) a)) (kshift_diag' _ _) ≃
+    @seq_colim (λk, P (rep k (rep l a))) (seq_diagram_of_over P (rep l a)) :=
+  seq_colim_equiv (λk, rep_rep_equiv a P k l) abstract (λk p,
+    begin
+      exact sorry
+      -- esimp,
+      -- rewrite [+my.cast_apo011],
+      -- refine _ ⬝ (my.fn_tro_eq_tro_fn (rep_f k a)⁻¹ᵒ g p)⁻¹,
+      -- rewrite [↑rep_f,↓rep_f k a],
+      -- refine !my.pathover_ap_invo_tro ⬝ _,
+      -- rewrite [my.apo_invo,my.apo_tro]
+    end) end
+
 
   definition seq_colim_over [unfold 5] (x : seq_colim A) : Type.{v} :=
   begin
@@ -295,30 +371,84 @@ namespace seq_colim
   end
 
   variable {P}
-  theorem seq_colim_over_glue (x : seq_colim_over P (ι (f a)))
-    : transport (seq_colim_over P) (glue a) x = shift_down ((to_fun (f_rep_equiv_rep_f a P))⁻¹ x) :=
-  ap10 (elim_type_glue _ _ a) x
+  -- theorem seq_colim_over_glue (x : seq_colim_over P (ι (f a)))
+  --   : transport (seq_colim_over P) (glue a) x = shift_down ((to_fun (f_rep_equiv_rep_f a P))⁻¹ x) :=
+  -- ap10 (elim_type_glue _ _ a) x
   -- REPORT: the following gives error: by exact ap10 (elim_type_glue _ _ a) x
   -- changing ap10 to ap10.{v v} resolves the error
 
-  definition change_over (p : P a) : pathover (seq_colim_over P)
-    (@ι _ (seq_diagram_of_over P (f a)) 0 (g p)) (glue a) (@ι _ _ 1 (g p)) :=
+  definition seq_colim_over_glue (x : seq_colim_over P (ι (f a)))
+    : pathover (seq_colim_over P) x (glue a) (shift_down (to_inv (f_rep_equiv_rep_f a P) x)) :=
+-- pathover_of_tr_eq (ap10 (elim_type_glue _ _ a) x)
   begin
-    esimp [seq_diagram_of_over],
-    apply pathover_of_tr_eq,
-    exact !seq_colim_over_glue
+    esimp [f_rep_equiv_rep_f],
   end
 
-  definition change_over_rep (k : ℕ) (p : P (rep k a)) : pathover (seq_colim_over P)
+  set_option pp.universes true
+  check @elim_type_glue
+  check @seq_colim
+  check @seq_diagram
+  set_option formatter.hide_full_terms false
+  definition seq_colim_over_glue' (k : ℕ) (p : P (rep k (f a)))
+    : pathover (seq_colim_over P) (ι' k p) (glue a) (ι' (succ k)
+                                  (cast ((apo011 P (succ_add n k) (rep_f k a))) p)) :=
+-- concato_eq (pathover_of_tr_eq (ap10 (elim_type_glue.{_ _} (λ ⦃n : ℕ⦄ (a : A n), seq_colim.{v} (λ (k : ℕ), P (rep.{l_1} k a))) _ a) (ι' k p))) sorry
+
+  begin
+    refine concato_eq (pathover_of_tr_eq (ap10 (elim_type_glue.{_ _} (λ ⦃n : ℕ⦄ (a : A n), seq_colim.{v} (λ (k : ℕ), P (rep.{l_1} k a))) _ a) (ι' k p))) sorry,
+--    esimp [equiv.trans,equiv.symm,f_rep_equiv_rep_f],
+    -- apply ap ι, unfold cast,
+    -- rewrite [-my.apo011_inv],
+--    exact sorry
+  end
+
+  -- definition seq_colim_over_glue' {k : ℕ} (p : P (rep k (f a)))
+  --   : pathover (seq_colim_over P) (ι' k p) (glue a) (shift_down ((to_fun (f_rep_equiv_rep_f a P))⁻¹ (ι' k p))) :=
+  -- begin
+  --   esimp [f_rep_equiv_rep_f]
+  -- end
+
+  definition glue_over (p : P a) : pathover (seq_colim_over P)
+    (@ι _ (seq_diagram_of_over P (f a)) 0 (g p)) (glue a) (@ι _ _ 1 (g p)) :=
+  !seq_colim_over_glue
+
+  -- set_option class.trace_instances true
+  -- set_option pp.all true
+  -- attribute rep [reducible]
+  -- definition glue_over'' {k : ℕ} (p : P (@rep A f n k a)) : pathover (seq_colim_over P)
+  --   (@ι _ (seq_diagram_of_over P (rep k a)) 0 p) _ _ :=
+  -- begin
+  --   esimp [seq_diagram_of_over],
+  --   apply pathover_of_tr_eq,
+  --   apply seq_colim_over_glue
+  -- end
+
+  -- definition glue_over' {k : ℕ} (p : P (rep k a)) : pathover (seq_colim_over P)
+  --   (@ι _ (seq_diagram_of_over P (f a)) 0 p) (glue (rep k a)) (@ι _ _ 1 (g p)) :=
+  -- begin
+  --   esimp [seq_diagram_of_over],
+  --   apply pathover_of_tr_eq,
+  --   apply seq_colim_over_glue
+  -- end
+
+  -- set_option pp.notation false
+  -- set_option pp.implicit true
+  definition glue_over_rep (k : ℕ) (p : P (rep k a)) : pathover (seq_colim_over P)
     (@ι _ (seq_diagram_of_over P (rep k a)) 0 p) (rep_glue a k) (@ι _ _ k p) :=
   begin
     revert a p, induction k with k IH, all_goals intro a p,
     { constructor},
     { rewrite [↑seq_diagram_of_over,↑rep_glue,↓rep_glue a k],
-      exact sorry --refine _ ⬝o _,
-
+      --refine _ ⬝o _,
+      unfold ι,
+      refine !pathover_tr ⬝o _,
+      -- refine eq_concato !glue⁻¹ _, esimp,
+      -- refine !glue_over⁻¹ᵒ ⬝o _,
     }
   end
+
+  -- variables {k l : ℕ} (p : P (rep k a))
+  -- check (glue p : ι (g p) = ι p)
 
   definition sigma_colim_of_colim_sigma (a : seq_colim (λn, Σ(x : A n), P x)) :
     Σ(x : seq_colim A), seq_colim_over P x :=
@@ -327,7 +457,7 @@ namespace seq_colim
   { induction v with a p, exact ⟨ι a, @ι _ _ 0 p⟩},
   { induction v with a p, esimp [seq_diagram_sigma], fapply sigma_eq,
       apply glue,
-      esimp, exact concato_eq !change_over (glue p)}
+      esimp, exact concato_eq !glue_over (glue p)}
   end
 
   theorem is_equiv_sigma_colim_of_colim_sigma :
@@ -344,7 +474,7 @@ namespace seq_colim
       { exact ι ⟨rep k a, p⟩},
       { esimp [sigma_colim_of_colim_sigma], fapply sigma_eq,
         { esimp, apply rep_glue},
-        { esimp, rexact change_over_rep a k p}}},
+        { esimp, rexact glue_over_rep a k p}}},
     { intro v, induction v with v q,
       induction v with l v l v,
       { induction v with a' p', esimp [sigma_colim_of_colim_sigma] at q,

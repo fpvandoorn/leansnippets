@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn, Egbert Rijke
 -/
 
-import types.nat
+import types.nat .move_to_lib
 
 open nat eq equiv sigma sigma.ops
 
@@ -37,6 +37,19 @@ namespace seq_colim
       exact apo f IH}
   end
 
+  definition rep_rep (k l : ℕ) (a : A n) : rep k (rep l a) =[my.add_add n l k] rep (k + l) a :=
+  begin
+    induction l with l IH,
+    { esimp [rep, my.add_add, add], constructor},
+    {
+      -- rewrite [▸rep k (f (rep l a)) =[ succ_add (n + l) k ⬝ ap succ (my.add_add n l k)]
+      --           f (rep (k + l) a)],
+      -- refine rep_f k (rep l a) ⬝o _,
+      -- rewrite [▸f (rep k (rep l a)) =[ ap succ (my.add_add n l k) ] f (rep (k + l) a)],
+      -- apply pathover_ap, exact apo f IH
+      }
+  end
+
   definition f_rep (k : ℕ) (a : A n) : f (rep k a) = rep (succ k) a := idp
 
   variable (A)
@@ -46,6 +59,10 @@ namespace seq_colim
   definition kshift_diag [instance] [unfold-full] [priority 800] (k : ℕ)
     : seq_diagram (λn, A (k + n)) :=
   λn a, f a
+
+  definition kshift_diag' [instance] [unfold-full] [priority 800] (k : ℕ)
+    : seq_diagram (λn, A (n + k)) :=
+  λn a, !succ_add⁻¹ ▸ f a
 
   definition arrow_left_diag [instance] [unfold-full] (X : Type)
     : seq_diagram (λn, X → A n) :=
@@ -68,6 +85,9 @@ namespace seq_colim
 
   theorem rep_f_equiv [constructor] (k : ℕ) : P (rep (succ k) a) ≃ P (rep k (f a)) :=
   equiv_of_eq (apo011 P _ (rep_f k a)⁻¹ᵒ)
+
+  theorem rep_rep_equiv [constructor] (k l : ℕ) : P (rep (k + l) a) ≃ P (rep k (rep l a)) :=
+  equiv_of_eq (apo011 P _ (rep_rep k l a)⁻¹ᵒ)
 
   end over
 
