@@ -41,7 +41,7 @@ namespace seq_colim
   begin
     induction l with l IH,
     { esimp [rep, my.add_add, add], constructor},
-    {
+    { exact sorry
       -- rewrite [▸rep k (f (rep l a)) =[ succ_add (n + l) k ⬝ ap succ (my.add_add n l k)]
       --           f (rep (k + l) a)],
       -- refine rep_f k (rep l a) ⬝o _,
