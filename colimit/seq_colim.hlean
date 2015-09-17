@@ -102,6 +102,19 @@ namespace seq_colim
   variables {n : ℕ} (a : A n)
   include f
 
+  definition ess_constant_seq_back (H : is_equiseq f) : seq_colim A → A 0 :=
+  begin
+    intro x,
+    induction x with n a,
+    induction n with n g,
+    exact a,
+  end
+
+  definition ess_constant_seq (H : is_equiseq f) : is_equiv (@inclusion 0) :=
+    begin
+     exact sorry
+    end
+
   definition rep_glue (k : ℕ) : @ι _ _ _ (rep k a) = ι a :=
   begin
     induction k with k IH,

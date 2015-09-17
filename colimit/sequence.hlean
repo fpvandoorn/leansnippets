@@ -6,7 +6,7 @@ Authors: Floris van Doorn, Egbert Rijke
 
 import types.nat .move_to_lib
 
-open nat eq equiv sigma sigma.ops
+open nat eq equiv sigma sigma.ops is_equiv
 
 namespace seq_colim
 
@@ -18,6 +18,16 @@ namespace seq_colim
     (carrier : ℕ → Type)
     (struct : seq_diagram carrier)
 
+  definition is_equiseq [class] {A : ℕ → Type} (f : seq_diagram A) : Type := forall (n : ℕ), is_equiv (@f n)
+
+  structure Equi_seq : Type :=
+    (carrier : ℕ → Type)
+    (maps : seq_diagram carrier)
+    (prop : is_equiseq maps)
+
+  definition is_equiv_of_equiseq [instance] {A : ℕ → Type} (f : seq_diagram A) [H : is_equiseq f] : forall (n : ℕ), is_equiv (@f n) :=
+    H
+
   protected abbreviation Mk [constructor] := Seq_diagram.mk
   attribute Seq_diagram.carrier [coercion]
   attribute Seq_diagram.struct [instance] [priority 10000] [coercion]
@@ -27,7 +37,7 @@ namespace seq_colim
   include f
 
   definition rep [reducible] (k : ℕ) (a : A n) : A (n + k) :=
-  by induction k;exact a;exact f v_0
+  by induction k with k x;exact a;exact f x
 
   definition rep_f (k : ℕ) (a : A n) : rep k (f a) =[succ_add n k] rep (succ k) a :=
   begin
@@ -35,6 +45,37 @@ namespace seq_colim
     { esimp [succ_add], constructor},
     { esimp [succ_add,add_succ], apply pathover_ap,
       exact apo f IH}
+  end
+
+  definition req_equiseq_back [H : is_equiseq f] (k : ℕ) (a : A (n + k)) : A n :=
+  begin
+    induction k with k g,
+    exact a,
+    exact g ((@f (n + k))⁻¹ a),
+  end
+
+  definition req_equiseq_is_equiv [H : is_equiseq f] (k : ℕ) : is_equiv (λ (a : A n), rep k a) :=
+  begin
+    fapply adjointify,
+    exact (λ (a : A (n + k)), req_equiseq_back k a),
+    induction k with k IH: intro b,
+    exact rfl,
+    unfold rep,
+    unfold req_equiseq_back,
+    fold [rep k (req_equiseq_back k ((@f (n+k))⁻¹ b))],
+    refine _ ⬝ _,
+    exact (@f (n+k)) ((@f (n+k))⁻¹ b),
+    exact (ap (@f (n+k)) (IH ((@f (n+k))⁻¹ b))),
+    apply right_inv (@f _),
+    induction k with k IH: intro b,
+    exact rfl,
+    unfold req_equiseq_back,
+    unfold rep,
+    fold [rep k b],
+    refine _ ⬝ _,
+    exact (req_equiseq_back k (rep k b)),
+    exact (ap (req_equiseq_back k) (@left_inv _ _ (@f (n+k)) _ (rep k b))),
+    exact IH b,
   end
 
   definition rep_rep (k l : ℕ) (a : A n) : rep k (rep l a) =[my.add_add n l k] rep (k + l) a :=
