@@ -99,21 +99,40 @@ attribute seq_colim.elim_type_on [unfold 3]
 namespace seq_colim
 
   variables {A : ℕ → Type} [f : seq_diagram A]
-  variables {n : ℕ} (a : A n)
   include f
 
-  definition ess_constant_seq_back (H : is_equiseq f) : seq_colim A → A 0 :=
+  definition rep0_glue (k : ℕ) (a : A 0) : @ι _ _ _ (rep0 k a) = ι a :=
+  begin
+    induction k with k IH,
+    { reflexivity},
+    { exact glue (rep0 k a) ⬝ IH}
+  end
+
+  definition equiseq_colim_back [H : is_equiseq f] : seq_colim A → A 0 :=
   begin
     intro x,
     induction x with n a,
-    induction n with n g,
+    apply (rep0 n)⁻¹,
     exact a,
+    refine _ ⬝ (ap ((rep0 n)⁻¹ᶠ) (left_inv (@f _) a)),
+    unfold rep0,
   end
 
-  definition ess_constant_seq (H : is_equiseq f) : is_equiv (@inclusion 0) :=
-    begin
-     exact sorry
-    end
+  definition equiseq_colim_equiv (H : is_equiseq f) : is_equiv (@inclusion A f 0) :=
+  begin
+    fapply adjointify,
+    exact equiseq_colim_back,
+    intro x; induction x with n a,
+    unfold equiseq_colim_back,
+    esimp,
+    refine (rep0_glue n ((rep0 n)⁻¹ a))⁻¹ ⬝ _,
+    exact ap (ι' n) (right_inv (rep0 n) a),
+    exact sorry,
+    intro a,
+    exact rfl,
+  end
+
+  variables {n : ℕ} (a : A n)
 
   definition rep_glue (k : ℕ) : @ι _ _ _ (rep k a) = ι a :=
   begin
