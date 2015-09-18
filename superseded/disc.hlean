@@ -65,7 +65,7 @@ namespace disc
   definition fill  : lp = idp :=
   (ap02 i (elim_loop b l)⁻¹) ⬝
   (ap_compose i f loop)⁻¹ ⬝
-  ap_weakly_constant fill' loop ⬝
+  ap_is_constant fill' loop ⬝
   !con.right_inv
 
   local attribute disc f i base aux lp fill' [reducible]
@@ -106,11 +106,11 @@ namespace disc
     xrewrite [eq_top_of_square
                ((ap_compose_natural (disc.elim Pb Pl Pf) i (elim_loop b l))⁻¹ʰ⁻¹ᵛ ⬝h
                (ap_ap_compose (disc.elim Pb Pl Pf) i f loop)⁻¹ʰ⁻¹ᵛ ⬝h
-               ap_ap_weakly_constant (disc.elim Pb Pl Pf) fill' loop ⬝h
+               ap_ap_is_constant (disc.elim Pb Pl Pf) fill' loop ⬝h
                ap_con_right_inv_sq (disc.elim Pb Pl Pf) (fill' circle.base)),
                ↑[elim_lp]],
     apply whisker_tl,
-    rewrite [ap_weakly_constant_eq,naturality_apdo_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
+    rewrite [ap_is_constant_eq,naturality_apdo_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
             square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
     -- rewriting here with

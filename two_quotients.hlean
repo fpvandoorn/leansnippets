@@ -96,7 +96,7 @@ namespace simple_two_quotient
   protected definition incl2w (q : Q r) : incltw r = idp :=
   (ap02 i (elim_loop (j a) (et r))⁻¹) ⬝
   (ap_compose i (f q) loop)⁻¹ ⬝
-  ap_weakly_constant (incl2' q) loop ⬝
+  ap_is_constant (incl2' q) loop ⬝
   !con.right_inv
 
   definition incl2 (q : Q r) : inclt r = idp :=
@@ -282,11 +282,11 @@ exit
     xrewrite [eq_top_of_square
                ((ap_compose_natural (elim P0 P1 P2) i (elim_loop (j a) (et r)))⁻¹ʰ⁻¹ᵛ ⬝h
                (ap_ap_compose (elim P0 P1 P2) i (f q) loop)⁻¹ʰ⁻¹ᵛ ⬝h
-               ap_ap_weakly_constant (elim P0 P1 P2) (incl2' q) loop ⬝h
+               ap_ap_is_constant (elim P0 P1 P2) (incl2' q) loop ⬝h
                ap_con_right_inv_sq (elim P0 P1 P2) (incl2' q base)),
                ↑[elim_incltw]],
     apply whisker_tl,
-    rewrite [ap_weakly_constant_eq],
+    rewrite [ap_is_constant_eq],
     xrewrite [naturality_apdo_eq (λx, !elim_eq_of_rel) loop],
     rewrite [↑elim_2,rec_loop,square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
