@@ -9,6 +9,61 @@ import hit.circle eq2 algebra.e_closure cubical.squareover cubical.cube
 
 open quotient eq circle sum sigma equiv function relation
 
+  /-
+    This files defines a general class of nonrecursive HITs using just quotients.
+    We can define any HIT X which has
+    - a single 0-constructor
+       f : A → X (for some type A)
+    - a single 1-constructor
+       e : Π{a a' : A}, R a a' → a = a' (for some (type-valued) relation R on A)
+    and furthermore has 2-constructors which are all of the form
+    p = p'
+    where p, p' are of the form
+    - refl (f a), for some a : A;
+    - e r, for some r : R a a';
+    - ap f q, where q : a = a';
+    - inverses of such paths;
+    - concatenations of such paths.
+
+    so an example 2-constructor could be (as long as it typechecks):
+      ap f q' ⬝ ((e r)⁻¹ ⬝ ap f q)⁻¹ ⬝ e r' = idp
+  -/
+
+
+section
+  variables {A A' : Type} {B : A → Type}
+            {a a' a'' a₀₀ a₂₀ a₄₀ a₀₂ a₂₂ a₂₄ a₀₄ a₄₂ a₄₄ : A}
+            /-a₀₀-/ {p₁₀ : a₀₀ = a₂₀} /-a₂₀-/ {p₃₀ : a₂₀ = a₄₀} /-a₄₀-/
+       {p₀₁ : a₀₀ = a₀₂} /-s₁₁-/ {p₂₁ : a₂₀ = a₂₂} /-s₃₁-/ {p₄₁ : a₄₀ = a₄₂}
+            /-a₀₂-/ {p₁₂ : a₀₂ = a₂₂} /-a₂₂-/ {p₃₂ : a₂₂ = a₄₂} /-a₄₂-/
+       {p₀₃ : a₀₂ = a₀₄} /-s₁₃-/ {p₂₃ : a₂₂ = a₂₄} /-s₃₃-/ {p₄₃ : a₄₂ = a₄₄}
+            /-a₀₄-/ {p₁₄ : a₀₄ = a₂₄} /-a₂₄-/ {p₃₄ : a₂₄ = a₄₄} /-a₄₄-/
+            {s₁₁ : square p₁₀ p₁₂ p₀₁ p₂₁}
+            {b₀₀ : B a₀₀} {b₂₀ : B a₂₀} {b₄₀ : B a₄₀}
+            {b₀₂ : B a₀₂} {b₂₂ : B a₂₂} {b₄₂ : B a₄₂}
+            {b₀₄ : B a₀₄} {b₂₄ : B a₂₄} {b₄₄ : B a₄₄}
+            /-b₀₀-/ {q₁₀ : b₀₀ =[p₁₀] b₂₀} /-b₂₀-/ {q₃₀ : b₂₀ =[p₃₀] b₄₀} /-b₄₀-/
+   {q₀₁ : b₀₀ =[p₀₁] b₀₂} /-t₁₁-/ {q₂₁ : b₂₀ =[p₂₁] b₂₂} /-t₃₁-/ {q₄₁ : b₄₀ =[p₄₁] b₄₂}
+            /-b₀₂-/ {q₁₂ : b₀₂ =[p₁₂] b₂₂} /-b₂₂-/ {q₃₂ : b₂₂ =[p₃₂] b₄₂} /-b₄₂-/
+   {q₀₃ : b₀₂ =[p₀₃] b₀₄} /-t₁₃-/ {q₂₃ : b₂₂ =[p₂₃] b₂₄} /-t₃₃-/ {q₄₃ : b₄₂ =[p₄₃] b₄₄}
+            /-b₀₄-/ {q₁₄ : b₀₄ =[p₁₄] b₂₄} /-b₂₄-/ {q₃₄ : b₂₄ =[p₃₄] b₄₄} /-b₄₄-/
+
+  definition apdo_change_path {B : A → Type} {a a₂ : A} (f : Πa, B a) {p p' : a = a₂} (s : p = p')
+    : apdo f p' = change_path s (apdo f p) :=
+  by induction s; reflexivity
+
+--  set_option pp.notation false
+  -- definition pathover_of_hdeg_squareover' {q₂₁ : p₁₀ ▸ b₀₀ =[p₂₁] p₁₂ ▸ b₀₂}
+  --   (r : pathover _ q₀₁ _ q₂₁)
+  --   : squareover B s₁₁ (pathover_tr p₁₀ b₀₀) (pathover_tr p₁₂ b₀₂) q₀₁ q₂₁ :=
+  -- begin
+
+  -- end
+
+end
+
+
+
 namespace simple_two_quotient
 
   section
@@ -72,8 +127,15 @@ namespace simple_two_quotient
     : ap (pre_elim Pj Pa Pe) (et t) = e_closure.elim Pe t :=
   ap_e_closure_elim_h e (elim_e Pj Pa Pe) t
 
+  protected definition rec_et {P : C → Type}
+    (Pj : Πa, P (j a)) (Pa : Π⦃a : A⦄ ⦃r : T a a⦄ (q : Q r), P (pre_aux q))
+    (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a =[e s] Pj a') ⦃a a' : A⦄ (t : T a a')
+    : apdo (pre_rec Pj Pa Pe) (et t) = e_closure.elimo e Pe t :=
+  ap_e_closure_elimo_h e Pe (rec_e Pj Pa Pe) t
+
   inductive simple_two_quotient_rel : C → C → Type :=
-  | Rmk {} : Π{a : A} {r : T a a} (q : Q r) (x : circle), simple_two_quotient_rel (f q x) (pre_aux q)
+  | Rmk {} : Π{a : A} {r : T a a} (q : Q r) (x : circle),
+      simple_two_quotient_rel (f q x) (pre_aux q)
 
   open simple_two_quotient_rel
   definition simple_two_quotient := quotient simple_two_quotient_rel
@@ -84,7 +146,7 @@ namespace simple_two_quotient
   definition incl1 (s : R a a') : incl0 a = incl0 a' := ap i (e s)
   definition inclt (t : T a a') : incl0 a = incl0 a' := e_closure.elim incl1 t
   -- "wrong" version inclt, which is ap i (p ⬝ q) instead of ap i p ⬝ ap i q
-  -- it is used in the proof, because inclt is easier to work with
+  -- it is used in the proof, because incltw is easier to work with
   protected definition incltw (t : T a a') : incl0 a = incl0 a' := ap i (et t)
 
   protected definition inclt_eq_incltw (t : T a a') : inclt t = incltw t :=
@@ -126,22 +188,27 @@ namespace simple_two_quotient
   end
   local attribute elim [unfold 8]
 
-  protected definition e_closure.elimo [unfold 6] {B : Type} {P : B → Type} {f : A → B}
-    (p : Π⦃a a' : A⦄, R a a' → f a = f a') {g : Π(a : A), P (f a)}
-    (po : Π⦃a a' : A⦄ (s : R a a'), g a =[p s] g a')
-    (t : T a a') : g a =[e_closure.elim p t] g a' :=
-  begin
-    induction t,
-      exact po r,
-      constructor,
-      exact v_0⁻¹ᵒ,
-      exact v_0 ⬝o v_1
-  end
-
+  --check eq_of_hdeg_square
+variables
+(P : D → Type)
+(P0 : Π (a : A), P (incl0 a))
+(P1 : Π ⦃a a' : A⦄ (s : R a a'), P0 a =[ incl1 s ] P0 a')
+(P2 :
+  Π ⦃a : A⦄ ⦃r : T a a⦄ (q : Q r),
+    squareover P (vdeg_square (incl2 q)) (e_closure.elimo incl1 P1 r) idpo idpo idpo)
+(q : Q r)
+(a_1 : S¹)
+exit
+  print pathover_tr
+  print pathover_ap
+  print pathover_of_pathover_ap
+  check incl2' q base
+  check f q
+  print apdo
   protected definition rec {P : D → Type} (P0 : Π(a : A), P (incl0 a))
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a =[incl1 s] P0 a')
     (P2 : Π⦃a : A⦄ ⦃r : T a a⦄ (q : Q r),
-      squareover P (vdeg_square (incl2 q)) (e_closure.elimo incl1 P1 r) idpo idpo idpo)
+      change_path (incl2 q) (e_closure.elimo incl1 P1 r) = idpo)
     (x : D) : P x :=
   begin
     induction x,
@@ -151,9 +218,23 @@ namespace simple_two_quotient
       { intro a a' s, exact pathover_of_pathover_ap P i (P1 s)}},
     { exact abstract begin induction H, induction x,
       { esimp, exact pathover_tr (incl2' q base) (P0 a)},
-      { apply pathover_pathover, esimp, fold [i],
-        check_expr (natural_square_tr (incl2' q) loop),
-        apply sorry
+      { apply pathover_pathover,
+        esimp, fold [i],
+        check_expr (natural_square_tr (incl2' q) loop), state,
+        refine eq_hconcato _ _, rotate 1,
+        transitivity _,
+        apply ap (pathover_ap _ _),
+        transitivity _,
+        apply apdo_compose2 (pre_rec P0 _ _) (f q) loop,
+        apply ap (pathover_of_pathover_ap _ _),
+        transitivity _,
+        apply apdo_change_path,
+        exact !elim_loop⁻¹,
+        apply ap (change_path _),
+        apply rec_et,
+        fold [i]
+--        fold [incl2 q]
+--        apply ap _ !elim_loop,
 
         -- apply hdeg_square,
         -- exact abstract ap_compose (pre_elim P0 _ P1) (f q) loop ⬝
@@ -163,7 +244,7 @@ namespace simple_two_quotient
         --       !ap_constant⁻¹ end
 } end end},
   end
-
+exit
   -- definition elim_unique {P : Type} {f g : D → P}
   --   (p0 : Π(a : A), f (incl0 a) = g (incl0 a))
   --   (p1 : Π⦃a a' : A⦄ (s : R a a'), square (ap f (incl1 s)) (ap g (incl1 s)) (p0 a) (p0 a'))
@@ -215,10 +296,6 @@ exit
 } end end},
   end
 -/
-
-
-
-
 
 
   protected definition elim_on {P : Type} (x : D) (P0 : A → P)
