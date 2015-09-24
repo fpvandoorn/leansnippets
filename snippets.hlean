@@ -1,4 +1,4 @@
-import hit.pushout types.nat.basic types.pointed
+import hit.circle types.nat.basic types.pointed
 
 /---------------------------------------------------------------------------------------------------
   Show that type quotient preserves equivalence.
@@ -204,3 +204,28 @@ end apn
 /---------------------------------------------------------------------------------------------------
   two quotient eliminator is unique
 ---------------------------------------------------------------------------------------------------/
+
+/---------------------------------------------------------------------------------------------------
+  unit relation on circle
+---------------------------------------------------------------------------------------------------/
+
+namespace circlerel
+  open circle equiv prod eq
+  variables {A : Type} (a : A)
+  inductive R : A → A → Type :=
+  | Rmk : R a a
+  open R
+
+  definition R_equiv (x y) : R a x y ≃ a = x × a = y :=
+  begin
+    fapply equiv.MK,
+    { intro r, induction r, exact (idp, idp)},
+    { intro v, induction v with p₁ p₂, induction p₁, induction p₂, exact Rmk a},
+    { intro v, induction v with p₁ p₂, induction p₁, induction p₂, reflexivity},
+    { intro r, induction r, reflexivity}
+  end
+
+  definition R_circle : R base base base ≃ ℤ × ℤ :=
+  !R_equiv ⬝e prod_equiv_prod base_eq_base_equiv base_eq_base_equiv
+
+end circlerel
