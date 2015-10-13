@@ -156,11 +156,7 @@ section
    apply (ap_f_eq_f a a'),
   end
 
-  definition eq_same_con {n : ℕ} (a : A n) {a' a'' : A n} (p : a' = a'')
-    : eq_same a a' = eq_same a a'' ⬝ (ap i p)⁻¹ :=
-  by induction p; reflexivity
-
-  -- step (2), n ≤ m
+  -- step (2)
   theorem eq_constructors_comp {n : ℕ} (a : X) (b : A n)
     : eq_constructors a (f b) ⬝ g b  = eq_constructors a b :=
   begin

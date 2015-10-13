@@ -1,4 +1,4 @@
-import hit.circle types.nat.basic types.pointed
+import homotopy.circle types.nat.basic types.pointed
 
 /---------------------------------------------------------------------------------------------------
   Show that type quotient preserves equivalence.

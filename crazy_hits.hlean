@@ -1,4 +1,4 @@
-import hit.circle
+import homotopy.circle
 open circle eq int nat prod sum equiv function equiv.ops is_trunc
 
 /---------------------------------------------------------------------------------------------------

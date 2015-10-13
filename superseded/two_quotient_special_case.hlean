@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn
 -/
 
-import hit.circle eq2
+import homotopy.circle eq2
 
 open quotient eq circle sum sigma equiv function
 

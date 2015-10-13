@@ -1,4 +1,4 @@
-import types.eq types.pi hit.colimit types.nat.hott hit.sphere
+import types.eq types.pi hit.colimit types.nat.hott homotopy.sphere
 
 --open unit pi equiv sum
 open eq quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum

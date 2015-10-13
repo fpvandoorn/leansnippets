@@ -1,4 +1,4 @@
-import hit.two_quotient hit.interval
+import hit.two_quotient homotopy.interval
 
 open two_quotient sum unit interval e_closure eq function
 
