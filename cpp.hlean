@@ -87,6 +87,62 @@ end one_step_tr
 attribute one_step_tr.rec one_step_tr.elim [recursor 5]
 open one_step_tr
 
+section /- Theorems about the one-step truncation -/
+  open homotopy trunc prod
+  theorem tr_eq_ne_idp {A : Type} (a : A) : tr_eq a a ≠ idp :=
+  begin
+    intro p,
+    have H2 : Π{X : Type₁} {x : X} {q : x = x}, q = idp,
+      from λX x q, calc
+        q   = ap (one_step_tr.elim (λa, x) (λa b, q)) (tr_eq a a)               : elim_tr_eq
+        ... = ap (one_step_tr.elim (λa, x) (λa b, q)) (refl (one_step_tr.tr a)) : by rewrite p
+        ... = idp                                                               : idp,
+    exact bool.eq_bnot_ne_idp H2
+  end
+
+  theorem tr_eq_ne_ap_tr {A : Type} {a b : A} (p : a = b) : tr_eq a b ≠ ap tr p :=
+  by induction p; apply tr_eq_ne_idp
+
+  theorem not_inhabited_hset_trunc_one_step_tr (A : Type) : ¬(trunc 1 (one_step_tr A) × is_hset (trunc 1 (one_step_tr A))) :=
+  begin
+    intro H, induction H with x H,
+    refine trunc.elim_on x _, clear x, intro x,
+    induction x,
+    { assert q : trunc -1 ((tr_eq a a) = idp),
+      { refine to_fun !tr_eq_tr_equiv _,
+        refine @is_hprop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv},
+      refine trunc.elim_on q _, clear q, intro p, exact !tr_eq_ne_idp p},
+    { apply is_hprop.elim}
+  end
+
+  theorem not_is_conn_one_step_tr (A : Type) : ¬is_conn 1 (one_step_tr A) :=
+  λH, not_inhabited_hset_trunc_one_step_tr A (!center, _)
+
+  theorem is_hprop_trunc_one_step_tr (A : Type) : is_hprop (trunc 0 (one_step_tr A)) :=
+  begin
+    apply is_hprop.mk,
+    intro x y,
+    refine trunc.rec_on x _, refine trunc.rec_on y _, clear x y, intro y x,
+    induction x,
+    { induction y,
+      { exact ap trunc.tr !tr_eq},
+      { apply is_hprop.elimo}},
+    { apply is_hprop.elimo}
+  end
+
+  local attribute is_hprop_trunc_one_step_tr [instance]
+
+  theorem trunc_0_one_step_tr_equiv (A : Type) : trunc 0 (one_step_tr A) ≃ ∥ A ∥ :=
+  begin
+    apply equiv_of_is_hprop,
+    { intro x, refine trunc.rec _ x, clear x, intro x, induction x,
+      { exact tr a},
+      { apply is_hprop.elim}},
+    { intro x, refine trunc.rec _ x, clear x, intro a, exact tr (tr a)},
+  end
+
+end
+
 section
   parameter {X : Type}
 
@@ -189,45 +245,6 @@ section
 
 end
 
-section
-  open homotopy one_step_tr trunc prod
-  theorem not_inhabited_set_trunc_one_step_tr (A : Type) : ¬(trunc 1 (one_step_tr A) × is_hset (trunc 1 (one_step_tr A))) :=
-  begin
-    intro H, induction H with x H,
-    refine trunc.elim_on x _, clear x, intro x,
-    induction x,
-    { assert q : trunc -1 ((tr_eq a a) = idp),
-      { refine to_fun !tr_eq_tr_equiv _,
-        refine @is_hprop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv},
-      refine trunc.elim_on q _, clear q, intro p,
-      have H2 : Π{X : Type₁} {x : X} {q : x = x}, q = idp,
-        from λA x q, calc
-          q   = ap (one_step_tr.elim (λa, x) (λa b, q)) (tr_eq a a)               : elim_tr_eq
-          ... = ap (one_step_tr.elim (λa, x) (λa b, q)) (refl (one_step_tr.tr a)) : by rewrite p
-          ... = idp                                                               : idp,
-      exact bool.eq_bnot_ne_idp H2},
-    { apply is_hprop.elim}
-  end
-
-  theorem not_is_conn_one_step_tr (A : Type) : ¬is_conn 1 (one_step_tr A) :=
-  λH, not_inhabited_set_trunc_one_step_tr A (!center, _)
-
-  theorem is_hprop_trunc_one_step_tr (A : Type) : is_hprop (trunc 0 (one_step_tr A)) :=
-  begin
-    apply is_hprop.mk,
-    intro x y,
-    refine trunc.rec_on x _, refine trunc.rec_on y _, clear x y, intro y x,
-    induction x,
-    { induction y,
-      { exact ap tr !tr_eq},
-      { apply is_hprop.elimo}},
-    { apply is_hprop.elimo}
-  end
-
-end
-
-open sigma one_step_tr
-
 namespace my_trunc
   definition trunc.{u} (A : Type.{u}) : Type.{u}                        := @truncX A
   definition tr {A : Type} : A → trunc A                                := @i A 0
@@ -238,6 +255,8 @@ namespace my_trunc
 
   example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
           (H : Πa, P (tr a)) (a : A) : (trunc.rec H) (tr a) = H a       := by reflexivity
+
+  open sigma prod
 
   -- some other recursors we get from this construction:
   definition trunc.elim2 {A P : Type} (h : Π{n}, n_step_tr A n → P)
@@ -257,7 +276,7 @@ namespace my_trunc
     { apply coh}
   end
 
-  definition elim2_equiv {A P : Type} : (trunc A → P) ≃
+  definition elim2_equiv [constructor] (A P : Type) : (trunc A → P) ≃
       Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a :=
   begin
     fapply equiv.MK,
@@ -274,6 +293,22 @@ namespace my_trunc
         esimp,
         apply eq_pathover, apply hdeg_square, esimp, rewrite elim_glue}
   end
+  open sigma.ops
+  definition conditionally_constant_equiv {A P : Type} (k : A → P) :
+    (Σ(g : trunc A → P), Πa, g (tr a) = k a) ≃
+      Σ(h : Π{n}, n_step_tr A n → P),
+        (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a) :=
+  calc
+          (Σ(g : trunc A → P), Πa, g (tr a) = k a)
+        ≃ (Σ(v : Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
+            Πa, (v.1) 0 a = k a)
+                      : sigma_equiv_sigma !elim2_equiv (λg, equiv.refl)
+    ... ≃ (Σ(h : Π{n}, n_step_tr A n → P) (p : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
+            Πa, @h 0 a = k a)
+                      : sigma_assoc_equiv
+    ... ≃ (Σ(h : Π{n}, n_step_tr A n → P),
+            (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a))
+                      : sigma_equiv_sigma_id (λa, !equiv_prod)
 
   -- the constructed truncation is equivalent to the "standard" propositional truncation
   -- (called _root_.trunc below)
