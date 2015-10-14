@@ -82,9 +82,13 @@ section
 
 end
 
-definition n_step_tr (A : Type) (n : ℕ) : Type := nat.rec_on n A (λn' A', one_step_tr A')
+definition n_step_tr [reducible] (A : Type) (n : ℕ) : Type :=
+nat.rec_on n A (λn' A', one_step_tr A')
+
 end one_step_tr
-attribute one_step_tr.rec one_step_tr.elim [recursor 5]
+attribute one_step_tr.rec one_step_tr.elim [recursor 5] [unfold 5]
+attribute one_step_tr.rec_on one_step_tr.elim_on [unfold 2]
+attribute one_step_tr.tr [constructor]
 open one_step_tr
 
 section /- Theorems about the one-step truncation -/
@@ -140,6 +144,28 @@ section /- Theorems about the one-step truncation -/
       { apply is_hprop.elim}},
     { intro x, refine trunc.rec _ x, clear x, intro a, exact tr (tr a)},
   end
+
+  definition one_step_tr_functor [unfold 4] {A B : Type} (f : A → B) (x : one_step_tr A)
+    : one_step_tr B :=
+  begin
+    induction x,
+    { exact tr (f a)},
+    { apply tr_eq}
+  end
+
+  definition one_step_tr_universal_property [constructor] (A B : Type)
+    : (one_step_tr A → B) ≃ Σ(f : A → B), Π(x y : A), f x = f y :=
+  begin
+    fapply equiv.MK,
+    { intro f, fconstructor, intro a, exact f (tr a), intros, exact ap f !tr_eq},
+    { intro v a, induction v with f p, induction a, exact f a, apply p},
+    { intro v, induction v with f p, esimp, apply ap (sigma.mk _), apply eq_of_homotopy2,
+      intro a a', apply elim_tr_eq},
+    { intro f, esimp, apply eq_of_homotopy, intro a, induction a,
+        reflexivity,
+        apply eq_pathover, apply hdeg_square, rewrite [▸*,elim_tr_eq]},
+  end
+
 
 end
 
@@ -198,19 +224,15 @@ section
 
   /- 2-dimensional path operations -/
 
-  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a') : ap i (ap !f p) = !g ⬝ ap i p ⬝ !g⁻¹ :=
-  eq.rec_on p !con.right_inv⁻¹
+  theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a') : !g⁻¹ ⬝ ap i (ap !f p) ⬝ !g = ap i p :=
+  by induction p; apply con.left_inv
 
   theorem ap_i_eq_ap_i_same {n : ℕ} {a a' : A n} (p q : a = a') : ap i p = ap i q :=
   !weakly_constant_ap eq_same
 
-  theorem ap_f_eq_f' {n : ℕ} (a a' : A n)
-    : ap i (f_eq (f a) (f a')) = g (f a) ⬝ ap i (f_eq a a') ⬝ (g (f a'))⁻¹ :=
-  !ap_i_eq_ap_i_same ⬝ !ap_i_ap_f
-
   theorem ap_f_eq_f {n : ℕ} (a a' : A n)
-    : (g (f a))⁻¹ ⬝ ap i (f_eq (f a) (f a')) ⬝ g (f a') = ap i (f_eq a a') :=
-  inv_con_con_eq_of_eq_con_con_inv !ap_f_eq_f'
+    : !g⁻¹ ⬝ ap i (f_eq (f a) (f a')) ⬝ !g = ap i (f_eq a a') :=
+  ap _ !ap_i_eq_ap_i_same ⬝ !ap_i_ap_f
 
   theorem eq_same_f {n : ℕ} (a a' : A n)
     : (g a)⁻¹ ⬝ eq_same (f a) (f a') ⬝ g a' = eq_same a a' :=
@@ -241,7 +263,6 @@ section
     { apply eq_constructors},
     { apply (equiv.to_inv !pathover_eq_equiv_r), apply eq_constructors_comp}
   end
-
 
 end
 
@@ -277,7 +298,8 @@ namespace my_trunc
   end
 
   definition elim2_equiv [constructor] (A P : Type) : (trunc A → P) ≃
-      Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a :=
+    Σ(h : Π{n}, n_step_tr A n → P),
+      Π(n : ℕ) (a : n_step_tr A n), @h (succ n) (one_step_tr.tr a) = h a :=
   begin
     fapply equiv.MK,
     { intro h, fconstructor,
@@ -288,7 +310,7 @@ namespace my_trunc
         apply p},
     { intro x, induction x with h p, fapply sigma_eq,
       { reflexivity},
-      { esimp, apply pathover_idp_of_eq, apply eq_of_homotopy2, intro n a, rewrite elim_glue}},
+      { esimp, apply pathover_idp_of_eq, apply eq_of_homotopy2, intro n a, xrewrite elim_glue}},
     { intro h, apply eq_of_homotopy, intro a, esimp, induction a,
         esimp,
         apply eq_pathover, apply hdeg_square, esimp, rewrite elim_glue}
@@ -322,6 +344,25 @@ namespace my_trunc
     { intro x, refine _root_.trunc.rec _ x, intro a, exact tr a},
     { intro x, induction x with a, reflexivity},
     { intro x, induction x with a, reflexivity}
+  end
+
+  definition cocone_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
+    (n : ℕ) (x : n_step_tr A n) : A :=
+  begin
+    apply f,
+    induction n with n h,
+    { exact x},
+    { apply to_inv !one_step_tr_universal_property ⟨f, p⟩, exact one_step_tr_functor h x}
+  end
+
+  definition is_hstable_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
+    : trunc A → A :=
+  begin
+    fapply to_inv !elim2_equiv,
+    fconstructor,
+    { exact cocone_of_is_collapsible f p},
+    { intro n a, apply p}
+
   end
 
 end my_trunc

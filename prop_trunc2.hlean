@@ -4,18 +4,8 @@ import .propositional_truncation cubical.squareover
 
 open one_step_tr equiv eq sigma function
 
-definition one_step_tr_up (A B : Type)
-  : (one_step_tr A → B) ≃ Σ(f : A → B), Π(x y : A), f x = f y :=
-begin
-  fapply equiv.MK,
-  { intro f, fconstructor, intro a, exact f (tr a), intros, exact ap f !tr_eq},
-  { intro v a, induction v with f p, induction a, exact f a, apply p},
-  { intro v, induction v with f p, esimp, apply ap (sigma.mk _), apply eq_of_homotopy2, intro a a',
-    apply elim_tr_eq},
-  { intro f, esimp, apply eq_of_homotopy, intro a, induction a,
-      reflexivity,
-      apply eq_pathover, apply hdeg_square, rewrite [▸*,elim_tr_eq]},
-end
+
+
 
 exit
 
