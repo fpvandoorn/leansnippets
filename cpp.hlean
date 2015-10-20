@@ -8,21 +8,9 @@ open eq is_trunc unit quotient seq_colim pi nat equiv sum
   submitted to CPP 2016.
 -/
 
-
-/- Helper Lemma -/
-
-  definition inv_con_con_eq_of_eq_con_con_inv {A : Type} {a₁ a₂ b₁ b₂ : A} {p : a₁ = b₁}
-    {q : a₁ = a₂} {r : a₂ = b₂} {s : b₁ = b₂} (H : q = p ⬝ s ⬝ r⁻¹) : p⁻¹ ⬝ q ⬝ r = s :=
-  begin
-    apply con_eq_of_eq_con_inv,
-    apply inv_con_eq_of_eq_con,
-    rewrite -con.assoc,
-    apply H
-  end
-
 /-
-  Call a function f weakly constant if Πa a', f a = f a'
-  This theorem states that if f is weakly constant, then ap f is weakly constant.
+  Call a function f weakly constant if (Πa a', f a = f a')
+  This theorem states that if f is weakly constant, then (ap f) is weakly constant.
 -/
   definition weakly_constant_ap {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
     (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
@@ -30,7 +18,7 @@ open eq is_trunc unit quotient seq_colim pi nat equiv sum
     (λb c r, eq.rec_on r !con.left_inv),
   L⁻¹ ⬝ L
 
-/- definition of "one step truncation" -/
+/- definition of "one step truncation" in terms of "quotients" (homotopy coequalizers) -/
 
 namespace one_step_tr
 section
