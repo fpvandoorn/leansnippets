@@ -183,8 +183,7 @@ namespace simple_two_quotient
               ap _ !elim_loop ⬝
               !elim_et ⬝
               P2 q ⬝
-              !ap_constant⁻¹ end
-} end end},
+              !ap_constant⁻¹ end} end end},
   end
   local attribute elim [unfold 8]
 
@@ -198,13 +197,15 @@ variables
     squareover P (vdeg_square (incl2 q)) (e_closure.elimo incl1 P1 r) idpo idpo idpo)
 (q : Q r)
 (a_1 : S¹)
-exit
+-- exit
   print pathover_tr
   print pathover_ap
   print pathover_of_pathover_ap
-  check incl2' q base
+  check (λ(x : incl0 a = aux q), x) (incl2' q base)
+  check (natural_square_tr (incl2' q) loop)
   check f q
   print apdo
+  print incl1
   protected definition rec {P : D → Type} (P0 : Π(a : A), P (incl0 a))
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a =[incl1 s] P0 a')
     (P2 : Π⦃a : A⦄ ⦃r : T a a⦄ (q : Q r),
@@ -219,20 +220,17 @@ exit
     { exact abstract begin induction H, induction x,
       { esimp, exact pathover_tr (incl2' q base) (P0 a)},
       { apply pathover_pathover,
-        esimp, fold [i],
+        esimp, fold [i, incl2' q],
         check_expr (natural_square_tr (incl2' q) loop), state,
         refine eq_hconcato _ _, rotate 1,
-        transitivity _,
-        apply ap (pathover_ap _ _),
-        transitivity _,
-        apply apdo_compose2 (pre_rec P0 _ _) (f q) loop,
-        apply ap (pathover_of_pathover_ap _ _),
-        transitivity _,
-        apply apdo_change_path,
-        exact !elim_loop⁻¹,
-        apply ap (change_path _),
-        apply rec_et,
-        fold [i]
+        { transitivity _,
+          { apply ap (pathover_ap _ _),
+            transitivity _, apply apdo_compose2 (pre_rec P0 _ _) (f q) loop,
+            apply ap (pathover_of_pathover_ap _ _),
+            transitivity _, apply apdo_change_path, exact !elim_loop⁻¹,
+            apply ap (change_path _),
+            apply rec_et},
+          fold [i], },
 --        fold [incl2 q]
 --        apply ap _ !elim_loop,
 
