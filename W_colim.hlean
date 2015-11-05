@@ -1,6 +1,6 @@
 import hit.quotient types.W hit.trunc function
 
-open eq quotient Wtype sigma equiv equiv.ops function is_equiv pi
+open eq quotient Wtype sigma equiv equiv.ops function is_equiv pi sum unit
 
 namespace W_colim
 
@@ -114,37 +114,92 @@ namespace Wtype
 
   infix ` ≤ ` := le
 
-  definition down (w : W a, B a) : Type.{max u v} := Σv, ∥ v ≤ w ∥
+  definition down (w : W a, B a) : Type.{max u v} := Σv, v ≤ w
   prefix `↓↓`:(max+1) := down
   definition to_tree [unfold 4] {w : W a, B a} (x : ↓↓w) : W a, B a := x.1
-  definition to_rel [unfold 4] {w : W a, B a} (x : ↓↓w) : ∥ to_tree x ≤ w ∥ := x.2
+  definition to_rel [unfold 4] {w : W a, B a} (x : ↓↓w) : to_tree x ≤ w := x.2
 
   definition down_functor [constructor] {a : A} (b : B a) (f : B a → W a, B a) (x : ↓↓(f b))
     : ↓↓(sup a f) :=
   begin
     fapply sigma.mk,
     { exact to_tree x},
-    { refine trunc.rec _ (to_rel x), intro H, exact tr (le.step H)}
+    { exact le.step (to_rel x)}
   end
+
+  /- begin intermezzo -/
+  definition down' : (W a, B a) → Type.{max u v} :=
+  Wtype.rec (λa f downs, unit + Σb, downs b)
+
+  definition self [unfold 3] (w : W a, B a) : down' w :=
+  by induction w; exact inl star
+
+  definition down'_of_down {w : W a, B a} (x : ↓↓w) : down' w :=
+  begin
+    induction x with v H, induction H with w w a f b H IH,
+    { apply self},
+    { esimp [down'], exact inr ⟨b, IH⟩}
+  end
+
+  definition down_of_down' {w : W a, B a} (x : down' w) : ↓↓w :=
+  begin
+    induction w with a f IH, esimp [down'] at x,
+    induction x with x x,
+    { exact ⟨sup a f, !le.refl⟩},
+    { induction x with b x, refine down_functor b _ _, apply IH, exact x}
+  end
+
+  definition down_equiv [constructor] (w : W a, B a) : ↓↓w ≃ down' w :=
+  begin
+    fapply equiv.MK,
+    { exact down'_of_down},
+    { exact down_of_down'},
+    { intro x, induction w with a f IH, esimp [down'] at x,
+      induction x with x x: esimp,
+      { unfold [down_of_down',down'_of_down], induction x, reflexivity},
+      { induction x with b x,
+        --change inr ⟨b, down'_of_down (down_of_down' x)⟩ = inr ⟨b, x⟩,
+        rewrite [▸*, ↑down_of_down', ↓@down_of_down' A B],
+        rewrite [↑down'_of_down, /-↓@down'_of_down A B (f b) (down_of_down' x)-/],
+        apply ap inr, apply ap (sigma.mk b), refine _ ⬝ IH b x,
+        -- revert x, generalize (f b), clear IH f b a, intro w,
+        -- intro x, cases w with a f, unfold down'_of_down,
+        exact sorry
+        }},
+    { intro x, induction x with v H, induction H with w w a f b H IH,
+      { unfold [down'_of_down], cases w, reflexivity},
+      { rewrite [↑down'_of_down,↓down'_of_down ⟨w, H⟩],
+        change down_of_down' (inr ⟨b, down'_of_down ⟨w, H⟩⟩) = ⟨w, le.step H⟩,
+        rewrite [↑down_of_down',], esimp,
+        exact sorry}}
+  end
+  /- end intermezzo -/
 
   variable (B)
   definition colim_down [reducible] := W_colim A B down (@down_functor A B)
 
   variable {B}
-  definition of_W [constructor] (w : W a, B a) : colim_down B := wι ⟨w, tr !le.refl⟩
+  definition of_W [constructor] (w : W a, B a) : colim_down B := wι ⟨w, !le.refl⟩
 
-  definition of_W_eq {v w : W a, B a} (H : v ≤ w) : of_W v = wι ⟨v, tr H⟩ :=
+  definition of_W_eq {v w : W a, B a} (H : v ≤ w) : of_W v = wι ⟨v, H⟩ :=
   begin
     induction H with v v a f b H IH,
     { reflexivity},
     { refine IH ⬝ !glue}
   end
 
-  definition tr_of_W_eq {v w : W a, B a} (H : ∥ v ≤ w ∥) : ∥ of_W v = wι ⟨v, H⟩ ∥ :=
-  begin
-    refine trunc.rec _ H, clear H,
-    intro H, apply tr, apply of_W_eq H
-  end
+  -- definition of_W_eq {v w : W a, B a} (H : v ≤ w) : of_W v = wι ⟨v, H⟩ :=
+  -- begin
+  --   induction H with v v a f b H IH,
+  --   { reflexivity},
+  --   { refine IH ⬝ !glue}
+  -- end
+
+  -- definition tr_of_W_eq {v w : W a, B a} (H : ∥ v ≤ w ∥) : ∥ of_W v = wι ⟨v, H⟩ ∥ :=
+  -- begin
+  --   refine trunc.rec _ H, clear H,
+  --   intro H, apply tr, apply of_W_eq H
+  -- end
 
   definition to_W [unfold 3] (w : colim_down B) : W a, B a :=
   begin
@@ -153,50 +208,79 @@ namespace Wtype
     { reflexivity},
   end
 
-  definition of_W_to_W (w : colim_down B) : ∥ of_W (to_W w) = w ∥ :=
+  definition of_W_to_W (w : colim_down B) : of_W (to_W w) = w :=
   begin
     induction w,
-    { induction p with v H, esimp, exact tr_of_W_eq H},
-    { apply is_hprop.elimo}
+    { induction p with v H, esimp, exact of_W_eq H},
+    { apply eq_pathover, induction q with v H,
+      rewrite [ap_id, ap_compose of_W to_W, ↑to_W],
+      refine ap (ap of_W) !elim_glue ⬝ph _,
+      apply square_of_eq, rewrite [▸*, idp_con]
+      }
   end
 
   definition to_W_of_W (w : W a, B a) : to_W (of_W w) = w :=
   idp
 
-  definition W_equiv_colim_down_of_is_hset [H : is_hset (W a, B a)]
-    : (W a, B a) ≃ trunc 0 (colim_down B) :=
+  definition W_equiv_colim_down [constructor] : (W a, B a) ≃ colim_down B :=
   begin
-
     fapply equiv.MK,
-    { exact tr ∘ of_W},
-    { exact trunc.rec to_W},
-    { refine trunc.rec _, intro w, esimp,
-      induction w,
-      { induction p with v H2, esimp, refine trunc.rec _ H2, exact λH3, ap tr !of_W_eq},
-      { apply is_hprop.elimo}},
+    { exact of_W},
+    { exact to_W},
+    { exact of_W_to_W},
     { intro w, reflexivity}
   end
 
+  end
 
-  /-
-    if W a, B a is a set, then we can conclude from this that (W a, B a) ≃ trunc 0 (colim_down B)
-    (this takes a little bit of work)
-  -/
+end Wtype
 
-  -- variable (B)
-  -- definition W_equiv_colim_down : (W a, B a) ≃ colim_down B :=
+open Wtype sigma.ops
+namespace Wsusp
+
+  section
+  universe variables u v w
+  parameters {A : Type.{u}} (B : A → Type.{v}) (R : A → A → Type.{w})
+
+  -- inductive Wsusp_rel (w : W a, B a) : ↓↓w → ↓↓w → Type :=
+  -- | Rmk : Π{a a' : A} {f : B a → W a, B a} {f' : B a' → W a, B a}
+  --         (H : sup a f ≤ w) (H' : sup a' f' ≤ w),
+  --         Wsusp_rel w ⟨sup a f, H⟩ ⟨sup a' f', H'⟩
+  include R -- BUG WITHOUT THIS
+  inductive rel2.{z} {a : A} (X : B a → Type.{z}) (f : Πb, X b → A)
+    : (unit + Σ (b : B a), X b) → (unit + Σ (b : B a), X b) → Type.{max v w z} :=
+  | Rmk : Π(b : B a) (x : X b) (r : R a ((f b x))), rel2 X f (inl star) (inr ⟨b, x⟩)
+
+  -- check @rel2
+  -- check @rel2.Rmk
+
+  -- definition P (w : W a, B a) : Σ(X : Type.{max v w}), X → A :=
   -- begin
-  --   fapply equiv.MK,
-  --   { exact of_W},
-  --   { exact to_W},
-  --   { intro w, induction w,
-  --     { induction p with v H, esimp, },
-  --     { }},
-  --   { }
+  --   induction w with a f IH,
+  --   refine ⟨quotient (rel2 (λb, (IH b).1) (λb, (IH b).2)), _⟩,
+  --   intro x,
+  --   induction x with x x x' s,
+  --   { induction x with x x,
+  --     { exact a},
+  --     { exact Wtype.pr1 (f x.1)}},
+  --   { induction s, esimp, exact sorry}
   -- end
+
+  -- definition PR (w : W a, B a) : Σ(P : Type), P → P → Type :=
+  -- begin
+  --   induction w with a f IH,
+  --   --  Wtype.rec (λa f downs, unit + Σb, downs b)
+  --   exact @quotient (unit + Σb, IH b) (λx y, _)
+  -- end
+
+
+  definition Wsusp : Type := W_colim A B P _
 
   end
 
+end Wsusp
+
+exit
   section
 
   variables {A A' : Type} {B : A → Type} {B' : A' → Type} (g : A → A') (h : Πa, B' (g a) → B a)
@@ -267,27 +351,3 @@ namespace Wtype
   definition Wsusp : Type := W_colim A B P _
 
   end
-
-end Wtype
-
-
--- namespace Wsusp
-
---   section
---   parameters {A : Type} (B : A → Type) (R : A → A → Type)
-
---   inductive Wsusp_rel {a : A} (Pf : B a → Type) : (Πb, Pf b) → (Πb, Pf b) → Type :=
---   | Rmk : Π{a' : A} (r : R a a') (l : B a → (Πb, Pf b)) (r : B a' → (Πb, Pf b)),
---           Wsusp_rel Pf _ _
-
---   definition P (w : W a, B a) : Type :=
---   begin
---     induction w with a f Pf,
---     exact @quotient (Πb, Pf b) _
---   end
-
---   definition Wsusp : Type := W_colim A B P _
-
---   end
-
--- end Wsusp
