@@ -231,7 +231,7 @@ namespace circlerel
 end circlerel
 
 /---------------------------------------------------------------------------------------------------
-  Quotienting A with the diagonal (smallest reflexive relation), gives A × S¹
+  Quotienting A with the diagonal relation (smallest reflexive relation) gives A × S¹
 ---------------------------------------------------------------------------------------------------/
 
 namespace circle
@@ -241,27 +241,27 @@ namespace circle
   section
   parameter {A : Type}
 
-  inductive foo_rel : A → A → Type :=
-  | Rmk : Πx, foo_rel x x
-  open foo_rel
+  inductive reflexive_rel : A → A → Type :=
+  | Rmk : Πx, reflexive_rel x x
+  open reflexive_rel
 
-  definition foo := quotient foo_rel
+  definition times_circle := quotient reflexive_rel
 
-  definition φ [unfold 2] (x : foo) : A × S¹ :=
+  definition φ [unfold 2] (x : times_circle) : A × S¹ :=
   begin
     induction x,
     { exact (a, base)},
     { induction H, exact ap (pair x) loop}
   end
 
-  definition ψ [unfold 2] (x : A × S¹) : foo :=
+  definition ψ [unfold 2] (x : A × S¹) : times_circle :=
   begin
     induction x with x y, induction y,
     { exact class_of _ x},
     { apply eq_of_rel, exact Rmk x}
   end
 
-  definition foo_equiv [constructor] : foo ≃ A × S¹ :=
+  definition times_circle_equiv [constructor] : times_circle ≃ A × S¹ :=
   begin
     fapply equiv.MK,
     { exact φ},
@@ -279,25 +279,25 @@ namespace circle
 
   /- the same construction, where the relation is equivalent, but defined differently -/
 
-  definition bar_rel := @eq A
+  definition reflexive_rel2 := @eq A
 
-  definition bar := quotient bar_rel
+  definition times_circle2 := quotient reflexive_rel2
 
-  definition φ' [unfold 2] (x : bar) : A × S¹ :=
+  definition φ' [unfold 2] (x : times_circle2) : A × S¹ :=
   begin
     induction x,
     { exact (a, base)},
     { induction H, exact ap (pair a) loop}
   end
 
-  definition ψ' [unfold 2] (x : A × S¹) : bar :=
+  definition ψ' [unfold 2] (x : A × S¹) : times_circle2 :=
   begin
     induction x with x y, induction y,
     { exact class_of _ x},
     { apply eq_of_rel, apply idp}
   end
 
-  definition bar_equiv [constructor] : bar ≃ A × S¹ :=
+  definition times_circle2_equiv [constructor] : times_circle2 ≃ A × S¹ :=
   begin
     fapply equiv.MK,
     { exact φ'},
@@ -324,119 +324,120 @@ end circle
   define dependent computation rule of the circle from the other data?
 ---------------------------------------------------------------------------------------------------/
 
--- namespace circlecomp
---   section
---   open circle eq sigma sigma.ops function equiv
+namespace circlecomp
+  section
+  open circle eq sigma sigma.ops function equiv
 
---   parameters {P : circle → Type} (Pbase : P base) (Ploop : Pbase =[loop] Pbase)
---   include Ploop
+  parameters {P : circle → Type} (Pbase : P base) (Ploop : Pbase =[loop] Pbase)
+  include Ploop
 
---   definition eq2_pr1 {A : Type} {B : A → Type} {u v : Σa, B a} {p q : u = v} (r : p = q)
---     : p..1 = q..1 :=
---   ap eq_pr1 r
+  definition eq2_pr1 {A : Type} {B : A → Type} {u v : Σa, B a} {p q : u = v} (r : p = q)
+    : p..1 = q..1 :=
+  ap eq_pr1 r
 
---   definition eq2_pr2 {A : Type} {B : A → Type} {u v : Σa, B a} {p q : u = v} (r : p = q)
---     : p..2 =[eq2_pr1 r] q..2 :=
---   !pathover_ap (apdo eq_pr2 r)
+  definition eq2_pr2 {A : Type} {B : A → Type} {u v : Σa, B a} {p q : u = v} (r : p = q)
+    : p..2 =[eq2_pr1 r] q..2 :=
+  !pathover_ap (apdo eq_pr2 r)
 
---   definition natural_square_tr_loop {A : Type} {B : Type} {a : A} {f g : A → B}
---     (p : f ~ g) (q : a = a) : natural_square_tr p q = _ :=
---   _
+  definition natural_square_tr_loop {A : Type} {B : Type} {a : A} {f g : A → B}
+    (p : f ~ g) (q : a = a) : natural_square_tr p q = _ :=
+  _
 
---   definition pathover_ap_id {A : Type} {a a₂ : A} (B : A → Type) {p : a = a₂}
---     {b : B a} {b₂ : B a₂} (q : b =[p] b₂) : pathover_ap B id q = change_path (ap_id p)⁻¹ q :=
---   by induction q; reflexivity
+  definition pathover_ap_id {A : Type} {a a₂ : A} (B : A → Type) {p : a = a₂}
+    {b : B a} {b₂ : B a₂} (q : b =[p] b₂) : pathover_ap B id q = change_path (ap_id p)⁻¹ q :=
+  by induction q; reflexivity
 
---   definition pathover_ap_compose {A A' A'' : Type} {a a₂ : A} (B : A'' → Type)
---     (g : A' → A'') (f : A → A') {p : a = a₂} {b : B (g (f a))} {b₂ : B (g (f a₂))}
---     (q : b =[p] b₂) : pathover_ap B (g ∘ f) q
---     = change_path (ap_compose g f p)⁻¹ (pathover_ap B g (pathover_ap (B ∘ g) f q)) :=
---   by induction q; reflexivity
+  definition pathover_ap_compose {A A' A'' : Type} {a a₂ : A} (B : A'' → Type)
+    (g : A' → A'') (f : A → A') {p : a = a₂} {b : B (g (f a))} {b₂ : B (g (f a₂))}
+    (q : b =[p] b₂) : pathover_ap B (g ∘ f) q
+    = change_path (ap_compose g f p)⁻¹ (pathover_ap B g (pathover_ap (B ∘ g) f q)) :=
+  by induction q; reflexivity
 
---   definition pathover_ap_compose_rev {A A' A'' : Type} {a a₂ : A} (B : A'' → Type)
---     (g : A' → A'') (f : A → A') {p : a = a₂} {b : B (g (f a))} {b₂ : B (g (f a₂))}
---     (q : b =[p] b₂) : pathover_ap B g (pathover_ap (B ∘ g) f q)
---     = change_path (ap_compose g f p) (pathover_ap B (g ∘ f) q) :=
---   by induction q; reflexivity
+  definition pathover_ap_compose_rev {A A' A'' : Type} {a a₂ : A} (B : A'' → Type)
+    (g : A' → A'') (f : A → A') {p : a = a₂} {b : B (g (f a))} {b₂ : B (g (f a₂))}
+    (q : b =[p] b₂) : pathover_ap B g (pathover_ap (B ∘ g) f q)
+    = change_path (ap_compose g f p) (pathover_ap B (g ∘ f) q) :=
+  by induction q; reflexivity
 
---   definition f : S¹ → sigma P := circle.elim ⟨base, Pbase⟩ (sigma_eq loop Ploop)
---   definition g : Πx, P x := circle.rec Pbase Ploop
+  definition f : S¹ → sigma P := circle.elim ⟨base, Pbase⟩ (sigma_eq loop Ploop)
+  definition g : Πx, P x := circle.rec Pbase Ploop
 
---   definition foo1 (x : S¹) : (f x).1 = x :=
---   circle.rec_on x idp
---   begin apply eq_pathover, apply hdeg_square,
---     rewrite [ap_id, ap_compose pr1 f,↑f,elim_loop], apply sigma_eq_pr1 end
+  definition foo1 (x : S¹) : (f x).1 = x :=
+  circle.rec_on x idp
+  begin apply eq_pathover, apply hdeg_square,
+    rewrite [ap_id, ap_compose pr1 f,↑f,elim_loop], apply sigma_eq_pr1 end
 
 
---   definition apdo_eq_apdo_ap {A B : Type} {C : B → Type} (g : Πb, C b) (f : A → B) {a a' : A}
---     (p : a = a') : apdo (λx, g (f x)) p = pathover_of_pathover_ap C f (apdo g (ap f p)) :=
---   by induction p; reflexivity
+  definition apdo_eq_apdo_ap {A B : Type} {C : B → Type} (g : Πb, C b) (f : A → B) {a a' : A}
+    (p : a = a') : apdo (λx, g (f x)) p = pathover_of_pathover_ap C f (apdo g (ap f p)) :=
+  by induction p; reflexivity
 
---   definition foo2 (x : S¹) : (f x).2 =[foo1 x] g x :=
---   circle.rec_on x idpo
---   begin
---     apply pathover_pathover, esimp, --rewrite pathover_ap_id,
---     apply transport (λx, squareover P x _ _ _ _),
---     apply to_left_inv !hdeg_square_equiv, esimp,
---     apply hdeg_squareover,
---     rewrite [pathover_ap_id, apdo_eq_apdo_ap pr2 f loop, ]
---     --unfold natural_square_tr,
---   end
+  definition foo2 (x : S¹) : (f x).2 =[foo1 x] g x :=
+  circle.rec_on x idpo
+  begin
+    apply pathover_pathover, esimp, --rewrite pathover_ap_id,
+    apply transport (λx, squareover P x _ _ _ _),
+    apply to_left_inv !hdeg_square_equiv, esimp,
+    apply hdeg_squareover,
+    rewrite [pathover_ap_id, apdo_eq_apdo_ap pr2 f loop, ]
+    --unfold natural_square_tr,
+  end
 
---   definition p : ap f loop = (sigma_eq loop Ploop) := !elim_loop
---   definition q : (ap f loop)..1 = loop := ap eq_pr1 p ⬝ !sigma_eq_pr1
---   definition r : (ap f loop)..2 =[q] Ploop :=
---   !eq2_pr2 ⬝o !sigma_eq_pr2
+  definition p : ap f loop = (sigma_eq loop Ploop) := !elim_loop
+  definition q : (ap f loop)..1 = loop := ap eq_pr1 p ⬝ !sigma_eq_pr1
+  definition r : (ap f loop)..2 =[q] Ploop :=
+  !eq2_pr2 ⬝o !sigma_eq_pr2
 
--- --set_option pp.notation false
---   theorem my_rec_loop  : apdo (circle.rec Pbase Ploop) loop = Ploop :=
---   begin
---     refine _ ⬝ tr_eq_of_pathover r,
---   end
+--set_option pp.notation false
+  theorem my_rec_loop  : apdo (circle.rec Pbase Ploop) loop = Ploop :=
+  begin
+    refine _ ⬝ tr_eq_of_pathover r,
+  end
 
---   end
--- end circlecomp
+  end
+end circlecomp
 
--- namespace circlecomp2
+  /- try to use the circle to transport the computation rule from the circle to the new type -/
+namespace circlecomp2
 
---   open circle eq sigma sigma.ops function equiv is_equiv
+  open circle eq sigma sigma.ops function equiv is_equiv
 
---   definition X : Type₀ := circle
---   definition b : X := base
---   definition l : b = b := loop
---   definition elim {C : Type} (c : C) (p : c = c) (x : X) : C := circle.elim c p x
---   definition rec {C : X → Type} (c : C b) (p : c =[l] c) (x : X) : C x := circle.rec c p x
---   theorem elim_l {C : Type} (c : C) (p : c = c) : ap (elim c p) l = p := elim_loop c p
+  definition X : Type₀ := circle
+  definition b : X := base
+  definition l : b = b := loop
+  definition elim {C : Type} (c : C) (p : c = c) (x : X) : C := circle.elim c p x
+  definition rec {C : X → Type} (c : C b) (p : c =[l] c) (x : X) : C x := circle.rec c p x
+  theorem elim_l {C : Type} (c : C) (p : c = c) : ap (elim c p) l = p := elim_loop c p
 
---   attribute X l [irreducible]
---   attribute rec elim [unfold 4] [recursor 4]
---   attribute b [constructor]
+  attribute X l [irreducible]
+  attribute rec elim [unfold 4] [recursor 4]
+  attribute b [constructor]
 
---   example {C : Type} (c : C) (p : c = c) : elim c p b = c := begin esimp end
+  example {C : Type} (c : C) (p : c = c) : elim c p b = c := begin esimp end
 
---   definition XequivS : X ≃ S¹ :=
---   begin
---     fapply equiv.MK,
---     { intro x, induction x, exact base, exact loop},
---     { intro y, induction y, exact b, exact l},
---     { intro y, induction y, esimp, apply eq_pathover, apply hdeg_square,
---       rewrite [ap_id,ap_compose (elim base loop),elim_loop], apply elim_l},
---     { intro x, induction x, esimp, apply eq_pathover, apply hdeg_square,
---       rewrite [ap_id,ap_compose (circle.elim b l),elim_l], apply elim_loop},
---   end
+  definition XequivS : X ≃ S¹ :=
+  begin
+    fapply equiv.MK,
+    { intro x, induction x, exact base, exact loop},
+    { intro y, induction y, exact b, exact l},
+    { intro y, induction y, esimp, apply eq_pathover, apply hdeg_square,
+      rewrite [ap_id,ap_compose (elim base loop),elim_loop], apply elim_l},
+    { intro x, induction x, esimp, apply eq_pathover, apply hdeg_square,
+      rewrite [ap_id,ap_compose (circle.elim b l),elim_l], apply elim_loop},
+  end
 
---   --set_option pp.notation false
---   definition foo {A A' : Type} (f : A ≃ A') (B : A → Type) {a a' : A} {p : a = a'}
---     {b : B a} {b' : B a'} : b =[p] b' ≃
---   pathover (B ∘ to_inv f) ((to_left_inv f a)⁻¹ ▸ b) (ap (to_fun f) p) ((to_left_inv f a')⁻¹ ▸ b') :=
---   begin
---     induction p, esimp,
---     refine !pathover_idp ⬝e _ ⬝e !pathover_idp⁻¹ᵉ,
---     apply eq_equiv_fn_eq
---   end
+  --set_option pp.notation false
+  definition foo {A A' : Type} (f : A ≃ A') (B : A → Type) {a a' : A} {p : a = a'}
+    {b : B a} {b' : B a'} : b =[p] b' ≃
+  pathover (B ∘ to_inv f) ((to_left_inv f a)⁻¹ ▸ b) (ap (to_fun f) p) ((to_left_inv f a')⁻¹ ▸ b') :=
+  begin
+    induction p, esimp,
+    refine !pathover_idp ⬝e _ ⬝e !pathover_idp⁻¹ᵉ,
+    apply eq_equiv_fn_eq
+  end
 
---   theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apdo (rec c p) l = p :=
---   begin
---     refine eq_of_fn_eq_fn !(foo XequivS) _,
---   end
--- end circlecomp2
+  theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apdo (rec c p) l = p :=
+  begin
+    refine eq_of_fn_eq_fn !(foo XequivS) _,
+  end
+end circlecomp2

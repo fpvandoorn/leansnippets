@@ -227,52 +227,9 @@ namespace Wtype
 
 end Wtype
 
-open Wtype sigma.ops
-namespace Wsusp
 
-  section
-  universe variables u v w
-  parameters {A : Type.{u}} (B : A → Type.{v}) (R : A → A → Type.{w})
+namespace Wtype
 
-  -- inductive Wsusp_rel (w : W a, B a) : ↓↓w → ↓↓w → Type :=
-  -- | Rmk : Π{a a' : A} {f : B a → W a, B a} {f' : B a' → W a, B a}
-  --         (H : sup a f ≤ w) (H' : sup a' f' ≤ w),
-  --         Wsusp_rel w ⟨sup a f, H⟩ ⟨sup a' f', H'⟩
-  include R -- BUG WITHOUT THIS
-  inductive rel2.{z} {a : A} (X : B a → Type.{z}) (f : Πb, X b → A)
-    : (unit + Σ (b : B a), X b) → (unit + Σ (b : B a), X b) → Type.{max v w z} :=
-  | Rmk : Π(b : B a) (x : X b) (r : R a ((f b x))), rel2 X f (inl star) (inr ⟨b, x⟩)
-
-  -- check @rel2
-  -- check @rel2.Rmk
-
-  -- definition P (w : W a, B a) : Σ(X : Type.{max v w}), X → A :=
-  -- begin
-  --   induction w with a f IH,
-  --   refine ⟨quotient (rel2 (λb, (IH b).1) (λb, (IH b).2)), _⟩,
-  --   intro x,
-  --   induction x with x x x' s,
-  --   { induction x with x x,
-  --     { exact a},
-  --     { exact Wtype.pr1 (f x.1)}},
-  --   { induction s, esimp, exact sorry}
-  -- end
-
-  -- definition PR (w : W a, B a) : Σ(P : Type), P → P → Type :=
-  -- begin
-  --   induction w with a f IH,
-  --   --  Wtype.rec (λa f downs, unit + Σb, downs b)
-  --   exact @quotient (unit + Σb, IH b) (λx y, _)
-  -- end
-
-
---  definition Wsusp : Type := W_colim A B P _
-
-  end
-
-end Wsusp
-
-exit
   section
 
   variables {A A' : Type} {B : A → Type} {B' : A' → Type} (g : A → A') (h : Πa, B' (g a) → B a)
@@ -324,22 +281,55 @@ exit
 
   end
 
+end Wtype
 
-  exit
+open Wtype sigma.ops
+namespace Wsusp
 
   section
-  parameters {A : Type} (B : A → Type) (R : A → A → Type)
+  universe variables u v w
+  parameters {A : Type.{u}} (B : A → Type.{v}) (R : A → A → Type.{w})
 
-  inductive Wsusp_rel {a : A} (Pf : B a → Type) : (Πb, Pf b) → (Πb, Pf b) → Type :=
-  | Rmk : Π{a' : A} (r : R a a') (l : B a → (Πb, Pf b)) (r : B a' → (Πb, Pf b)),
-          Wsusp_rel Pf _ _
+  inductive rel2.{z} {a : A} (X : B a → Type.{z}) (f : Πb, X b → A)
+    : (unit + Σ (b : B a), X b) → (unit + Σ (b : B a), X b) → Type.{max v w z} :=
+  | Rmk : Π(b : B a) (x : X b) (r : R a ((f b x))), rel2 X f (inl star) (inr ⟨b, x⟩)
 
-  definition P (w : W a, B a) : Type :=
+  inductive Wsusp_rel (w : W a, B a) : ↓↓w → ↓↓w → Type :=
+  | Rmk : Π{a a' : A} {f : B a → W a, B a} {f' : B a' → W a, B a}
+          (H : sup a f ≤ w) (H' : sup a' f' ≤ w),
+          Wsusp_rel w ⟨sup a f, H⟩ ⟨sup a' f', H'⟩
+
+  -- include R -- BUG WITHOUT THIS
+  -- inductive rel2.{z} {a : A} (X : B a → Type.{z}) (f : Πb, X b → A)
+  --   : (unit + Σ (b : B a), X b) → (unit + Σ (b : B a), X b) → Type.{max v w z} :=
+  -- | Rmk : Π(b : B a) (x : X b) (r : R a ((f b x))), rel2 X f (inl star) (inr ⟨b, x⟩)
+
+  -- check @rel2
+  -- check @rel2.Rmk
+
+  include R
+  definition P (w : W a, B a) : Σ(X : Type.{max v w}), X → A :=
   begin
-    induction w with a f Pf,
-    exact @quotient (Πb, Pf b) _
+    induction w with a f IH,
+    refine ⟨quotient (rel2 (λb, (IH b).1) (λb, (IH b).2)), _⟩,
+    intro x,
+    induction x with x x x' s,
+    { induction x with x x,
+      { exact a},
+      { exact Wtype.pr1 (f x.1)}},
+    { induction s, esimp, exact sorry}
   end
 
-  definition Wsusp : Type := W_colim A B P _
+  -- definition PR (w : W a, B a) : Σ(P : Type), P → P → Type :=
+  -- begin
+  --   induction w with a f IH,
+  --   --  Wtype.rec (λa f downs, unit + Σb, downs b)
+  --   exact @quotient (unit + Σb, IH b) (λx y, _)
+  -- end
+
+
+--  definition Wsusp : Type := W_colim A B P _
 
   end
+
+end Wsusp
