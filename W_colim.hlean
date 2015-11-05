@@ -146,7 +146,7 @@ namespace Wtype
     induction w with a f IH, esimp [down'] at x,
     induction x with x x,
     { exact ⟨sup a f, !le.refl⟩},
-    { induction x with b x, refine down_functor b _ _, apply IH, exact x}
+    { induction x with b x, refine down_functor b f _, apply IH, exact x}
   end
 
   definition down_equiv [constructor] (w : W a, B a) : ↓↓w ≃ down' w :=
@@ -158,20 +158,12 @@ namespace Wtype
       induction x with x x: esimp,
       { unfold [down_of_down',down'_of_down], induction x, reflexivity},
       { induction x with b x,
-        --change inr ⟨b, down'_of_down (down_of_down' x)⟩ = inr ⟨b, x⟩,
-        rewrite [▸*, ↑down_of_down', ↓@down_of_down' A B],
-        rewrite [↑down'_of_down, /-↓@down'_of_down A B (f b) (down_of_down' x)-/],
+        rewrite [▸*, ↑down_of_down', ↓@down_of_down' A B, ↑down'_of_down],
         apply ap inr, apply ap (sigma.mk b), refine _ ⬝ IH b x,
-        -- revert x, generalize (f b), clear IH f b a, intro w,
-        -- intro x, cases w with a f, unfold down'_of_down,
-        exact sorry
-        }},
+        apply ap down'_of_down !sigma.eta}},
     { intro x, induction x with v H, induction H with w w a f b H IH,
       { unfold [down'_of_down], cases w, reflexivity},
-      { rewrite [↑down'_of_down,↓down'_of_down ⟨w, H⟩],
-        change down_of_down' (inr ⟨b, down'_of_down ⟨w, H⟩⟩) = ⟨w, le.step H⟩,
-        rewrite [↑down_of_down',], esimp,
-        exact sorry}}
+      { exact ap (down_functor b f) IH}}
   end
   /- end intermezzo -/
 
@@ -274,7 +266,7 @@ namespace Wsusp
   -- end
 
 
-  definition Wsusp : Type := W_colim A B P _
+--  definition Wsusp : Type := W_colim A B P _
 
   end
 

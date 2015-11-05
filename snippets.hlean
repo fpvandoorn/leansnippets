@@ -231,6 +231,96 @@ namespace circlerel
 end circlerel
 
 /---------------------------------------------------------------------------------------------------
+  Quotienting A with the diagonal (smallest reflexive relation), gives A × S¹
+---------------------------------------------------------------------------------------------------/
+
+namespace circle
+
+  open eq circle prod quotient equiv
+
+  section
+  parameter {A : Type}
+
+  inductive foo_rel : A → A → Type :=
+  | Rmk : Πx, foo_rel x x
+  open foo_rel
+
+  definition foo := quotient foo_rel
+
+  definition φ [unfold 2] (x : foo) : A × S¹ :=
+  begin
+    induction x,
+    { exact (a, base)},
+    { induction H, exact ap (pair x) loop}
+  end
+
+  definition ψ [unfold 2] (x : A × S¹) : foo :=
+  begin
+    induction x with x y, induction y,
+    { exact class_of _ x},
+    { apply eq_of_rel, exact Rmk x}
+  end
+
+  definition foo_equiv [constructor] : foo ≃ A × S¹ :=
+  begin
+    fapply equiv.MK,
+    { exact φ},
+    { exact ψ},
+    { intro x, induction x with x y, induction y,
+      { reflexivity},
+      { apply eq_pathover, apply hdeg_square,
+        rewrite [ap_compose φ (λa, ψ (x, a)), ▸*, elim_loop, ↑φ], apply elim_eq_of_rel}},
+    { intro x, induction x,
+      { reflexivity},
+      { apply eq_pathover, apply hdeg_square, rewrite [ap_id], refine ap_compose ψ φ _ ⬝ _,
+        refine ap (ap ψ) !elim_eq_of_rel ⬝ _, induction H, esimp,
+        refine !ap_compose⁻¹ ⬝ _, esimp [function.compose], apply elim_loop}}
+  end
+
+  /- the same construction, where the relation is equivalent, but defined differently -/
+
+  definition bar_rel := @eq A
+
+  definition bar := quotient bar_rel
+
+  definition φ' [unfold 2] (x : bar) : A × S¹ :=
+  begin
+    induction x,
+    { exact (a, base)},
+    { induction H, exact ap (pair a) loop}
+  end
+
+  definition ψ' [unfold 2] (x : A × S¹) : bar :=
+  begin
+    induction x with x y, induction y,
+    { exact class_of _ x},
+    { apply eq_of_rel, apply idp}
+  end
+
+  definition bar_equiv [constructor] : bar ≃ A × S¹ :=
+  begin
+    fapply equiv.MK,
+    { exact φ'},
+    { exact ψ'},
+    { intro x, induction x with x y, induction y,
+      { reflexivity},
+      { apply eq_pathover, apply hdeg_square,
+        rewrite [ap_compose φ' (λa, ψ' (x, a)), ▸*, elim_loop, ↑φ'], apply elim_eq_of_rel}},
+    { intro x, induction x,
+      { reflexivity},
+      { apply eq_pathover, apply hdeg_square, rewrite [ap_id], refine ap_compose ψ' φ' _ ⬝ _,
+        refine ap (ap ψ') !elim_eq_of_rel ⬝ _, induction H, esimp,
+        refine !ap_compose⁻¹ ⬝ _, esimp [function.compose], apply elim_loop}}
+  end
+
+
+  end
+
+end circle
+
+
+
+/---------------------------------------------------------------------------------------------------
   define dependent computation rule of the circle from the other data?
 ---------------------------------------------------------------------------------------------------/
 
