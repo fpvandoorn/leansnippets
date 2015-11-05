@@ -197,7 +197,7 @@ variables
     squareover P (vdeg_square (incl2 q)) (e_closure.elimo incl1 P1 r) idpo idpo idpo)
 (q : Q r)
 (a_1 : S¹)
--- exit
+  exit
   print pathover_tr
   print pathover_ap
   print pathover_of_pathover_ap

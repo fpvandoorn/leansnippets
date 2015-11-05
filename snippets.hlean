@@ -313,7 +313,6 @@ namespace circle
         refine !ap_compose⁻¹ ⬝ _, esimp [function.compose], apply elim_loop}}
   end
 
-
   end
 
 end circle
@@ -323,7 +322,7 @@ end circle
 /---------------------------------------------------------------------------------------------------
   define dependent computation rule of the circle from the other data?
 ---------------------------------------------------------------------------------------------------/
-
+exit
 namespace circlecomp
   section
   open circle eq sigma sigma.ops function equiv
