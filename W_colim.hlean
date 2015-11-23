@@ -1,6 +1,6 @@
 import hit.quotient types.W hit.trunc function
 
-open eq quotient Wtype sigma equiv equiv.ops function is_equiv pi sum unit
+open eq quotient Wtype sigma equiv equiv.ops function is_equiv pi sum unit function
 
 namespace W_colim
 
@@ -13,9 +13,9 @@ namespace W_colim
   | Rmk : Π{a : A} {b : B a} (f : B a → W a, B a) (q : P (f b)),
           W_rel ⟨f b, q⟩ ⟨sup a f, g q⟩
 
+  parameters {A B}
   definition W_colim : Type := quotient W_rel
 
-  parameters {A B}
   variable (w)
   definition inclusion : W_colim :=
   class_of W_rel ⟨w, p⟩
@@ -168,7 +168,7 @@ namespace Wtype
   /- end intermezzo -/
 
   variable (B)
-  definition colim_down [reducible] := W_colim A B down (@down_functor A B)
+  definition colim_down [reducible] := W_colim down (@down_functor A B)
 
   variable {B}
   definition of_W [constructor] (w : W a, B a) : colim_down B := wι ⟨w, !le.refl⟩
@@ -282,6 +282,48 @@ namespace Wtype
   end
 
 end Wtype
+
+namespace Wcompact
+
+  variables {A : Type} {B : A → Type} (P : (W a, B a) → Type)
+            (g : Π⦃a : A⦄ {b : B a} {f : B a → W a, B a}, P (f b) → P (sup a f))
+
+  variables {w : W a, B a} (p : P w)
+
+  definition arrow_obj (X : Type) (w : W a, B a) : Type := X → P w
+
+  definition arrow_mor {X : Type} ⦃a : A⦄ {b : B a} {f : B a → W a, B a} (p : arrow_obj P X (f b))
+    : arrow_obj P X (sup a f) :=
+  λx, g (p x)
+
+  definition arrow_colim_of_colim_arrow {X : Type} (h : W_colim (arrow_obj P X) (arrow_mor P g))
+    (x : X) : W_colim P g :=
+  begin induction h with w h a b f h, exact wι (h x), exact glue b (h x) end
+
+  definition W_compact [class] (X : Type) {A : Type} (B : A → Type) : Type :=
+  Π(P : (W a, B a) → Type)
+   (g : Π⦃a : A⦄ {b : B a} {f : B a → W a, B a}, P (f b) → P (sup a f)),
+   is_equiv (arrow_colim_of_colim_arrow P g
+     : W_colim (arrow_obj P X) (arrow_mor P g) → (X → W_colim P g))
+
+  -- is this true?
+exit
+  definition W_compact_self {A : Type} (B : A → Type) (a : A) : W_compact (B a) B :=
+  begin
+    intro P g,
+    fapply adjointify,
+    { intro h, refine !@wι _,
+      { apply sup a, intro b, refine W_colim.elim _ _ (h b),
+        { intro w p, exact w},
+        { intro a b f p, }},
+      { }},
+    { },
+    { },
+  end
+
+end Wcompact
+
+exit -- below doesn't work well yet
 
 open Wtype sigma.ops
 namespace Wsusp
