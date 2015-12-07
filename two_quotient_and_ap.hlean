@@ -18,7 +18,7 @@ namespace test
   -- local notation `[`:max a `]`:0 := @e_closure.of_rel unit torus_R star star a
 
   inductive Q : Π⦃x y : A⦄, e_closure R x y → e_closure R x y → Type :=
-  | Qmk : Q (ap inl seg ▸ [Rmk0]) [Rmk1]
+  | Qmk : Q [Rmk0] (< ap inl seg > ⬝r [Rmk1])
   open Q
   definition triangle := two_quotient R Q
   definition x0 : triangle := incl0 R Q (inl zero)
@@ -30,11 +30,11 @@ namespace test
 
   open relation
 
-  definition fill : p01⁻¹ ⬝ p02 = p12 :=
-  !e_closure.transport_left⁻¹ ⬝ incl2 R Q Qmk
+  definition fill : p02 = p01 ⬝ p12 :=
+  incl2 R Q Qmk
 
   definition elim (P : Type) (P0 : A → P) (P10 : P0 (inl zero) = P0 (inr star))
-    (P11 : P0 (inl one) = P0 (inr star)) (P2 : (ap P0 (ap inl seg))⁻¹ ⬝ P10 = P11)
+    (P11 : P0 (inl one) = P0 (inr star)) (P2 : P10 = ap P0 (ap inl seg) ⬝ P11)
     (y : triangle) : P :=
   begin
     induction y,
@@ -42,7 +42,7 @@ namespace test
     { induction s,
       { exact P10},
       { exact P11}},
-    { induction q, esimp, exact !e_closure.transport_left ⬝ P2}
+    { induction q, esimp, exact P2}
   end
 
 end test

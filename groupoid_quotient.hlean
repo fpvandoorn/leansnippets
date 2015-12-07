@@ -96,7 +96,7 @@ section
     (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) {a b : G} (f : a ⟶ b) :
     ap (elim Pe Pp Pid Pcomp Pinv) (pth f) = Pp f :=
   !ap_compose⁻¹ ⬝ !elim_incl1
-
+exit
   -- set_option pp.notation false
   -- set_option pp.implicit true
   theorem elim_resp_id {P : 1-Type} (Pe : G → P) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
