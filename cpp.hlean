@@ -18,7 +18,7 @@ open eq is_trunc unit quotient seq_colim pi nat equiv sum
     (λb c r, eq.rec_on r !con.left_inv),
   L⁻¹ ⬝ L
 
-/- definition of "one step truncation" in terms of "quotients" (homotopy coequalizers) -/
+/- definition of "one step truncation" in terms of quotients -/
 
 namespace one_step_tr
 section
@@ -95,7 +95,8 @@ section /- Theorems about the one-step truncation -/
   theorem tr_eq_ne_ap_tr {A : Type} {a b : A} (p : a = b) : tr_eq a b ≠ ap tr p :=
   by induction p; apply tr_eq_ne_idp
 
-  theorem not_inhabited_hset_trunc_one_step_tr (A : Type) : ¬(trunc 1 (one_step_tr A) × is_hset (trunc 1 (one_step_tr A))) :=
+  theorem not_inhabited_hset_trunc_one_step_tr (A : Type)
+    : ¬(trunc 1 (one_step_tr A) × is_hset (trunc 1 (one_step_tr A))) :=
   begin
     intro H, induction H with x H,
     refine trunc.elim_on x _, clear x, intro x,
@@ -267,6 +268,19 @@ namespace my_trunc
 
   open sigma prod
 
+  -- the constructed truncation is equivalent to the "standard" propositional truncation
+  -- (called _root_.trunc -1 below)
+  open trunc
+  attribute is_hprop_trunc [instance]
+  definition trunc_equiv (A : Type) : trunc A ≃ _root_.trunc -1 A :=
+  begin
+    fapply equiv.MK,
+    { intro x, induction x using trunc.rec with a, exact trunc.tr a},
+    { intro x, refine _root_.trunc.rec _ x, intro a, exact tr a},
+    { intro x, induction x with a, reflexivity},
+    { intro x, induction x using trunc.rec with a, reflexivity}
+  end
+
   -- some other recursors we get from this construction:
   definition trunc.elim2 {A P : Type} (h : Π{n}, n_step_tr A n → P)
     (coh : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) (x : trunc A) : P :=
@@ -303,36 +317,23 @@ namespace my_trunc
         esimp,
         apply eq_pathover, apply hdeg_square, esimp, rewrite elim_glue}
   end
+
   open sigma.ops
   definition conditionally_constant_equiv {A P : Type} (k : A → P) :
     (Σ(g : trunc A → P), Πa, g (tr a) = k a) ≃
       Σ(h : Π{n}, n_step_tr A n → P),
         (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a) :=
   calc
-          (Σ(g : trunc A → P), Πa, g (tr a) = k a)
-        ≃ (Σ(v : Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
-            Πa, (v.1) 0 a = k a)
-                      : sigma_equiv_sigma !elim2_equiv (λg, equiv.refl)
-    ... ≃ (Σ(h : Π{n}, n_step_tr A n → P) (p : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
-            Πa, @h 0 a = k a)
-                      : sigma_assoc_equiv
-    ... ≃ (Σ(h : Π{n}, n_step_tr A n → P),
-            (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a))
-                      : sigma_equiv_sigma_id (λa, !equiv_prod)
-
-  -- the constructed truncation is equivalent to the "standard" propositional truncation
-  -- (called _root_.trunc below)
-  open trunc
-  attribute trunc.rec [recursor]
-  attribute is_hprop_trunc [instance]
-  definition trunc_equiv (A : Type) : trunc A ≃ _root_.trunc -1 A :=
-  begin
-    fapply equiv.MK,
-    { intro x, refine trunc.rec _ x, intro a, exact trunc.tr a},
-    { intro x, refine _root_.trunc.rec _ x, intro a, exact tr a},
-    { intro x, induction x with a, reflexivity},
-    { intro x, induction x with a, reflexivity}
-  end
+    (Σ(g : trunc A → P), Πa, g (tr a) = k a)
+      ≃ Σ(v : Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
+          Πa, (v.1) 0 a = k a
+                    : sigma_equiv_sigma !elim2_equiv (λg, equiv.refl)
+  ... ≃ Σ(h : Π{n}, n_step_tr A n → P) (p : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
+          Πa, @h 0 a = k a
+                    : sigma_assoc_equiv
+  ... ≃ Σ(h : Π{n}, n_step_tr A n → P),
+          (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a)
+                    : sigma_equiv_sigma_id (λa, !equiv_prod)
 
   definition cocone_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
     (n : ℕ) (x : n_step_tr A n) : A :=
@@ -343,7 +344,7 @@ namespace my_trunc
     { apply to_inv !one_step_tr_universal_property ⟨f, p⟩, exact one_step_tr_functor h x}
   end
 
-  definition is_hstable_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
+  definition has_split_support_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
     : trunc A → A :=
   begin
     fapply to_inv !elim2_equiv,
