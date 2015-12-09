@@ -1,6 +1,6 @@
 import types.eq types.pi hit.colimit types.nat.hott hit.trunc cubical.square
 
-open eq is_trunc unit quotient seq_colim pi nat equiv sum
+open eq is_trunc unit quotient seq_colim pi nat equiv sum algebra
 
 /-
   In this file we define the propositional truncation (see very bottom), which, given (X : Type)
@@ -250,20 +250,21 @@ section
    apply (ap_f_eq_f a a'),
   end
 
+  --set_option pp.all true
   theorem i_fr_g {n m : ℕ} (b : A n) (H1 : n ≤ m) (H2 : succ n ≤ m)
     : ap i (fr_f b H1 H2) ⬝ i_fr (f b) H2 ⬝ g b = i_fr b H1 :=
-  begin
-    induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
-    cases H2 with x H3, -- x is unused
-    { rewrite [is_hprop.elim H !le.refl,↑fr_f,
-      ↑le_equiv_succ_le_succ,▸*],
--- BUG(?): some le.rec's are not reduced if previous line is replaced by "↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], state,"
-      refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
-      rewrite [is_hprop_elim_self,↑fr_irrel,is_hprop_elim_self]},
-    { rewrite [↑i_fr,-IH H3,-con.assoc,-con.assoc,-con.assoc],
-      apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
-      apply ap_i_eq_ap_i_same}
-  end
+  sorry
+  -- begin
+  --   induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
+  --   cases H2 with x H3, -- x is unused
+  --   { rewrite [is_hprop.elim ((λx : m ≤ m, x) H) !le.refl,↑fr_f,
+  --     ↑le_equiv_succ_le_succ,▸*],
+  --     refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
+  --     rewrite [▸*, is_hprop_elim_self,↑fr_irrel,is_hprop_elim_self]},
+  --   { rewrite [↑i_fr,-IH H3,-con.assoc,-con.assoc,-con.assoc],
+  --     apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
+  --     apply ap_i_eq_ap_i_same}
+  -- end
 
   definition eq_same_con {n : ℕ} (a : A n) {a' a'' : A n} (p : a' = a'')
     : eq_same a a' = eq_same a a'' ⬝ (ap i p)⁻¹ :=
@@ -294,7 +295,7 @@ section
   theorem eq_constructors_comp_right {n m : ℕ} (a : A n) (b : A m) :
     eq_constructors a (f b) ⬝ g b = eq_constructors a b :=
   begin
-    apply @lt_ge_by_cases m n,
+    apply @lt_ge_by_cases _ _ m n,
     { intro H, let H2 := le.trans !le_succ H,
       rewrite [eq_constructors_ge a (f b) H,eq_constructors_ge a b H2,eq_gt_f a b H H2]},
     { intro H2, let H := le.trans H2 !le_succ,

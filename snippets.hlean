@@ -114,7 +114,7 @@ end nat
 
 namespace nat
 namespace lt
-  open unit is_trunc
+  open unit is_trunc algebra
   protected definition code (n m : ℕ) : Type₀ :=
   begin
     revert m,
