@@ -296,9 +296,9 @@ section
     eq_constructors a (f b) ⬝ g b = eq_constructors a b :=
   begin
     apply @lt_ge_by_cases _ _ m n,
-    { intro H, let H2 := le.trans !le_succ H,
+    { intro H, note H2 := le.trans !le_succ H,
       rewrite [eq_constructors_ge a (f b) H,eq_constructors_ge a b H2,eq_gt_f a b H H2]},
-    { intro H2, let H := le.trans H2 !le_succ,
+    { intro H2, note H := le.trans H2 !le_succ,
       rewrite [eq_constructors_le a (f b) H,eq_constructors_le a b H2,eq_le_f a b H H2]}
   end
 
