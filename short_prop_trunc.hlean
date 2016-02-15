@@ -1,10 +1,10 @@
-import types.eq types.pi hit.colimit types.nat.hott hit.trunc cubical.square hprop_trunc
+import types.eq types.pi hit.colimit types.nat.hott hit.trunc cubical.square prop_trunc
 
 open eq is_trunc unit quotient seq_colim pi nat equiv sum
 
 /-
   Trying a different construction of the propositional truncation
-  Original proof length of "is_hprop truncX": 163 lines
+  Original proof length of "is_prop truncX": 163 lines
   Proof length here: 76 lines
 -/
 
@@ -91,7 +91,7 @@ section
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a      := glue f a
 
   /- defining the normal recursor is easy -/
-  definition rec {P : truncX → Type} [Pt : Πx, is_hprop (P x)]
+  definition rec {P : truncX → Type} [Pt : Πx, is_prop (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : truncX) : P x :=
   begin
     induction x,
@@ -99,8 +99,8 @@ section
       { exact H a},
       { induction a,
         { exact !g⁻¹ ▸ IH a},
-        { apply is_hprop.elimo}}},
-    { apply is_hprop.elimo}
+        { apply is_prop.elimo}}},
+    { apply is_prop.elimo}
   end
 
   /- point operations -/
@@ -165,9 +165,9 @@ section
     rewrite -con.assoc, exact !eq_same_f
   end
 
-  theorem is_hprop_truncX : is_hprop truncX :=
+  theorem is_prop_truncX : is_prop truncX :=
   begin
-    apply is_hprop_of_imp_is_contr,
+    apply is_prop_of_imp_is_contr,
     intro a,
     refine @rec _ _ _ a,
     clear a, intro a,

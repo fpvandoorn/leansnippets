@@ -95,42 +95,42 @@ section /- Theorems about the one-step truncation -/
   theorem tr_eq_ne_ap_tr {A : Type} {a b : A} (p : a = b) : tr_eq a b ≠ ap tr p :=
   by induction p; apply tr_eq_ne_idp
 
-  theorem not_inhabited_hset_trunc_one_step_tr (A : Type)
-    : ¬(trunc 1 (one_step_tr A) × is_hset (trunc 1 (one_step_tr A))) :=
+  theorem not_inhabited_set_trunc_one_step_tr (A : Type)
+    : ¬(trunc 1 (one_step_tr A) × is_set (trunc 1 (one_step_tr A))) :=
   begin
     intro H, induction H with x H,
     refine trunc.elim_on x _, clear x, intro x,
     induction x,
     { assert q : trunc -1 ((tr_eq a a) = idp),
       { refine to_fun !tr_eq_tr_equiv _,
-        refine @is_hprop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv},
+        refine @is_prop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv},
       refine trunc.elim_on q _, clear q, intro p, exact !tr_eq_ne_idp p},
-    { apply is_hprop.elim}
+    { apply is_prop.elim}
   end
 
   theorem not_is_conn_one_step_tr (A : Type) : ¬is_conn 1 (one_step_tr A) :=
-  λH, not_inhabited_hset_trunc_one_step_tr A (!center, _)
+  λH, not_inhabited_set_trunc_one_step_tr A (!center, _)
 
-  theorem is_hprop_trunc_one_step_tr (A : Type) : is_hprop (trunc 0 (one_step_tr A)) :=
+  theorem is_prop_trunc_one_step_tr (A : Type) : is_prop (trunc 0 (one_step_tr A)) :=
   begin
-    apply is_hprop.mk,
+    apply is_prop.mk,
     intro x y,
     refine trunc.rec_on x _, refine trunc.rec_on y _, clear x y, intro y x,
     induction x,
     { induction y,
       { exact ap trunc.tr !tr_eq},
-      { apply is_hprop.elimo}},
-    { apply is_hprop.elimo}
+      { apply is_prop.elimo}},
+    { apply is_prop.elimo}
   end
 
-  local attribute is_hprop_trunc_one_step_tr [instance]
+  local attribute is_prop_trunc_one_step_tr [instance]
 
   theorem trunc_0_one_step_tr_equiv (A : Type) : trunc 0 (one_step_tr A) ≃ ∥ A ∥ :=
   begin
-    apply equiv_of_is_hprop,
+    apply equiv_of_is_prop,
     { intro x, refine trunc.rec _ x, clear x, intro x, induction x,
       { exact tr a},
-      { apply is_hprop.elim}},
+      { apply is_prop.elim}},
     { intro x, refine trunc.rec _ x, clear x, intro a, exact tr (tr a)},
   end
 
@@ -170,7 +170,7 @@ section
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a      := glue f a
 
   /- defining the normal recursor is easy -/
-  definition rec {P : truncX → Type} [Pt : Πx, is_hprop (P x)]
+  definition rec {P : truncX → Type} [Pt : Πx, is_prop (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : truncX) : P x :=
   begin
     induction x,
@@ -178,8 +178,8 @@ section
       { exact H a},
       { induction a,
         { exact !g⁻¹ ▸ IH a},
-        { apply is_hprop.elimo}}},
-    { apply is_hprop.elimo}
+        { apply is_prop.elimo}}},
+    { apply is_prop.elimo}
   end
 
   /- point operations -/
@@ -239,9 +239,9 @@ section
     rewrite -con.assoc, exact !eq_same_f
   end
 
-  theorem is_hprop_truncX : is_hprop truncX :=
+  theorem is_prop_truncX : is_prop truncX :=
   begin
-    apply is_hprop_of_imp_is_contr,
+    apply is_prop_of_imp_is_contr,
     intro a,
     refine @rec _ _ _ a,
     clear a, intro a,
@@ -258,12 +258,12 @@ end
 namespace my_trunc
   definition trunc.{u} (A : Type.{u}) : Type.{u}                        := @truncX A
   definition tr {A : Type} : A → trunc A                                := @i A 0
-  definition is_hprop_trunc (A : Type) : is_hprop (trunc A)             := is_hprop_truncX
+  definition is_prop_trunc (A : Type) : is_prop (trunc A)               := is_prop_truncX
   definition trunc.rec {A : Type} {P : trunc A → Type}
-    [Pt : Π(x : trunc A), is_hprop (P x)]
+    [Pt : Π(x : trunc A), is_prop (P x)]
     (H : Π(a : A), P (tr a)) : Π(x : trunc A), P x                      := @rec A P Pt H
 
-  example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
+  example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_prop (P aa)]
           (H : Πa, P (tr a)) (a : A) : (trunc.rec H) (tr a) = H a       := by reflexivity
 
   open sigma prod
@@ -271,7 +271,7 @@ namespace my_trunc
   -- the constructed truncation is equivalent to the "standard" propositional truncation
   -- (called _root_.trunc -1 below)
   open trunc
-  attribute is_hprop_trunc [instance]
+  attribute is_prop_trunc [instance]
   definition trunc_equiv (A : Type) : trunc A ≃ _root_.trunc -1 A :=
   begin
     fapply equiv.MK,
@@ -333,7 +333,7 @@ namespace my_trunc
                     : sigma_assoc_equiv
   ... ≃ Σ(h : Π{n}, n_step_tr A n → P),
           (Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a) × (Πa, @h 0 a = k a)
-                    : sigma_equiv_sigma_id (λa, !equiv_prod)
+                    : sigma_equiv_sigma_right (λa, !equiv_prod)
 
   definition cocone_of_is_collapsible {A : Type} (f : A → A) (p : Πa a', f a = f a')
     (n : ℕ) (x : n_step_tr A n) : A :=

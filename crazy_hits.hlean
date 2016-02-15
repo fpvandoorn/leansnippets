@@ -48,7 +48,7 @@ namespace hide
   need:
   (S¹ → Y) ≃ (Σ(y : Y), y = y)
   (Σ(y : X + Y), y = y) ≃ (Σ(x : X), x = x) + (Σ(y : Y), y = y)
-  (Σ(x : X), x = x) ≃ X if x is hset
+  (Σ(x : X), x = x) ≃ X if x is set
   (Σ(y : X × Y), y = y) ≃ (Σ(x : X), x = x) × (Σ(y : Y), y = y) ?
   (Σ(y : S¹), y = y) ≃ S¹ × ℤ?
 -/
@@ -182,7 +182,7 @@ HIT ntree :=
 | leaf : ntree
 | node : (ℕ → ntree) → ntree
 | nirr : Π(f : ℕ ≃ ℕ) (g : ℕ → ntree), node (g ∘ f) = node g
-| tru  : is_hset ntree
+| tru  : is_set ntree
 the set-truncation of
 HIT tree :=
 | leaf : tree
@@ -198,7 +198,7 @@ namespace hide2
   open ntree
 
   constant nirr : Π(f : ℕ ≃ ℕ) (g : ℕ → ntree), node (g ∘ f) = node g
-  constant tru : is_hset ntree
+  constant tru : is_set ntree
 
 
 

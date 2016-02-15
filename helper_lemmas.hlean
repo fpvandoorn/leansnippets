@@ -58,10 +58,10 @@ open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
     : square (ap f p) (ap g q) (r a b) (r a' b') :=
   by cases p; cases q;exact hrfl
 
-  theorem is_hprop_elim_self {A : Type} {H : is_hprop A} (x : A) : is_hprop.elim x x = idp :=
-  !is_hprop.elim
+  theorem is_prop_elim_self {A : Type} {H : is_prop A} (x : A) : is_prop.elim x x = idp :=
+  !is_prop.elim
 
-  definition is_hset_image_of_is_hprop_image {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
+  definition is_set_image_of_is_prop_image {A B : Type} {f : A → B} {a a' : A} (p q : a = a')
     (H : Π(a a' : A), f a = f a') : ap f p = ap f q :=
   have H' : Π{b c : A} (r : b = c), !H⁻¹ ⬝ H a c = ap f r, from
     (λb c r, eq.rec_on r !con.left_inv),

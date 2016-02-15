@@ -6,7 +6,7 @@ open eq is_trunc unit quotient seq_colim pi nat equiv sum algebra
   In this file we define the propositional truncation (see very bottom), which, given (X : Type)
   has constructors
   * tr             : X → trunc X
-  * is_hprop_trunc : is_hprop (trunc X)
+  * is_prop_trunc  : is_prop (trunc X)
   and with a recursor which recurses to any family of mere propositions.
 
   The construction uses a "one step truncation" of X, with two constructors:
@@ -115,7 +115,7 @@ section
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a      := glue f a
 
   /- defining the normal recursor is easy -/
-  private definition rec {P : truncX → Type} [Pt : Πx, is_hprop (P x)]
+  private definition rec {P : truncX → Type} [Pt : Πx, is_prop (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : truncX) : P x :=
   begin
     induction x,
@@ -123,8 +123,8 @@ section
       { exact H a},
       { induction a,
         { exact !g⁻¹ ▸ IH a},
-        { apply is_hprop.elimo}}},
-    { apply is_hprop.elimo}
+        { apply is_prop.elimo}}},
+    { apply is_prop.elimo}
   end
 
 
@@ -197,7 +197,7 @@ section
   definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
 
   definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
-  ap (fr a) !is_hprop.elim
+  ap (fr a) !is_prop.elim
 
   -- Maybe later: the proofs can probably be simplified a bit if H is expressed in terms of H2
   definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
@@ -206,7 +206,7 @@ section
     { exfalso, exact not_succ_le_self H2},
     { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
       --TODO: add some unfold attributes in files
-      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
+      esimp [le_equiv_succ_le_succ,equiv_of_is_prop, is_equiv_of_is_prop],
       revert H IH,
       eapply le.rec_on (le_of_succ_le_succ H2),
       { intros, esimp [succ_le_succ], apply concat,
@@ -257,10 +257,10 @@ section
   -- begin
   --   induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
   --   cases H2 with x H3, -- x is unused
-  --   { rewrite [is_hprop.elim ((λx : m ≤ m, x) H) !le.refl,↑fr_f,
+  --   { rewrite [is_prop.elim ((λx : m ≤ m, x) H) !le.refl,↑fr_f,
   --     ↑le_equiv_succ_le_succ,▸*],
   --     refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
-  --     rewrite [▸*, is_hprop_elim_self,↑fr_irrel,is_hprop_elim_self]},
+  --     rewrite [▸*, is_prop_elim_self,↑fr_irrel,is_prop_elim_self]},
   --   { rewrite [↑i_fr,-IH H3,-con.assoc,-con.assoc,-con.assoc],
   --     apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
   --     apply ap_i_eq_ap_i_same}
@@ -284,7 +284,7 @@ section
   theorem eq_le_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
     : eq_le a (f b) H1 ⬝ g b  = eq_le a b H2 :=
   begin
-    rewrite [↑eq_le,is_hprop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc],
+    rewrite [↑eq_le,is_prop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc],
     clear H1,
     apply ap (λx, _ ⬝ x),
     rewrite [↑fr,↓fr a H2],
@@ -315,23 +315,23 @@ section
   begin
     induction a,
     { intro b, apply eq_constructor_left},
-    { apply is_hprop.elimo}
+    { apply is_prop.elimo}
   end
 
   -- final result
-  theorem is_hprop_truncX : is_hprop truncX := is_hprop.mk eq_general
+  theorem is_prop_truncX : is_prop truncX := is_prop.mk eq_general
 
 end
 
 namespace my_trunc
 definition trunc.{u} (A : Type.{u}) : Type.{u}                        := @truncX A
 definition tr {A : Type} : A → trunc A                                := @i A 0
-definition is_hprop_trunc (A : Type) : is_hprop (trunc A)             := is_hprop_truncX
+definition is_prop_trunc (A : Type) : is_prop (trunc A)               := is_prop_truncX
 definition trunc.rec {A : Type} {P : trunc A → Type}
-  [Pt : Π(x : trunc A), is_hprop (P x)]
+  [Pt : Π(x : trunc A), is_prop (P x)]
   (H : Π(a : A), P (tr a)) : Π(x : trunc A), P x                      := @rec A P Pt H
 
-example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
+example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_prop (P aa)]
         (H : Πa, P (tr a)) (a : A) : (trunc.rec H) (tr a) = H a       := by reflexivity
 
   -- some other recursors we get from this construction:
@@ -375,7 +375,7 @@ example {A : Type} {P : trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
   -- (called _root_.trunc below, because it lives in the root namespace)
   open trunc
   attribute trunc.rec [recursor]
-  attribute is_hprop_trunc [instance]
+  attribute is_prop_trunc [instance]
   definition trunc_equiv (A : Type) : trunc A ≃ _root_.trunc -1 A :=
   begin
     fapply equiv.MK,

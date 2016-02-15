@@ -164,7 +164,7 @@ exit
   definition fr_step {n m : ℕ} (a : A n) (H : n ≤ m) : fr a (le.step H) = f (fr a H) := idp
 
   definition fr_irrel {n m : ℕ} (a : A n) (H H' : n ≤ m) : fr a H = fr a H' :=
-  ap (fr a) !is_hprop.elim
+  ap (fr a) !is_prop.elim
 
   -- TODO: the proofs can probably be slightly simplified if H is expressed in terms of H2
   definition fr_f {n m : ℕ} (a : A n) (H : n ≤ m) (H2 : succ n ≤ m) : fr a H = fr (f a) H2 :=
@@ -173,7 +173,7 @@ exit
     { exfalso, exact not_succ_le_self H2},
     { refine _ ⬝ ap (fr (f a)) (to_right_inv !le_equiv_succ_le_succ H2),
       --add some unfold-c's in files
-      esimp [le_equiv_succ_le_succ,equiv_of_is_hprop, is_equiv_of_is_hprop],
+      esimp [le_equiv_succ_le_succ,equiv_of_is_prop, is_equiv_of_is_prop],
       revert H IH,
       eapply le.rec_on (le_of_succ_le_succ H2),
       { intros, esimp [succ_le_succ], apply concat,
@@ -193,9 +193,9 @@ exit
   begin
     unfold [eq_constructors,lt_ge_by_cases],
     induction (lt_or_ge n m) with H2 H2;all_goals esimp,
-    { rewrite [is_hprop.elim H (le_of_lt H2)]},
+    { rewrite [is_prop.elim H (le_of_lt H2)]},
     { let p := le.antisymm H H2, cases p,
-      rewrite [is_hprop.elim H (le.refl m), is_hprop.elim H2 (le.refl m)]; exact !idp_con⁻¹},
+      rewrite [is_prop.elim H (le.refl m), is_prop.elim H2 (le.refl m)]; exact !idp_con⁻¹},
   end
 
   theorem eq_constructors_ge {n m : ℕ} (a : A n) (b : A m) (H : n ≥ m)
@@ -204,7 +204,7 @@ exit
     unfold [eq_constructors,lt_ge_by_cases],
     induction (lt_or_ge n m) with H2 H2;all_goals esimp,
     { exfalso, apply lt.irrefl, exact lt_of_le_of_lt H H2},
-    { rewrite [is_hprop.elim H H2]},
+    { rewrite [is_prop.elim H H2]},
   end
 
   theorem ap_i_ap_f {n : ℕ} {a a' : A n} (p : a = a')
@@ -235,11 +235,11 @@ exit
   begin
     induction H1 with m H IH, exfalso, exact not_succ_le_self H2,
     cases H2 with x H3, -- x is unused
-    { rewrite [is_hprop.elim H !le.refl,↑fr_f,
+    { rewrite [is_prop.elim H !le.refl,↑fr_f,
       ↑le_equiv_succ_le_succ,▸*],
 -- some le.rec's are not reduced if previous line is replaced by "↑le_equiv_succ_le_succ,↑i_fr,↑fr,▸*], state,"
       refine (_ ⬝ !idp_con), apply ap (λx, x ⬝ _), apply (ap (ap i)),
-      rewrite [is_hprop_elim_self,↑fr_irrel,▸*,is_hprop_elim_self]},
+      rewrite [is_prop_elim_self,↑fr_irrel,▸*,is_prop_elim_self]},
     { rewrite [↑i_fr,↓i_fr b H,↓i_fr (f b) H3,↓fr (f b) H3,↓fr b H, -IH H3,
         -con.assoc,-con.assoc,-con.assoc],
       apply ap (λx, x ⬝ _ ⬝ _), apply con_eq_of_eq_con_inv, rewrite [-ap_i_ap_f],
@@ -264,7 +264,7 @@ exit
   theorem eq_le_f {n m : ℕ} (a : A n) (b : A m) (H1 : n ≤ succ m) (H2 : n ≤ m)
     : eq_le a (f b) H1 ⬝ g b  = eq_le a b H2 :=
   begin
-    rewrite [↑eq_le,is_hprop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc],
+    rewrite [↑eq_le,is_prop.elim H1 (le.step H2),i_fr_step,con_inv,con.assoc,con.assoc],
     clear H1,
     apply ap (λx, _ ⬝ x),
     rewrite [↑fr,↓fr a H2],
@@ -295,20 +295,20 @@ exit
   begin
     induction a,
     { intro b, apply my_f_eq1},
-    { apply is_hprop.elimo}
+    { apply is_prop.elimo}
   end
 
   -- final result
-  theorem is_hprop_my_tr : is_hprop my_tr := is_hprop.mk my_f_eq2
+  theorem is_prop_my_tr : is_prop my_tr := is_prop.mk my_f_eq2
 
 end
 
 definition my_trunc.{u} (A : Type.{u}) : Type.{u}                        := @my_tr A
 definition tr {A : Type} : A → my_trunc A                                := @i A 0
-definition is_hprop_my_trunc (A : Type) : is_hprop (my_trunc A)          := is_hprop_my_tr
+definition is_prop_my_trunc (A : Type) : is_prop (my_trunc A)            := is_prop_my_tr
 definition my_trunc.rec {A : Type} {P : my_trunc A → Type}
-  [Pt : Π(x : my_trunc A), is_hprop (P x)]
+  [Pt : Π(x : my_trunc A), is_prop (P x)]
   (H : Π(a : A), P (tr a)) : Π(x : my_trunc A), P x                      := @rec A P Pt H
 
-example {A : Type} {P : my_trunc A → Type} [Pt : Πaa, is_hprop (P aa)]
+example {A : Type} {P : my_trunc A → Type} [Pt : Πaa, is_prop (P aa)]
         (H : Πa, P (tr a)) (a : A) : (my_trunc.rec H) (tr a) = H a       := by reflexivity

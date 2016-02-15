@@ -93,9 +93,9 @@ namespace nat
       { exact ap succ (!IH q)}},
   end
 
-  definition is_hprop_code (n m : ℕ) : is_hprop (nat.code n m) :=
+  definition is_prop_code (n m : ℕ) : is_prop (nat.code n m) :=
   begin
-    apply is_hprop.mk, revert m,
+    apply is_prop.mk, revert m,
     induction n with n IH,
     { intro m p q, cases m,
       { cases p, cases q, reflexivity},
@@ -104,7 +104,7 @@ namespace nat
       { contradiction},
       { exact IH m p q}},
   end
-  local attribute is_hprop_code [instance]
+  local attribute is_prop_code [instance]
 end nat
 
 /---------------------------------------------------------------------------------------------------
@@ -151,9 +151,9 @@ namespace lt
       { exact succ_lt_succ (!IH q)}},
   end
 
-  definition is_hprop_code (n m : ℕ) : is_hprop (lt.code n m) :=
+  definition is_prop_code (n m : ℕ) : is_prop (lt.code n m) :=
   begin
-    apply is_hprop.mk, revert m,
+    apply is_prop.mk, revert m,
     induction n with n IH,
     { intro m p q, cases m,
       { contradiction},
@@ -162,7 +162,7 @@ namespace lt
       { contradiction},
       { exact IH m p q}},
   end
-  local attribute is_hprop_code [instance]
+  local attribute is_prop_code [instance]
 
 end lt
 end nat
@@ -191,11 +191,11 @@ end lpath
 namespace apn
   open eq pointed nat
 
-  definition weakly_constant_apn {A B : Pointed} {n : ℕ} {f : map₊ A B} (p : Ω[n] A)
+  definition weakly_constant_apn {A B : pType} {n : ℕ} {f : map₊ A B} (p : Ω[n] A)
     (H : Π(a : A), f a = pt) : apn n f p = pt :=
   begin
     induction n with n IH,
-    { unfold [apn, Iterated_loop_space] at *, apply H},
+    { unfold [apn, iterated_ploop_space] at *, apply H},
     { exact sorry}
   end
 
