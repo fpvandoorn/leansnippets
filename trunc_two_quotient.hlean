@@ -123,7 +123,7 @@ namespace trunc_two_quotient
     unfold [ap02,incl2], rewrite [+ap_con,ap_inv,-ap_compose (ap _)],
     xrewrite [H7],
     clear [Hn, Ht, Ht', H7],
-    esimp,
+    esimp, exact sorry
   end
   check natural_square_tr
 /-
