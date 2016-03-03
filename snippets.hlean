@@ -1,11 +1,11 @@
-import homotopy.circle types.nat.basic types.pointed cubical.cubeover
+import homotopy.circle types.nat.hott types.pointed cubical.cubeover
 
 /---------------------------------------------------------------------------------------------------
   Show that type quotient preserves equivalence.
   Can this be done without univalence?
 ---------------------------------------------------------------------------------------------------/
 namespace quotient
-  open equiv.ops equiv
+  open equiv
   universe variables u v
   variables {A B : Type.{u}} {R : A → A → Type.{v}} {S : B → B → Type.{v}}
 
@@ -55,8 +55,8 @@ end pushout
   This is not needed in the library, since we use Hedberg's Theorem to show that the natural numbers
   is a set
 ---------------------------------------------------------------------------------------------------/
-namespace nat
-  open unit eq is_trunc
+namespace nathide
+  open unit eq is_trunc nat
   protected definition code (n m : ℕ) : Type₀ :=
   begin
     revert m,
@@ -105,7 +105,7 @@ namespace nat
       { exact IH m p q}},
   end
   local attribute is_prop_code [instance]
-end nat
+end nathide
 
 /---------------------------------------------------------------------------------------------------
   (Part of) encode-decode proof to characterize < on nat, to show that it is a mere proposition.
@@ -165,6 +165,53 @@ namespace lt
   local attribute is_prop_code [instance]
 
 end lt
+end nat
+
+/---------------------------------------------------------------------------------------------------
+  Alternative recursor for inequality on ℕ
+---------------------------------------------------------------------------------------------------/
+
+namespace nat
+  open eq is_trunc
+
+
+  inductive le2 : ℕ → ℕ → Type :=
+  | zero_le2 : Πk, le2 0 k
+  | succ_le2_succ : Π{n k : ℕ}, le2 n k → le2 (succ n) (succ k)
+
+  open le2
+
+  definition le2_of_le {n m : ℕ} (H : n ≤ m) : le2 n m :=
+  begin
+    induction H with m H IH,
+    { induction n with n IH,
+      { exact zero_le2 0},
+      { exact succ_le2_succ IH}},
+    { clear H, induction IH with m n m IH IH2,
+      { apply zero_le2},
+      { exact succ_le2_succ IH2}}
+  end
+
+  definition le_of_le2 {n m : ℕ} (H : le2 n m) : n ≤ m :=
+  begin
+    induction H with m n m H IH,
+    { apply zero_le},
+    { apply succ_le_succ IH}
+  end
+
+  definition nat.le.rec2 {C : Π (n k : ℕ), n ≤ k → Type}
+    (H1 : Πk, C 0 k (zero_le k))
+    (H2 : (Π{n k : ℕ} (H : n ≤ k), C n k H → C (succ n) (succ k) (succ_le_succ H)))
+    {n k : ℕ} (H : n ≤ k) : C n k H :=
+  begin
+    assert lem : Π(x : le2 n k), C n k (le_of_le2 x),
+    { intro x, clear H,
+      induction x with k n k x IH,
+      { refine transport (C _ _) _ (H1 k), apply is_prop.elim},
+      { refine transport (C _ _) _ (H2 (le_of_le2 x) IH), apply is_prop.elim}},
+    refine transport (C _ _) _ (lem (le2_of_le H)), apply is_prop.elim
+  end
+
 end nat
 
 /---------------------------------------------------------------------------------------------------

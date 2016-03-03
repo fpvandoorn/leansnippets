@@ -1,6 +1,6 @@
 import hit.quotient types.W hit.trunc function
 
-open eq quotient Wtype sigma equiv equiv.ops function is_equiv pi sum unit function
+open eq quotient Wtype sigma equiv function is_equiv pi sum unit function
 
 namespace W_colim
 

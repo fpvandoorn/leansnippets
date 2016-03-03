@@ -9,7 +9,7 @@ Quotient of a reflexive relation
 
 import homotopy.circle cubical.squareover
 
-open quotient eq equiv equiv.ops function circle sum
+open quotient eq equiv function circle sum
 
 section
 variables {A B : Type} (f : A → B) {a : A} {b : B}

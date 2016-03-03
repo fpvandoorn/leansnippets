@@ -1,5 +1,5 @@
 import homotopy.circle
-open circle eq int nat prod sum equiv function equiv.ops is_trunc
+open circle eq int nat prod sum equiv function is_trunc
 
 /---------------------------------------------------------------------------------------------------
 We use the Licata trick to define
