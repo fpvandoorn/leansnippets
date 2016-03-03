@@ -101,9 +101,11 @@ section /- Theorems about the one-step truncation -/
     intro H, induction H with x H,
     refine trunc.elim_on x _, clear x, intro x,
     induction x,
-    { assert q : trunc -1 ((tr_eq a a) = idp),
-      { refine to_fun !tr_eq_tr_equiv _,
-        refine @is_prop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv},
+    { have q : trunc -1 ((tr_eq a a) = idp),
+      begin
+        refine to_fun !tr_eq_tr_equiv _,
+        refine @is_prop.elim _ _ _ _, apply is_trunc_equiv_closed, apply tr_eq_tr_equiv
+      end,
       refine trunc.elim_on q _, clear q, intro p, exact !tr_eq_ne_idp p},
     { apply is_prop.elim}
   end

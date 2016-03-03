@@ -402,7 +402,7 @@ exit
 
 -/
 
-    -- assert H : square (ap (ap (elim P0 P1 P2)) (inclt_eq_ap r)⁻¹)
+    -- have H : square (ap (ap (elim P0 P1 P2)) (inclt_eq_ap r)⁻¹)
     --          (ap_st_closure_elim_h e (λa a' s, ap_compose (elim P0 P1 P2) i (e s)) r)
     --          (ap_compose (elim P0 P1 P2) i (st_closure.elim e r))⁻¹
     --          (ap_st_closure_elim (elim P0 P1 P2) (λa a' r, ap i (e r)) r)

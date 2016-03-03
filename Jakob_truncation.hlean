@@ -37,8 +37,8 @@ namespace prop_truncate
   universe variable l
   definition equiv_prop_truncate (A : Type.{l}) [HA : is_prop A] : A ≃ prop_truncate.{l l+1} A :=
   begin
-    assert HlA : is_prop (lift A),
-      {apply is_trunc_equiv_closed, apply equiv_lift},
+    have HlA : is_prop (lift A),
+    begin apply is_trunc_equiv_closed, apply equiv_lift end,
     apply equiv.trans,
       apply equiv_lift.{l l+1},
     fapply equiv.mk,

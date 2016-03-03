@@ -58,7 +58,7 @@ section
   definition ρaux (a : A) (x : circle) : !class_of (f a x) = aux a := !eq_of_rel (Rmk a x)
 
   definition pρ (a : A) : req_of_rel (ρ a) = idp :=
-  assert H : Π (a' : A), ap (class_of S ∘ f a') loop = idp, from
+  have H : Π (a' : A), ap (class_of S ∘ f a') loop = idp, from
     λa', ap_eq_idp_of_contractible (class_of S ∘ f a') (ρaux a') loop,
   begin
     xrewrite [-H],
