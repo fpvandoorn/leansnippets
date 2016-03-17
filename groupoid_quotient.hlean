@@ -17,11 +17,10 @@ section
 
   inductive groupoid_quotient_R : G → G → Type :=
   | Rmk : Π{a b : G} (f : a ⟶ b), groupoid_quotient_R a b
-  -- local infix `⬝r`:75 := @e_closure.trans G groupoid_quotient_R
-  -- local postfix `⁻¹ʳ`:(max+10) := @e_closure.symm G groupoid_quotient_R
-  -- local notation `[`:max a `]`:0 := @e_closure.of_rel G groupoid_quotient_R _ _ a
+
   open groupoid_quotient_R
   local abbreviation R := groupoid_quotient_R
+
   inductive groupoid_quotient_Q : Π⦃x y : G⦄,
     e_closure groupoid_quotient_R x y → e_closure groupoid_quotient_R x y → Type :=
   | Qrefl : Π(a : G), groupoid_quotient_Q [Rmk (ID a)] rfl
@@ -31,8 +30,10 @@ section
 
   open groupoid_quotient_Q
   local abbreviation Q := groupoid_quotient_Q
-  variables {a b c : G}
+
   definition groupoid_quotient := trunc 1 (two_quotient R Q)
+
+  variables {a b c : G}
   definition elt (a : G) : groupoid_quotient := tr (incl0 _ _ a)
   definition pth' (f : a ⟶ b) : incl0 _ _ a = incl0 _ _ b :=
   incl1 R Q (Rmk f)
