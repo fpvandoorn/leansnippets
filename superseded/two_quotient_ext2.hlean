@@ -38,7 +38,7 @@ variables {A B C : Type} {f : A → B} {a a' a₁ a₂ a₃ a₄ : A} {b b' : B}
   theorem ap_weakly_constant_eq {A B : Type} {f : A → B} {b : B} (p : Πx, f x = b)
     {x y : A} (q : x = y) :
       ap_weakly_constant p q =
-      eq_con_inv_of_con_eq ((eq_of_square (square_of_pathover (apdo p q)))⁻¹ ⬝
+      eq_con_inv_of_con_eq ((eq_of_square (square_of_pathover (apd p q)))⁻¹ ⬝
       whisker_left (p x) (ap_constant q b)) :=
   begin
     induction q, esimp, generalize (p x), intro p, cases p, apply idpath idp
@@ -139,15 +139,15 @@ variables {A B C : Type} {f : A → B} {a a' a₁ a₂ a₃ a₄ : A} {b b' : B}
            (ap_compose g f q) :=
   natural_square (ap_compose g f) r
 
--- definition naturality_apdo {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+-- definition naturality_apd {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
 --   (H : f ~ g) (p : a = a₂)
---   : squareover B vrfl (apdo f p) (apdo g p)
+--   : squareover B vrfl (apd f p) (apd g p)
 --                       (pathover_idp_of_eq (H a)) (pathover_idp_of_eq (H a₂)) :=
 -- by induction p;esimp;exact hrflo
 
-definition naturality_apdo_eq {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
+definition naturality_apd_eq {A : Type} {B : A → Type} {a a₂ : A} {f g : Πa, B a}
   (H : f ~ g) (p : a = a₂)
-  : apdo f p = concato_eq (eq_concato (H a) (apdo g p)) (H a₂)⁻¹ :=
+  : apd f p = concato_eq (eq_concato (H a) (apd g p)) (H a₂)⁻¹ :=
 begin
   induction p, esimp,
   generalizes [H a, g a], intro ga Ha, induction Ha,
@@ -286,7 +286,7 @@ namespace two_quotient_ext
   protected theorem rec_e {P : C → Type}
     (Pj : Πa, P (j a)) (Pa : Π⦃a : A⦄ ⦃r : T a a⦄ (q : Q r), P (pre_aux q))
     (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a =[e s] Pj a') ⦃a a' : A⦄ (s : R a a')
-    : apdo (pre_rec Pj Pa Pe) (e s) = Pe s :=
+    : apd (pre_rec Pj Pa Pe) (e s) = Pe s :=
   !rec_eq_of_rel
 
   protected theorem elim_e {P : Type} (Pj : A → P) (Pa : Π⦃a : A⦄ ⦃r : T a a⦄, Q r → P)
@@ -294,7 +294,7 @@ namespace two_quotient_ext
     : ap (pre_elim Pj Pa Pe) (e s) = Pe s :=
   begin
     apply eq_of_fn_eq_fn_inv !(pathover_constant (e s)),
-    rewrite [▸*,-apdo_eq_pathover_of_eq_ap,↑pre_elim,rec_e],
+    rewrite [▸*,-apd_eq_pathover_of_eq_ap,↑pre_elim,rec_e],
   end
 
   protected theorem elim_et {P : Type} (Pj : A → P) (Pa : Π⦃a : A⦄ ⦃r : T a a⦄, Q r → P)
@@ -422,7 +422,7 @@ exit
                ↑[elim_inclt]],
     apply whisker_tl,
     rewrite [ap_weakly_constant_eq],
-    xrewrite [naturality_apdo_eq (λx, !elim_eq_of_rel) loop],
+    xrewrite [naturality_apd_eq (λx, !elim_eq_of_rel) loop],
     rewrite [↑elim_2,rec_loop,square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
     apply eq_vconcat,

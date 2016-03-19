@@ -59,15 +59,15 @@ namespace trunc_two_quotient
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a =[incl1 s] P0 a')
     (P2 : Π⦃a a' : A⦄ ⦃t t' : T a a'⦄ (q : Q t t'),
       change_path (incl2 q) (e_closure.elimo incl1 P1 t) = e_closure.elimo incl1 P1 t')
-    ⦃a a' : A⦄ (s : R a a') : apdo (rec P0 P1 P2) (incl1 s) = P1 s :=
-  !apdo_ap ⬝ ap !pathover_ap !rec_incl1 ⬝ to_right_inv !pathover_compose (P1 s)
+    ⦃a a' : A⦄ (s : R a a') : apd (rec P0 P1 P2) (incl1 s) = P1 s :=
+  !apd_ap ⬝ ap !pathover_ap !rec_incl1 ⬝ to_right_inv !pathover_compose (P1 s)
 
   theorem rec_inclt {P : trunc_two_quotient → Type} [H : Πx, is_trunc n (P x)]
     (P0 : Π(a : A), P (incl0 a))
     (P1 : Π⦃a a' : A⦄ (s : R a a'), P0 a =[incl1 s] P0 a')
     (P2 : Π⦃a a' : A⦄ ⦃t t' : T a a'⦄ (q : Q t t'),
       change_path (incl2 q) (e_closure.elimo incl1 P1 t) = e_closure.elimo incl1 P1 t')
-    ⦃a a' : A⦄ (t : T a a') : apdo (rec P0 P1 P2) (inclt t) = e_closure.elimo incl1 P1 t :=
+    ⦃a a' : A⦄ (t : T a a') : apd (rec P0 P1 P2) (inclt t) = e_closure.elimo incl1 P1 t :=
   sorry
 
   protected definition elim {P : Type} (P0 : A → P) [H : is_trunc n P]
@@ -206,12 +206,12 @@ section
 
   -- definition rec_loop1 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
   --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apdo (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
+  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
   -- sorry
 
   -- definition rec_loop2 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
   --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apdo (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
+  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
   -- sorry
 
   -- definition rec_surf {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)

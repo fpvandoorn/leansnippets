@@ -383,7 +383,7 @@ namespace circlecomp
 
   definition eq2_pr2 {A : Type} {B : A → Type} {u v : Σa, B a} {p q : u = v} (r : p = q)
     : p..2 =[eq2_pr1 r] q..2 :=
-  !pathover_ap (apdo eq_pr2 r)
+  !pathover_ap (apd eq_pr2 r)
 
   definition natural_square_tr_loop {A : Type} {B : Type} {a : A} {f g : A → B}
     (p : f ~ g) (q : a = a) : natural_square_tr p q = _ :=
@@ -414,8 +414,8 @@ namespace circlecomp
     rewrite [ap_id, ap_compose pr1 f,↑f,elim_loop], apply sigma_eq_pr1 end
 
 
-  definition apdo_eq_apdo_ap {A B : Type} {C : B → Type} (g : Πb, C b) (f : A → B) {a a' : A}
-    (p : a = a') : apdo (λx, g (f x)) p = pathover_of_pathover_ap C f (apdo g (ap f p)) :=
+  definition apd_eq_apd_ap {A B : Type} {C : B → Type} (g : Πb, C b) (f : A → B) {a a' : A}
+    (p : a = a') : apd (λx, g (f x)) p = pathover_of_pathover_ap C f (apd g (ap f p)) :=
   by induction p; reflexivity
 
   definition foo2 (x : S¹) : (f x).2 =[foo1 x] g x :=
@@ -425,7 +425,7 @@ namespace circlecomp
     apply transport (λx, squareover P x _ _ _ _),
     apply to_left_inv !hdeg_square_equiv, esimp,
     apply hdeg_squareover,
-    rewrite [pathover_ap_id, apdo_eq_apdo_ap pr2 f loop, ]
+    rewrite [pathover_ap_id, apd_eq_apd_ap pr2 f loop, ]
     --unfold natural_square_tr,
   end
 
@@ -435,7 +435,7 @@ namespace circlecomp
   !eq2_pr2 ⬝o !sigma_eq_pr2
 
 --set_option pp.notation false
-  theorem my_rec_loop  : apdo (circle.rec Pbase Ploop) loop = Ploop :=
+  theorem my_rec_loop  : apd (circle.rec Pbase Ploop) loop = Ploop :=
   begin
     refine _ ⬝ tr_eq_of_pathover r,
   end
@@ -482,7 +482,7 @@ namespace circlecomp2
     apply eq_equiv_fn_eq
   end
 
-  theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apdo (rec c p) l = p :=
+  theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apd (rec c p) l = p :=
   begin
     refine eq_of_fn_eq_fn !(foo XequivS) _,
   end

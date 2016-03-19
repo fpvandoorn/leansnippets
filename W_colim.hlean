@@ -46,7 +46,7 @@ namespace W_colim
     (Qglue : Π⦃a : A⦄ (b : B a) {f : B a → W a, B a} (q : P (f b)),
       Qincl q =[glue b q] Qincl (g q))
     {a : A} (b : B a) {f : B a → W a, B a} (q : P (f b)) :
-    apdo (rec Qincl Qglue) (glue b q) = Qglue b q :=
+    apd (rec Qincl Qglue) (glue b q) = Qglue b q :=
   !rec_eq_of_rel
 
   protected definition elim {Q : Type} (Qincl : Π⦃w : W a, B a⦄ (p : P w), Q)
@@ -67,7 +67,7 @@ namespace W_colim
       : ap (elim Qincl Qglue) (glue b q) = Qglue b q :=
   begin
     apply eq_of_fn_eq_fn_inv !(pathover_constant (glue b q)),
-    rewrite [▸*,-apdo_eq_pathover_of_eq_ap,↑elim,rec_glue],
+    rewrite [▸*,-apd_eq_pathover_of_eq_ap,↑elim,rec_glue],
   end
 
   protected definition elim_type (Qincl : Π⦃w : W a, B a⦄ (p : P w), Type)

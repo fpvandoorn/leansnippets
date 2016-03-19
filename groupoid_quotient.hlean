@@ -56,12 +56,12 @@ section
 
   -- definition rec_loop1 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
   --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apdo (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
+  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
   -- sorry
 
   -- definition rec_loop2 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
   --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apdo (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
+  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
   -- sorry
 
   -- definition rec_surf {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)

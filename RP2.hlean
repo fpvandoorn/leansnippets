@@ -2,29 +2,6 @@ import hit.two_quotient
 
 open eq unit relation is_equiv equiv function bool pi is_trunc trunc
 
-attribute e_closure.rfl [constructor]
-section
-  local attribute eq_equiv_equiv [constructor]
-  definition ua_symm {A B : Type} (f : A ≃ B) : ua f⁻¹ᵉ = (ua f)⁻¹ :=
-  begin
-    apply inv_eq_of_eq,
-    esimp,
-    refine @(homotopy_inv_of_homotopy (eq_equiv_equiv A B)) _ (λp, equiv_of_eq p⁻¹) _ f,
-    clear f, intro p, apply equiv_eq, reflexivity
-  end
-
-  definition ua_trans {A B C : Type} (f : A ≃ B) (g : B ≃ C) : ua (f ⬝e g) = ua f ⬝ ua g :=
-  begin
-    apply inv_eq_of_eq,
-    esimp,
-    refine @(homotopy_inv_of_homotopy (eq_equiv_equiv A B)) _ (λp, equiv_of_eq (p ⬝ ua g)) _ f,
-    clear f, intro p,
-    refine @(homotopy_inv_of_homotopy (eq_equiv_equiv B C)) _ (λq, equiv_of_eq (p ⬝ q)) _ g,
-    clear g, intro q, apply equiv_eq, esimp, induction q, reflexivity
-  end
-
-end
-
 section
   parameters {A : Type}
              {R : A → A → Type}
@@ -170,7 +147,7 @@ section
 
   theorem rec_loop {P : RP2 → Type} {Pb : P base} {Pl : Pb =[loop] Pb}
     (Ps : change_path surf (Pl ⬝o Pl) = idpo)
-    : apdo (RP2.rec Pb Pl Ps) loop = Pl :=
+    : apd (RP2.rec Pb Pl Ps) loop = Pl :=
   !rec_incl1
 
   protected definition elim {P : Type} (Pb : P) (Pl : Pb = Pb)

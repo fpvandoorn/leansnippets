@@ -53,7 +53,7 @@ namespace two_quotient
   private theorem rec_e {P : C → Type}
     (Pj : Πa, P (j a)) (Pa : Π⦃a : A⦄ ⦃r : R a a⦄ (q : Q r), P (pre_aux q))
     (Pe : Π⦃a a' : A⦄ (s : R a a'), Pj a =[e s] Pj a') ⦃a a' : A⦄ (s : R a a')
-    : apdo (pre_rec Pj Pa Pe) (e s) = Pe s :=
+    : apd (pre_rec Pj Pa Pe) (e s) = Pe s :=
   !rec_eq_of_rel
 
   private theorem elim_e {P : Type} (Pj : A → P) (Pa : Π⦃a : A⦄ ⦃r : R a a⦄, Q r → P)
@@ -61,7 +61,7 @@ namespace two_quotient
     : ap (pre_elim Pj Pa Pe) (e s) = Pe s :=
   begin
     apply eq_of_fn_eq_fn_inv !(pathover_constant (e s)),
-    rewrite [▸*,-apdo_eq_pathover_of_eq_ap,↑pre_elim,rec_e],
+    rewrite [▸*,-apd_eq_pathover_of_eq_ap,↑pre_elim,rec_e],
   end
 
   inductive two_quotient_rel : C → C → Type :=
@@ -140,7 +140,7 @@ check_expr empty,
     apply whisker_tl,
 check_expr empty,
     rewrite [ap_is_constant_eq],
-    xrewrite [naturality_apdo_eq (λx, !elim_eq_of_rel) loop],
+    xrewrite [naturality_apd_eq (λx, !elim_eq_of_rel) loop],
     rewrite [↑elim_2,rec_loop,square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
 check_expr empty,

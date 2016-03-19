@@ -39,14 +39,14 @@ namespace disc
   predisc.rec Pb Pe (pathover_of_eq Pl) x
 
   theorem rec_l {P : predisc → Type} (Pb : P b) (Pe : P e) (Pl : Pb =[l] Pb)
-    : apdo (predisc.rec Pb Pe Pl) l = Pl :=
+    : apd (predisc.rec Pb Pe Pl) l = Pl :=
   !rec_eq_of_rel
 
   theorem elim_l {P : Type} {Pb Pe : P} (Pl : Pb = Pb)
     : ap (predisc.elim Pb Pe Pl) l = Pl :=
   begin
     apply eq_of_fn_eq_fn_inv !(pathover_constant l),
-    rewrite [▸*,-apdo_eq_pathover_of_eq_ap,↑predisc.elim,rec_l],
+    rewrite [▸*,-apd_eq_pathover_of_eq_ap,↑predisc.elim,rec_l],
   end
 
   end predisc
@@ -110,7 +110,7 @@ namespace disc
                ap_con_right_inv_sq (disc.elim Pb Pl Pf) (fill' circle.base)),
                ↑[elim_lp]],
     apply whisker_tl,
-    rewrite [ap_is_constant_eq,naturality_apdo_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
+    rewrite [ap_is_constant_eq,naturality_apd_eq (λx, !elim_eq_of_rel) loop,▸*,↑elim_2,rec_loop,
             square_of_pathover_concato_eq,square_of_pathover_eq_concato,
             eq_of_square_vconcat_eq,eq_of_square_eq_vconcat],
     -- rewriting here with
@@ -198,12 +198,12 @@ exit
 
   definition rec_loop1 {P : disc → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
     (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-    : apdo (disc.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
+    : apd (disc.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
   sorry
 
   definition rec_loop2 {P : disc → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
     (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-    : apdo (disc.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
+    : apd (disc.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
   sorry
 
   definition rec_fill {P : disc → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)

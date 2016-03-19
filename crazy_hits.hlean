@@ -29,7 +29,7 @@ namespace hide
   X.rec_on x Pb Ps
 
   axiom rec_p {P : X → Type} (Pb : P b) (Ps : Π(f : S¹ → X), (Π(x : S¹), P (f x)) →  P (s f))
-    (Pp : Pb =[p] Pb) : apdo (rec Pb Ps Pp) p = Pp
+    (Pp : Pb =[p] Pb) : apd (rec Pb Ps Pp) p = Pp
 
   definition elim [unfold 5] {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
     (Pp : Pb = Pb) (x : X) : P :=

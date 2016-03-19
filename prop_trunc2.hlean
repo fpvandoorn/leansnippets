@@ -42,7 +42,7 @@ definition one_step_tr_dup {A : Type} (B : one_step_tr A → Type)
   : (Π(x : one_step_tr A), B x) ≃ Σ(f : Πa, B (tr a)), Π(x y : A), f x =[tr_eq x y] f y :=
 begin
   fapply equiv.MK,
-  { intro f, fconstructor, intro a, exact f (tr a), intros, exact apdo f !tr_eq},
+  { intro f, fconstructor, intro a, exact f (tr a), intros, exact apd f !tr_eq},
   { intro v a, induction v with f p, induction a, exact f a, apply p},
   { intro v, induction v with f p, esimp, apply ap (sigma.mk _), apply eq_of_homotopy2, intro a a',
     apply rec_tr_eq},

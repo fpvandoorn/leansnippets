@@ -109,7 +109,7 @@ section
     (Pc : Π(a : A), P (rclass_of a))
     (Pp : Π⦃a a' : A⦄ (H : R a a'), Pc a =[req_of_rel H] Pc a')
     (Pr : Π(a : A), Pp (ρ a) =[pρ a] idpo)
-    {a a' : A} (H : R a a') : apdo (rec Pc Pp Pr) (req_of_rel H) = Pp H :=
+    {a a' : A} (H : R a a') : apd (rec Pc Pp Pr) (req_of_rel H) = Pp H :=
   sorry
 
   theorem rec_pρ {P : refl_quotient → Type}
