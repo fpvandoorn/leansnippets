@@ -364,6 +364,44 @@ namespace circle
 
 end circle
 
+/---------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------/
+
+namespace pushout
+
+  open eq pi
+
+  variables {TL BL TR : Type} {f : TL → BL} {g : TL → TR}
+
+  protected definition elim_type' [unfold 9] (Pinl : BL → Type) (Pinr : TR → Type)
+    (Pglue : Π(x : TL), Pinl (f x) ≃ Pinr (g x)) : pushout f g → Type :=
+  pushout.elim Pinl Pinr (λx, ua (Pglue x))
+
+  protected definition elim_type_eq {Pinl : BL → Type} {Pinr : TR → Type}
+    (Pglue : Π(x : TL), Pinl (f x) ≃ Pinr (g x)) (y : pushout f g) :
+    pushout.elim_type Pinl Pinr Pglue y ≃ pushout.elim_type' Pinl Pinr Pglue y :=
+  begin
+    fapply equiv.MK,
+    { induction y, exact id, exact id, apply arrow_pathover_left, esimp, intro,
+      apply pathover_of_tr_eq, exact sorry},
+    { induction y, exact id, exact id, apply arrow_pathover_left, esimp, intro,
+      apply pathover_of_tr_eq, exact sorry},
+    { intro b, induction y, reflexivity, reflexivity, esimp,
+      apply pi_pathover_left, intro b, esimp at *, exact sorry},
+    { exact sorry},
+  end
+
+/---------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------/
+
+
+
+/---------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------/
+
 
 
 /---------------------------------------------------------------------------------------------------
