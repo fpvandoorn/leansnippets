@@ -7,9 +7,9 @@ Authors: Floris van Doorn
 Declaration of the groupoid quotient
 -/
 
-import hit.two_quotient algebra.category.groupoid hit.trunc
+import algebra.category.groupoid hit.trunc .trunc_two_quotient
 
-open two_quotient eq bool unit relation category e_closure iso is_trunc trunc
+open trunc_two_quotient eq bool unit relation category e_closure iso is_trunc trunc
 
 namespace groupoid_quotient
 section
@@ -31,115 +31,115 @@ section
   open groupoid_quotient_Q
   local abbreviation Q := groupoid_quotient_Q
 
-  definition groupoid_quotient := trunc 1 (two_quotient R Q)
+  definition groupoid_quotient := trunc_two_quotient 1 R Q
+
+  local attribute groupoid_quotient [reducible]
+  definition is_trunc_groupoid_quotient [instance] : is_trunc 1 groupoid_quotient := _
 
   variables {a b c : G}
-  definition elt (a : G) : groupoid_quotient := tr (incl0 _ _ a)
-  definition pth' (f : a ⟶ b) : incl0 _ _ a = incl0 _ _ b :=
-  incl1 R Q (Rmk f)
-  definition pth (f : a ⟶ b) : elt a = elt b := ap tr (pth' f)
-  definition resp_id (a : G) : pth (ID a) = idp := ap02 tr (incl2 _ _ (Qrefl a))
-  definition resp_comp (g : b ⟶ c) (f : a ⟶ b) : pth (g ∘ f) = pth f ⬝ pth g :=
-  ap02 tr (incl2 _ _ (Qconcat g f)) ⬝ ap_con tr (pth' f) (pth' g)
-  definition resp_inv (f : a ⟶ b) : pth (f⁻¹) = (pth f)⁻¹ :=
-  ap02 tr (incl2 _ _ (Qinv f)) ⬝ ap_inv tr (pth' f)
-  theorem is_trunc_groupoid_quotient : is_trunc 1 groupoid_quotient :=
-  !is_trunc_trunc
+  definition elt (a : G) : groupoid_quotient := incl0 a
+  definition pth (f : a ⟶ b) : elt a = elt b := incl1 (Rmk f)
+  definition resp_id (a : G) : pth (ID a) = idp := incl2 (Qrefl a)
+  definition resp_comp (g : b ⟶ c) (f : a ⟶ b) : pth (g ∘ f) = pth f ⬝ pth g := incl2 (Qconcat g f)
+  definition resp_inv (f : a ⟶ b) : pth (f⁻¹) = (pth f)⁻¹ := incl2 (Qinv f)
 
-  -- protected definition rec {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
-  --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   (x : groupoid_quotient) : P x :=
-  -- sorry
-
-  -- example {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb) (Pl2 : Pb =[loop2] Pb)
-  --         (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2) : groupoid_quotient.rec Pb Pl1 Pl2 Pf base = Pb := idp
-
-  -- definition rec_loop1 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
-  --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop1 = Pl1 :=
-  -- sorry
-
-  -- definition rec_loop2 {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
-  --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : apd (groupoid_quotient.rec Pb Pl1 Pl2 Pf) loop2 = Pl2 :=
-  -- sorry
-
-  -- definition rec_surf {P : groupoid_quotient → Type} (Pb : P base) (Pl1 : Pb =[loop1] Pb)
-  --   (Pl2 : Pb =[loop2] Pb) (Pf : squareover P fill Pl1 Pl1 Pl2 Pl2)
-  --   : cubeover P rfl1 (apds (groupoid_quotient.rec Pb Pl1 Pl2 Pf) fill) Pf
-  --              (vdeg_squareover !rec_loop2) (vdeg_squareover !rec_loop2)
-  --              (vdeg_squareover !rec_loop1) (vdeg_squareover !rec_loop1) :=
-  -- sorry
-
-  protected definition elim {P : 1-Type} (Pe : G → P) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
-    (Pid : Πa, Pp (ID a) = idp) (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
-    (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) (x : groupoid_quotient) : P :=
+  protected definition rec {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
+    (Pe : Πg, P (elt g)) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b)
+    (Pid : Πa, change_path (resp_id a) (Pp (ID a)) = idpo)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b),
+      change_path (resp_comp g f) (Pp (g ∘ f)) = Pp f ⬝o Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), change_path (resp_inv f) (Pp f⁻¹) = (Pp f)⁻¹ᵒ)
+    (x : groupoid_quotient) : P x :=
   begin
-    refine trunc.elim _ x,
-    { intro x,
-      induction x,
-      { exact Pe a},
-      { induction s with a b f, exact Pp f},
-      { induction q, all_goals esimp [e_closure.elim],
-        { exact Pid a},
-        { exact Pcomp g f},
-        { exact Pinv f}}}
+    induction x,
+    { apply Pe},
+    { induction s with a b f, apply Pp},
+    { induction q with a a b c g f a b f,
+      { apply Pid},
+      { apply Pcomp},
+      { apply Pinv}},
   end
 
-  protected definition elim_on [reducible] {P : 1-Type} (x : groupoid_quotient) (Pe : G → P)
-    (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
-    (Pid : Πa, Pp (ID a) = idp) (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+  protected definition rec_on {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
+    (x : groupoid_quotient)
+    (Pe : Πg, P (elt g)) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b)
+    (Pid : Πa, change_path (resp_id a) (Pp (ID a)) = idpo)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b),
+      change_path (resp_comp g f) (Pp (g ∘ f)) = Pp f ⬝o Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), change_path (resp_inv f) (Pp f⁻¹) = (Pp f)⁻¹ᵒ) : P x :=
+  rec Pe Pp Pid Pcomp Pinv x
+
+  -- without the proof ... qed this takes 10+ seconds to compile
+  definition rec_loop1 {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
+    {Pe : Πg, P (elt g)} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b}
+    (Pid : Πa, change_path (resp_id a) (Pp (ID a)) = idpo)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b),
+      change_path (resp_comp g f) (Pp (g ∘ f)) = Pp f ⬝o Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), change_path (resp_inv f) (Pp f⁻¹) = (Pp f)⁻¹ᵒ)
+    {a b : G} (f : a ⟶ b) : apd (rec Pe Pp Pid Pcomp Pinv) (pth f) = Pp f :=
+  proof !rec_incl1 qed
+
+  protected definition elim {P : Type} [is_trunc 1 P] (Pe : G → P)
+    (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b) (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) (x : groupoid_quotient) : P :=
+  begin
+    induction x,
+    { exact Pe a},
+    { induction s with a b f, exact Pp f},
+    { induction q with a a b c g f a b f,
+      { exact Pid a},
+      { exact Pcomp g f},
+      { exact Pinv f}},
+  end
+
+  protected definition elim_on [reducible] {P : Type} [is_trunc 1 P] (x : groupoid_quotient)
+    (Pe : G → P) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
+    (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
     (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) : P :=
   elim Pe @Pp Pid @Pcomp @Pinv x
 
-  definition elim_pth {P : 1-Type} (Pe : G → P) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
-    (Pid : Πa, Pp (ID a) = idp) (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+  definition elim_pth {P : Type} [is_trunc 1 P] {Pe : G → P} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b}
+    (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
     (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) {a b : G} (f : a ⟶ b) :
     ap (elim Pe Pp Pid Pcomp Pinv) (pth f) = Pp f :=
-  !ap_compose⁻¹ ⬝ !elim_incl1
-exit
-  -- set_option pp.notation false
-  -- set_option pp.implicit true
-  theorem elim_resp_id {P : 1-Type} (Pe : G → P) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
-    (Pid : Πa, Pp (ID a) = idp) (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+  !elim_incl1
+
+  theorem elim_resp_id {P : Type} [is_trunc 1 P] {Pe : G → P}
+    {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b} (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
     (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) (a : G)
     : square (ap02 (elim Pe Pp Pid Pcomp Pinv) (resp_id a))
              (Pid a)
-             !elim_pth
+             (elim_pth Pid Pcomp Pinv (ID a))
              idp :=
-  begin
-    rewrite [↑[groupoid_quotient.elim,elim_pth,resp_id,ap02],-ap_compose],
-    -- let H := eq_top_of_square (natural_square ((ap_compose ((trunc.elim
-    --             (two_quotient.elim R Q Pe @(groupoid_quotient_R.rec Pp)
-    --                (groupoid_quotient_Q.rec Pid Pcomp Pinv))))
-    --       (@tr 1 _))) (incl2 R Q (Qrefl a))),
-    -- refine tr_rev (λx, square x _ _ _) _ _,
-    -- rotate 1,
-    -- exact eq_top_of_square (natural_square (λx, (ap_compose ((trunc.elim
-    --             (two_quotient.elim R Q Pe @(groupoid_quotient_R.rec Pp)
-    --                (groupoid_quotient_Q.rec Pid Pcomp Pinv))))
-    --       (@tr 1 _) x)⁻¹) (incl2 R Q (Qrefl a))),
+  proof !elim_incl2 qed
 
-    -- xrewrite [eq_top_of_square (natural_square ((ap_compose ((trunc.elim
-    --             (two_quotient.elim R Q Pe @(groupoid_quotient_R.rec Pp)
-    --                (groupoid_quotient_Q.rec Pid Pcomp Pinv))))
-    --       (@tr 1 _))) (incl2 R Q (Qrefl a)))],
-    -- let H := eq_top_of_square
-    --   (elim_incl2 R Q Pe @(groupoid_quotient_R.rec Pp) (groupoid_quotient_Q.rec Pid Pcomp Pinv) (Qrefl a)),
-    xrewrite [eq_top_of_square (natural_square (homotopy.symm (ap_compose ((trunc.elim
-                (two_quotient.elim R Q Pe @(groupoid_quotient_R.rec Pp)
-                   (groupoid_quotient_Q.rec Pid Pcomp Pinv))))
-          (@tr 1 _))) (incl2 R Q (Qrefl a)))],
-    esimp [inclt,e_closure.elim,function.compose],
-    xrewrite [eq_top_of_square (elim_incl2 R Q Pe @(groupoid_quotient_R.rec Pp)
-                                 (groupoid_quotient_Q.rec Pid Pcomp Pinv) (Qrefl a))],
-    esimp [elim_inclt], exact sorry
-  end
+  theorem elim_resp_comp {P : Type} [is_trunc 1 P] {Pe : G → P}
+    {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b} (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) {a b c : G} (g : b ⟶ c) (f : a ⟶ b)
+    : square (ap02 (elim Pe Pp Pid Pcomp Pinv) (resp_comp g f))
+             (Pcomp g f)
+             (elim_pth Pid Pcomp Pinv (g ∘ f))
+             (!ap_con ⬝ (elim_pth Pid Pcomp Pinv f ◾ elim_pth Pid Pcomp Pinv g)) :=
+  proof !elim_incl2 qed
+
+  theorem elim_resp_inv {P : Type} [is_trunc 1 P] {Pe : G → P}
+    {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b} (Pid : Πa, Pp (ID a) = idp)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g)
+    (Pinv : Π⦃a b⦄ (f : a ⟶ b), Pp f⁻¹ = (Pp f)⁻¹) {a b : G} (f : a ⟶ b)
+    : square (ap02 (elim Pe Pp Pid Pcomp Pinv) (resp_inv f))
+             (Pinv f)
+             (elim_pth Pid Pcomp Pinv f⁻¹)
+             (!ap_inv ⬝ (elim_pth Pid Pcomp Pinv f)⁻²) :=
+  proof !elim_incl2 qed
+
 end
 end groupoid_quotient
 
 attribute groupoid_quotient.elt [constructor]
---attribute /-groupoid_quotient.rec-/ groupoid_quotient.elim [unfold 8] [recursor 8]
---attribute groupoid_quotient.elim_type [unfold 9]
---attribute /-groupoid_quotient.rec_on-/ groupoid_quotient.elim_on [unfold 2]
---attribute groupoid_quotient.elim_type_on [unfold 6]
+attribute groupoid_quotient.rec groupoid_quotient.elim [unfold 9] [recursor 9]
+attribute groupoid_quotient.rec_on groupoid_quotient.elim_on [unfold 4]
