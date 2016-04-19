@@ -7,7 +7,7 @@ Authors: Floris van Doorn
 Declaration of the groupoid quotient
 -/
 
-import algebra.category.groupoid hit.trunc .trunc_two_quotient
+import algebra.category.groupoid .trunc_two_quotient homotopy.connectedness
 
 open trunc_two_quotient eq bool unit relation category e_closure iso is_trunc trunc equiv is_equiv
 
@@ -34,6 +34,7 @@ section
   local attribute groupoid_quotient [reducible]
   definition is_trunc_groupoid_quotient [instance] : is_trunc 1 groupoid_quotient := _
 
+  parameter {G}
   variables {a b c : G}
   definition elt (a : G) : groupoid_quotient := incl0 a
   definition pth (f : a ⟶ b) : elt a = elt b := incl1 (Rmk f)
@@ -73,6 +74,15 @@ section
       change_path (resp_comp g f) (Pp (g ∘ f)) = Pp f ⬝o Pp g) : P x :=
   rec Pe Pp Pcomp x
 
+  protected definition set_rec {P : groupoid_quotient → Type} [Πx, is_set (P x)]
+    (Pe : Πg, P (elt g)) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b)
+    (x : groupoid_quotient) : P x :=
+  rec Pe Pp !center x
+
+  protected definition prop_rec {P : groupoid_quotient → Type} [Πx, is_prop (P x)]
+    (Pe : Πg, P (elt g)) (x : groupoid_quotient) : P x :=
+  rec Pe !center !center x
+
   definition rec_loop1 {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
     {Pe : Πg, P (elt g)} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b}
     (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b),
@@ -97,6 +107,15 @@ section
     (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g) : P :=
   elim Pe Pp Pcomp x
 
+  protected definition set_elim [reducible] {P : Type} [is_set P] (Pe : G → P)
+    (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b)
+    (x : groupoid_quotient) : P :=
+  elim Pe Pp !center x
+
+  protected definition prop_elim [reducible] {P : Type} [is_prop P] (Pe : G → P)
+    (x : groupoid_quotient) : P :=
+  elim Pe !center !center x
+
   definition elim_pth {P : Type} [is_trunc 1 P] {Pe : G → P} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b}
     (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g) {a b : G} (f : a ⟶ b) :
     ap (elim Pe Pp Pcomp) (pth f) = Pp f :=
@@ -114,16 +133,17 @@ section
              (!ap_con ⬝ (elim_pth Pcomp f ◾ elim_pth Pcomp g)) :=
   proof !elim_incl2 qed
 
-  protected definition elim_set (Pe : G → Set)
-    (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a ≃ Pe b)
+  protected definition elim_set.{u} (Pe : G → Set.{u}) (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a ≃ Pe b)
     (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b) (x : Pe a), Pp (g ∘ f) x = Pp g (Pp f x))
-    (x : groupoid_quotient) : Set :=
-  elim Pe (λa b f, tua (Pp f)) sorry x
+    (x : groupoid_quotient) : Set.{u} :=
+  elim Pe (λa b f, tua (Pp f)) (λa b c g f, ap tua (equiv_eq (Pcomp g f)) ⬝ !tua_trans) x
 
-  -- definition elim_pth {P : Type} [is_trunc 1 P] {Pe : G → P} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b}
-  --   (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g) {a b : G} (f : a ⟶ b) :
-  --   ap (elim Pe Pp Pcomp) (pth f) = Pp f :=
-  -- !elim_incl1
+  theorem elim_set_pth {Pe : G → Set} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a ≃ Pe b}
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b) (x : Pe a), Pp (g ∘ f) x = Pp g (Pp f x))
+    {a b : G} (f : a ⟶ b) :
+    transport (elim_set Pe Pp Pcomp) (pth f) = Pp f :=
+  by rewrite [tr_eq_cast_ap_fn, ↑elim_set, ▸*, ap_compose' trunctype.carrier, elim_pth];
+     apply tcast_tua_fn
 
 end
 end groupoid_quotient
@@ -131,30 +151,153 @@ end groupoid_quotient
 attribute groupoid_quotient.elt [constructor]
 attribute groupoid_quotient.rec groupoid_quotient.elim [unfold 7] [recursor 7]
 attribute groupoid_quotient.rec_on groupoid_quotient.elim_on [unfold 4]
+attribute groupoid_quotient.set_rec groupoid_quotient.set_elim [unfold 6]
+attribute groupoid_quotient.prop_rec groupoid_quotient.prop_elim
+          groupoid_quotient.elim_set [unfold 5]
 
-open sigma
+
+open sigma pi is_conn function
 namespace groupoid_quotient
+section
   universe variables u v
-  variables {G : Groupoid.{u v}} (g₁ g₂ : G)
+  variables {G : Groupoid.{u v}} (a : G) {b c : G}
 
-  -- attribute is_equiv_sigma_eq is_equiv_subtype_eq equiv_subtype [constructor]
-  -- attribute subtype_eq [unfold_full]
-  -- attribute sigma_eq_unc [unfold 5]
+  include a
 
-  -- TODO: equiv.refl explicit argument, equiv.rfl implicit *check*
-  -- TODO: equiv_eq' should be the default
-
-  include g₁
-
-  protected definition code (y : groupoid_quotient G) : Set.{v} :=
+  protected definition code [unfold 3] (x : groupoid_quotient G) : Set.{v} :=
   begin
-    induction y with g₂ g₂ g₃ f g₂ g₃ g₄ f h,
-    { exact homset g₁ g₂},
-    { apply tua, esimp, exact equiv_postcompose f},
-    { refine _ ⬝ !tua_trans, apply ap tua, apply equiv_eq, intro k, esimp at *, apply assoc'}
+    refine groupoid_quotient.elim_set _ _ _ x,
+    { intro b, exact homset a b},
+    { intro b c g, exact equiv_postcompose g},
+    { intro b c d h g f, esimp at *, apply assoc'}
   end
 
-  definition path_space_groupoid_quotient : (elt G g₁ = elt G g₂) ≃ (g₁ ⟶ g₂) :=
-  sorry
+  omit a
+
+  local abbreviation code [unfold 3] := @groupoid_quotient.code G a
+
+  variable {a}
+  protected definition encode [unfold 4] (x : groupoid_quotient G) (p : elt a = x) : code a x :=
+  transport (code a) p (ID a)
+
+  protected definition decode [unfold 3] (x : groupoid_quotient G) (z : code a x) : elt a = x :=
+  begin
+    induction x using groupoid_quotient.set_rec with b b c g,
+    { esimp, exact pth z},
+    { apply arrow_pathover_left, esimp, intro f, apply eq_pathover_constant_left_id_right,
+      apply square_of_eq, refine !resp_comp⁻¹ ⬝ _ ⬝ !idp_con⁻¹, rewrite elim_set_pth}
+  end
+
+  local abbreviation encode [unfold_full] := @groupoid_quotient.encode G a
+  local abbreviation decode [unfold 3] := @groupoid_quotient.decode G a
+
+  protected definition decode_encode (x : groupoid_quotient G) (p : elt a = x) :
+    decode x (encode x p) = p :=
+  begin induction p, esimp, apply resp_id end
+
+  -- set_option pp.universes true
+  -- set_option pp.abbreviations false
+  -- set_option pp.notation false
+  -- print groupoid_quotient.elim_set_pth
+  -- print ap10
+  -- set_option formatter.hide_full_terms false
+
+  protected definition encode_decode (x : groupoid_quotient G) (z : code a x) :
+    encode x (decode x z) = z :=
+  begin
+    induction x using groupoid_quotient.prop_rec with b,
+    esimp, refine ap10 !elim_set_pth.{u v v} (ID a) ⬝ _, esimp,
+    apply id_right
+  end
+
+  definition decode_comp (z : code a (elt b)) (z' : code b (elt c)) :
+    decode (elt c) (z' ∘ z) = decode (elt b) z ⬝ decode (elt c) z' :=
+  !resp_comp
+
+  variables (a b)
+  definition elt_eq_elt_equiv [constructor] : (elt a = elt b) ≃ (a ⟶ b) :=
+  equiv.MK (encode (elt b)) (decode (elt b))
+           (groupoid_quotient.encode_decode (elt b)) (groupoid_quotient.decode_encode (elt b))
+
+  variables {a b}
+  definition encode_con (p : elt a = elt b)
+    (q : elt b = elt c) : encode (elt c) (p ⬝ q) = encode (elt c) q ∘ encode (elt b) p :=
+  begin
+    apply eq_of_fn_eq_fn (elt_eq_elt_equiv a c)⁻¹ᵉ,
+    refine !right_inv ⬝ _ ⬝ !decode_comp⁻¹,
+    apply concat2, do 2 exact (to_left_inv !elt_eq_elt_equiv _)⁻¹
+  end
+
+  variable (G)
+  definition is_conn_groupoid_quotient [H : is_conn 0 G] : is_conn 0 (groupoid_quotient G) :=
+  begin
+    have g : trunc 0 G, from !center,
+    induction g with g,
+    have p : Πh, ∥ g = h ∥,
+    begin
+      intro h, refine !tr_eq_tr_equiv _, apply is_prop.elim
+    end,
+    fapply is_contr.mk,
+    { apply trunc_functor 0 elt (tr g)},
+    { intro x, induction x with x,
+      induction x using groupoid_quotient.prop_rec with b, esimp,
+      induction p b with q, exact ap (tr ∘ elt) q}
+  end
+
+end
+  /- Eilenberg MacLane spaces -/
+
+  open algebra pointed nat eq
+
+  -- TODO: redefine this in the groupoid file
+  definition groupoid_of_group'.{l} [constructor] (A : Type.{l}) [G : group A] :
+    groupoid.{0 l} unit :=
+  begin
+    fapply groupoid.mk; fapply precategory.mk: intros,
+      { exact A},
+      { exact _},
+      { exact a_2 * a_1},
+      { exact 1},
+      { apply mul.assoc},
+      { apply mul_one},
+      { apply one_mul},
+      { esimp [precategory.mk],
+        fapply is_iso.mk,
+        { exact f⁻¹},
+        { apply mul.right_inv},
+        { apply mul.left_inv}},
+  end
+
+  definition Groupoid_of_Group [constructor] (G : Group) : Groupoid :=
+  Groupoid.mk unit (groupoid_of_group' G)
+
+  definition EM1 [reducible] [constructor] (G : Group) : Type* :=
+  pointed.MK (groupoid_quotient (Groupoid_of_Group G)) (elt star)
+
+  definition base [constructor] {G : Group} : EM1 G := elt star
+
+  definition base_eq_base_equiv [constructor] (G : Group) : (base = base :> EM1 G) ≃ G :=
+  !elt_eq_elt_equiv
+
+  -- definition tr_mul_tr {n : ℕ} {A : Type*} (p q : Ω[succ n] A)
+  --   : tr p *[π[succ n] A] tr q = tr (p ⬝ q) :=
+  -- idp
+
+  definition fundamental_group_EM1 (G : Group) : π₁ (EM1 G) = G :> Group :=
+  begin
+    fapply Group_eq,
+    { exact trunc_equiv_trunc 0 !base_eq_base_equiv ⬝e trunc_equiv 0 G},
+    { intros g h, induction g with p, induction h with q,
+      exact encode_con p q}
+  end
+
+  proposition is_trunc_EM1 [instance] (G : Group) : is_trunc 1 (EM1 G) :=
+  !is_trunc_trunc
+
+  -- TODO: move
+  attribute Groupoid._trans_of_to_Precategory_1 Groupoid.to_Precategory [unfold 1]
+  proposition is_conn_EM1 [instance] (G : Group) : is_conn 0 (EM1 G) :=
+  by apply @is_conn_groupoid_quotient; esimp; exact _
+
 
 end groupoid_quotient
