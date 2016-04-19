@@ -130,15 +130,10 @@ namespace trunc_two_quotient
       ap_e_closure_elim (elim P0 P1 P2) (λa a' (r : R a a'), ap tr (two_quotient.incl1 R Q r)) t ⬝
       (ap_e_closure_elim_h (two_quotient.incl1 R Q)
         (λa a' (s : R a a'), ap_compose (elim P0 P1 P2) tr (two_quotient.incl1 R Q s)) t)⁻¹ ⬝
-      two_quotient.elim_inclt P2 t = elim_inclt P2 t,
-    begin
-      clear q t t', intro t,
-      induction t with a a' r a a' pp a a' r IH a a' a'' r r' IH₁ IH₂,
-      { esimp, rewrite idp_con},
-      { induction pp, reflexivity},
-      { },
-      { }
-    end,
+      two_quotient.elim_inclt P2 t = elim_inclt P2 t, from
+        ap_e_closure_elim_h_zigzag (elim P0 P1 P2)
+                                   (two_quotient.incl1 R Q)
+                                   (two_quotient.elim_incl1 P2),
     rewrite [con.assoc5, con.assoc5, H t, -inv_con_inv_right, -con_inv], xrewrite [H t'],
     apply top_deg_square
   end
