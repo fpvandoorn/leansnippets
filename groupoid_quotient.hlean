@@ -9,7 +9,7 @@ Declaration of the groupoid quotient
 
 import algebra.category.groupoid hit.trunc .trunc_two_quotient
 
-open trunc_two_quotient eq bool unit relation category e_closure iso is_trunc trunc
+open trunc_two_quotient eq bool unit relation category e_closure iso is_trunc trunc equiv is_equiv
 
 namespace groupoid_quotient
 section
@@ -114,6 +114,17 @@ section
              (!ap_con ⬝ (elim_pth Pcomp f ◾ elim_pth Pcomp g)) :=
   proof !elim_incl2 qed
 
+  protected definition elim_set (Pe : G → Set)
+    (Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a ≃ Pe b)
+    (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b) (x : Pe a), Pp (g ∘ f) x = Pp g (Pp f x))
+    (x : groupoid_quotient) : Set :=
+  elim Pe (λa b f, tua (Pp f)) sorry x
+
+  -- definition elim_pth {P : Type} [is_trunc 1 P] {Pe : G → P} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a = Pe b}
+  --   (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b), Pp (g ∘ f) = Pp f ⬝ Pp g) {a b : G} (f : a ⟶ b) :
+  --   ap (elim Pe Pp Pcomp) (pth f) = Pp f :=
+  -- !elim_incl1
+
 end
 end groupoid_quotient
 
@@ -121,47 +132,26 @@ attribute groupoid_quotient.elt [constructor]
 attribute groupoid_quotient.rec groupoid_quotient.elim [unfold 7] [recursor 7]
 attribute groupoid_quotient.rec_on groupoid_quotient.elim_on [unfold 4]
 
-open equiv is_equiv
+open sigma
 namespace groupoid_quotient
   universe variables u v
   variables {G : Groupoid.{u v}} (g₁ g₂ : G)
 
---   print instances precategory
---   print instances groupoid
+  -- attribute is_equiv_sigma_eq is_equiv_subtype_eq equiv_subtype [constructor]
+  -- attribute subtype_eq [unfold_full]
+  -- attribute sigma_eq_unc [unfold 5]
 
--- set_option pp.universes true
--- print homset
---   set_option pp.coercions true
-  -- set_option pp.all true
---   definition precategory_Precategory_Groupoid [instance] (G : Groupoid)
---     : precategory (Groupoid._trans_of_to_Precategory_1 G) :=
---   _
-
-  definition tua {n : ℕ₋₂} {A B : n-Type} (f : A ≃ B) : A = B :=
-  to_inv (trunctype_eq_equiv n A B) (ua f)
-
-
-  definition is_equiv_postcompose [constructor] {ob : Type} [precategory ob] {a b c : ob}
-    (g : b ⟶ c) [is_iso g] : is_equiv (λ(f : a ⟶ b), g ∘ f) :=
-  begin
-    fapply adjointify,
-    { exact λf', g⁻¹ ∘ f'},
-    { intro f', apply comp_inverse_cancel_left},
-    { intro f, apply inverse_comp_cancel_left}
-  end
-
-  definition equiv_postcompose [constructor] {ob : Type} [precategory ob] {a b c : ob}
-    (g : b ⟶ c) [is_iso g] : (a ⟶ b) ≃ (a ⟶ c) :=
-  equiv.mk (λ(f : a ⟶ b), g ∘ f) (is_equiv_postcompose g)
+  -- TODO: equiv.refl explicit argument, equiv.rfl implicit *check*
+  -- TODO: equiv_eq' should be the default
 
   include g₁
 
   protected definition code (y : groupoid_quotient G) : Set.{v} :=
   begin
-    induction y with g₂ g₂ g₂' f,
+    induction y with g₂ g₂ g₃ f g₂ g₃ g₄ f h,
     { exact homset g₁ g₂},
     { apply tua, esimp, exact equiv_postcompose f},
-    { exact sorry}
+    { refine _ ⬝ !tua_trans, apply ap tua, apply equiv_eq, intro k, esimp at *, apply assoc'}
   end
 
   definition path_space_groupoid_quotient : (elt G g₁ = elt G g₂) ≃ (g₁ ⟶ g₂) :=
