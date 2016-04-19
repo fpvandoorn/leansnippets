@@ -74,7 +74,7 @@ namespace two_quotient
     abstract begin
       intros, rewrite [+elim_rel_eq],
       do 2 rewrite [-ap_elim_rel equiv eq P1 (λb b', ua) ua_refl @ua_symm @ua_trans],
-      apply ap ua, apply equiv_eq, apply eq_of_homotopy, exact P2 q
+      apply ap ua, apply equiv_eq, exact P2 q
     end end
 
   protected definition elim_type_on [reducible] (P0 : A → Type) (x : two_quotient R Q)

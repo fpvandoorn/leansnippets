@@ -329,7 +329,7 @@ namespace my_trunc
     (Σ(g : trunc A → P), Πa, g (tr a) = k a)
       ≃ Σ(v : Σ(h : Π{n}, n_step_tr A n → P), Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
           Πa, (v.1) 0 a = k a
-                    : sigma_equiv_sigma !elim2_equiv (λg, equiv.refl)
+                    : sigma_equiv_sigma !elim2_equiv (λg, equiv.rfl)
   ... ≃ Σ(h : Π{n}, n_step_tr A n → P) (p : Π(n : ℕ) (a : n_step_tr A n), h (f a) = h a),
           Πa, @h 0 a = k a
                     : sigma_assoc_equiv
