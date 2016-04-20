@@ -8,8 +8,10 @@ Declaration of the groupoid quotient
 -/
 
 import algebra.category.groupoid .trunc_two_quotient homotopy.connectedness
+       algebra.group_theory
 
 open trunc_two_quotient eq bool unit relation category e_closure iso is_trunc trunc equiv is_equiv
+     group
 
 namespace groupoid_quotient
 section
@@ -283,9 +285,9 @@ end
   --   : tr p *[π[succ n] A] tr q = tr (p ⬝ q) :=
   -- idp
 
-  definition fundamental_group_EM1 (G : Group) : π₁ (EM1 G) = G :> Group :=
+  definition fundamental_group_EM1 (G : Group) : π₁ (EM1 G) ≃g G :=
   begin
-    fapply Group_eq,
+    fapply isomorphism_of_equiv,
     { exact trunc_equiv_trunc 0 !base_eq_base_equiv ⬝e trunc_equiv 0 G},
     { intros g h, induction g with p, induction h with q,
       exact encode_con p q}
@@ -294,10 +296,20 @@ end
   proposition is_trunc_EM1 [instance] (G : Group) : is_trunc 1 (EM1 G) :=
   !is_trunc_trunc
 
-  -- TODO: move
-  attribute Groupoid._trans_of_to_Precategory_1 Groupoid.to_Precategory [unfold 1]
   proposition is_conn_EM1 [instance] (G : Group) : is_conn 0 (EM1 G) :=
   by apply @is_conn_groupoid_quotient; esimp; exact _
 
+  definition equiv_EM1 {G : Group} {X : Type*} (e : π₁ X ≃g G) [is_conn 0 X] [is_trunc 1 X]
+    : X ≃ EM1 G :=
+  begin
+    fapply equiv.MK,
+    { exact sorry},
+    { intro x, induction x,
+      { exact Point X},
+      { note p := e⁻¹ᵍ f, induction p with p, exact p},
+      { exact sorry}},
+    { exact sorry},
+    { exact sorry}
+  end
 
 end groupoid_quotient
