@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2015 Floris van Doorn. All rights reserved.
+Copyright (c) 2015-16 Floris van Doorn. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 
 Authors: Floris van Doorn
@@ -85,7 +85,7 @@ section
     (Pe : Πg, P (elt g)) (x : groupoid_quotient) : P x :=
   rec Pe !center !center x
 
-  definition rec_loop1 {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
+  definition rec_pth {P : groupoid_quotient → Type} [Πx, is_trunc 1 (P x)]
     {Pe : Πg, P (elt g)} {Pp : Π⦃a b⦄ (f : a ⟶ b), Pe a =[pth f] Pe b}
     (Pcomp : Π⦃a b c⦄ (g : b ⟶ c) (f : a ⟶ b),
       change_path (resp_comp g f) (Pp (g ∘ f)) = Pp f ⬝o Pp g)
@@ -247,69 +247,5 @@ section
   end
 
 end
-  /- Eilenberg MacLane spaces -/
-
-  open algebra pointed nat eq
-
-  -- TODO: redefine this in the groupoid file
-  definition groupoid_of_group'.{l} [constructor] (A : Type.{l}) [G : group A] :
-    groupoid.{0 l} unit :=
-  begin
-    fapply groupoid.mk; fapply precategory.mk: intros,
-      { exact A},
-      { exact _},
-      { exact a_2 * a_1},
-      { exact 1},
-      { apply mul.assoc},
-      { apply mul_one},
-      { apply one_mul},
-      { esimp [precategory.mk],
-        fapply is_iso.mk,
-        { exact f⁻¹},
-        { apply mul.right_inv},
-        { apply mul.left_inv}},
-  end
-
-  definition Groupoid_of_Group [constructor] (G : Group) : Groupoid :=
-  Groupoid.mk unit (groupoid_of_group' G)
-
-  definition EM1 [reducible] [constructor] (G : Group) : Type* :=
-  pointed.MK (groupoid_quotient (Groupoid_of_Group G)) (elt star)
-
-  definition base [constructor] {G : Group} : EM1 G := elt star
-
-  definition base_eq_base_equiv [constructor] (G : Group) : (base = base :> EM1 G) ≃ G :=
-  !elt_eq_elt_equiv
-
-  -- definition tr_mul_tr {n : ℕ} {A : Type*} (p q : Ω[succ n] A)
-  --   : tr p *[π[succ n] A] tr q = tr (p ⬝ q) :=
-  -- idp
-
-  definition fundamental_group_EM1 (G : Group) : π₁ (EM1 G) ≃g G :=
-  begin
-    fapply isomorphism_of_equiv,
-    { exact trunc_equiv_trunc 0 !base_eq_base_equiv ⬝e trunc_equiv 0 G},
-    { intros g h, induction g with p, induction h with q,
-      exact encode_con p q}
-  end
-
-  proposition is_trunc_EM1 [instance] (G : Group) : is_trunc 1 (EM1 G) :=
-  !is_trunc_trunc
-
-  proposition is_conn_EM1 [instance] (G : Group) : is_conn 0 (EM1 G) :=
-  by apply @is_conn_groupoid_quotient; esimp; exact _
-
-  definition equiv_EM1 {G : Group} {X : Type*} (e : π₁ X ≃g G) [is_conn 0 X] [is_trunc 1 X]
-    : X ≃ EM1 G :=
-  begin
-    fapply equiv.MK,
-    { exact sorry},
-    { intro x, induction x,
-      { exact Point X},
-      { note p := e⁻¹ᵍ f, induction p with p, exact p},
-      { exact sorry}},
-    { exact sorry},
-    { exact sorry}
-  end
 
 end groupoid_quotient
