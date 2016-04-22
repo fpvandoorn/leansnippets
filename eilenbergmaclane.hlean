@@ -144,6 +144,9 @@ namespace EM
   proposition is_conn_EM1 [instance] (G : Group) : is_conn 0 (EM1 G) :=
   by apply @is_conn_groupoid_quotient; esimp; exact _
 
+  proposition is_conn_pEM1 [instance] (G : Group) : is_conn 0 (pEM1 G) :=
+  is_conn_EM1 G
+
   -- use truncated Whitehead for this?
   definition equiv_EM1 {G : Group} {X : Type*} (e : Ω X ≃ G)
     (r : Πp q, e p * e q = e (p ⬝ q)) [is_conn 0 X] [is_trunc 1 X] : X ≃ pEM1 G :=
@@ -188,7 +191,7 @@ namespace EM
     { apply eq_pathover_id_right, apply hdeg_square, refine EM.elim_pth _ g}
   end
 
-  definition h_space_EM1 [constructor] [instance] (G : CommGroup) : h_space (EM1 G) :=
+  definition h_space_EM1 [constructor] [instance] (G : CommGroup) : h_space (pEM1 G) :=
   begin
     fapply h_space.mk,
     { exact EM1_mul},
@@ -197,14 +200,25 @@ namespace EM
     { apply EM1_mul_one}
   end
 
-  definition foo (G : CommGroup) : Ω[1] (ptrunc 2 (psusp (pEM1 G))) ≃ EM1 G :=
+  /- K(G,2) -/
+  definition pEM2 (G : CommGroup) : Type* := ptrunc 2 (psusp (pEM1 G))
+
+  definition loop_pEM2 (G : CommGroup) : Ω[1] (pEM2 G) ≃* pEM1 G :=
   begin
-    do 2 esimp [iterated_ploop_space], apply hopf.delooping, reflexivity
+    apply hopf.delooping, reflexivity
   end
 
-  definition bar (G : CommGroup) : Ω[2] (ptrunc 2 (psusp (pEM1 G))) ≃ G :=
+  definition homotopy_group_pEM2 (G : CommGroup) : πg[1+1] (pEM2 G) ≃g G :=
   begin
-    refine sorry
+    refine ghomotopy_group_succ_in _ 0 ⬝g _,
+    refine homotopy_group_isomorphism_of_pequiv 0 (loop_pEM2 G) ⬝g _,
+    apply fundamental_group_pEM1
   end
+
+  /- K(G, n+1) -/
+  definition EMn1 (G : CommGroup) (n : ℕ) : Type* :=
+  ptrunc (n+2) (iterate (λA, psusp A) n (pEM1 G))
+  print EMn1
+  print iterate
 
 end EM
