@@ -3,6 +3,9 @@ import types.eq types.pi hit.colimit types.nat.hott hit.trunc cubical.square
 open eq is_trunc unit quotient seq_colim pi nat equiv sum algebra
 
 /-
+
+  NOTE: THIS IS AN OLD PROOF. A SIMPLER PROOF CAN BE FOUND in cpp.hlean
+
   In this file we define the propositional truncation (see very bottom), which, given (X : Type)
   has constructors
   * tr             : X → trunc X

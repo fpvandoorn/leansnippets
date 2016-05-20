@@ -393,9 +393,68 @@ namespace pushout
   end
 
 /---------------------------------------------------------------------------------------------------
-
+  define quotient from pushout
 ---------------------------------------------------------------------------------------------------/
 
+
+namespace pushout
+  open quotient sum sigma sigma.ops
+  section
+  parameters {A : Type} (R : A → A → Type)
+
+  definition f [unfold 3] : A + (Σx y, R x y) → A
+  | (sum.inl a) := a
+  | (sum.inr v) := v.1
+
+  definition g [unfold 3] : A + (Σx y, R x y) → A
+  | (sum.inl a) := a
+  | (sum.inr v) := v.2.1
+
+  definition X [reducible] := pushout f g
+  definition Q [reducible] := quotient R
+  definition X_of_Q [unfold 3] : Q → X :=
+  begin
+    intro q, induction q,
+    { exact inl a},
+    { exact glue (sum.inr ⟨a, a', H⟩) ⬝ (glue (sum.inl a'))⁻¹}
+  end
+
+  definition Q_of_X [unfold 3] : X → Q :=
+  begin
+    intro x, induction x,
+    { exact class_of R a},
+    { exact class_of R a},
+    { cases x with a v,
+      { reflexivity},
+      { exact eq_of_rel R v.2.2}}
+  end
+
+  definition Q_of_X_of_Q (q : Q) : Q_of_X (X_of_Q q) = q :=
+  begin
+    induction q,
+    { reflexivity},
+    { apply eq_pathover_id_right, apply hdeg_square, refine ap_compose Q_of_X _ _ ⬝ _,
+      refine ap02 Q_of_X !elim_eq_of_rel ⬝ _, refine !ap_con ⬝ _,
+      refine whisker_left _ !ap_inv ⬝ _,
+      exact !elim_glue ◾ !elim_glue⁻²}
+  end
+
+  definition X_of_Q_of_X (x : X) : X_of_Q (Q_of_X x) = x :=
+  begin
+    induction x,
+    { reflexivity},
+    { esimp, exact glue (sum.inl x)},
+    { apply eq_pathover_id_right,
+      refine ap_compose X_of_Q _ _ ⬝ph _,
+      refine ap02 X_of_Q !elim_glue ⬝ph _,
+      cases x with a v,
+      { esimp, exact square_of_eq idp},
+      { cases v with a₁ v, cases v with a₂ r, esimp, refine !elim_eq_of_rel ⬝ph _,
+        apply square_of_eq, refine !idp_con ⬝ _, exact !inv_con_cancel_right⁻¹}}
+  end
+
+  end
+end pushout
 
 
 /---------------------------------------------------------------------------------------------------
