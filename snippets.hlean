@@ -5,7 +5,7 @@ import homotopy.circle types.nat.hott types.pointed cubical.cubeover
   Can this be done without univalence?
 ---------------------------------------------------------------------------------------------------/
 namespace quotient
-  open equiv
+  open equiv eq
   universe variables u v
   variables {A B : Type.{u}} {R : A → A → Type.{v}} {S : B → B → Type.{v}}
 
