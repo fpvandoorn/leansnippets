@@ -33,7 +33,7 @@ namespace hide
 
   definition elim [unfold 5] {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
     (Pp : Pb = Pb) (x : X) : P :=
-  rec Pb Ps (pathover_of_eq Pp) x
+  rec Pb Ps (pathover_of_eq _ Pp) x
 
   theorem elim_p {P : Type} (Pb : P) (Ps : Π(f : S¹ → X), (S¹ → P) →  P)
     (Pp : Pb = Pb) : ap (elim Pb Ps Pp) p = Pp := sorry -- easy to prove

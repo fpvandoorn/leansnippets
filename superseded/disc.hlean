@@ -36,7 +36,7 @@ namespace disc
 
   protected definition elim [recursor 5] [unfold 5] {P : Type}
     (Pb : P) (Pe : P) (Pl : Pb = Pb) (x : predisc) : P :=
-  predisc.rec Pb Pe (pathover_of_eq Pl) x
+  predisc.rec Pb Pe (pathover_of_eq _ Pl) x
 
   theorem rec_l {P : predisc → Type} (Pb : P b) (Pe : P e) (Pl : Pb =[l] Pb)
     : apd (predisc.rec Pb Pe Pl) l = Pl :=

@@ -52,7 +52,7 @@ namespace W_colim
   protected definition elim {Q : Type} (Qincl : Π⦃w : W a, B a⦄ (p : P w), Q)
     (Qglue : Π⦃a : A⦄ (b : B a) {f : B a → W a, B a} (q : P (f b)),
       Qincl q = Qincl (g q)) : W_colim → Q :=
-  rec Qincl (λa b f q, pathover_of_eq (Qglue b q))
+  rec Qincl (λa b f q, pathover_of_eq _ (Qglue b q))
 
   protected definition elim_on [reducible] {Q : Type} (aa : W_colim)
     (Qincl : Π⦃w : W a, B a⦄ (p : P w), Q)

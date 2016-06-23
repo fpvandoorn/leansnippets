@@ -67,8 +67,8 @@ open eq is_trunc unit quotient seq_colim is_equiv funext pi nat equiv
     (λb c r, eq.rec_on r !con.left_inv),
   !H'⁻¹ ⬝ !H'
 
-  definition apo011_inv_con {A Z : Type} {B : A → Type} (f : Πa, B a → Z) {a a' a'' : A}
+  definition apd011_inv_con {A Z : Type} {B : A → Type} (f : Πa, B a → Z) {a a' a'' : A}
     {b : B a} {b' : B a'} {b'' : B a''} (Ha : a' = a) (Ha' : a' = a'')
     (Hb : b' =[Ha] b) (Hb' : b' =[Ha'] b'')
-      : (apo011 f Ha Hb)⁻¹ ⬝ apo011 f Ha' Hb' = apo011 f (Ha⁻¹ ⬝ Ha') (Hb⁻¹ᵒ ⬝o Hb') :=
+      : (apd011 f Ha Hb)⁻¹ ⬝ apd011 f Ha' Hb' = apd011 f (Ha⁻¹ ⬝ Ha') (Hb⁻¹ᵒ ⬝o Hb') :=
   by cases Hb; cases Hb'; reflexivity
