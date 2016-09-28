@@ -242,7 +242,7 @@ namespace apn
     (H : Π(a : A), f a = pt) : apn n f p = pt :=
   begin
     induction n with n IH,
-    { unfold [apn, iterated_ploop_space] at *, apply H},
+    { unfold [apn, loopn] at *, apply H},
     { exact sorry}
   end
 
@@ -455,7 +455,6 @@ namespace pushout
 
   end
 end pushout
-
 
 /---------------------------------------------------------------------------------------------------
 
