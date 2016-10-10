@@ -1,4 +1,4 @@
-import homotopy.circle types.nat.hott types.pointed cubical.cubeover
+import types.nat.hott cubical.cubeover homotopy.join homotopy.circle ..Spectral.homotopy.smash
 
 /---------------------------------------------------------------------------------------------------
   Show that type quotient preserves equivalence.
@@ -457,9 +457,191 @@ namespace pushout
 end pushout
 
 /---------------------------------------------------------------------------------------------------
-
+Is the suspension of sets without decidable equality a 1-type?
 ---------------------------------------------------------------------------------------------------/
 
+namespace susp
+
+  section
+  open susp eq bool is_trunc quotient unit pointed equiv prod int
+  parameter (P : Prop.{0})
+  inductive R : bool → bool → Type :=
+  | Rmk : P → R ff tt
+
+  definition Xt := quotient R
+  definition X : Type* := pointed.MK Xt (class_of R ff)
+  definition npt : X := class_of R tt
+  definition pth (p : P) : pt = npt :> X := eq_of_rel R (R.Rmk p)
+
+  /- X is a pointed set -/
+
+  definition code [unfold 2] : X → Prop.{0} :=
+  begin
+    intro x, induction x with b,
+    { induction b, exact trunctype.mk unit _, exact P},
+    { induction H, esimp, apply tua, esimp, apply equiv_of_is_prop,
+      { intro u, exact a },
+      { intro p, exact ⋆ }}
+  end
+
+  definition encode [unfold 3] (x : X) (p : pt = x) : code x :=
+  transport code p ⋆
+
+  definition decode [unfold 2 3] (x : X) (c : code x) : pt = x :=
+  begin
+    induction x with b,
+    { induction b,
+      { reflexivity },
+      { esimp at c, exact pth c }},
+    { induction H with p, apply arrow_pathover_left, intro c,
+      apply eq_pathover_constant_left_id_right, esimp at *, apply square_of_eq,
+      refine !idp_con ⬝ _ ⬝ !idp_con⁻¹, apply ap pth !is_prop.elim }
+  end
+
+  definition decode_encode (x : X) (p : pt = x) : decode x (encode x p) = p :=
+  begin
+    induction p, reflexivity
+  end
+
+  definition encode_decode (x : X) (c : code x) : encode x (decode x c) = c :=
+  !is_prop.elim
+
+  definition X_eq [constructor] (x : X) : (pt = x) ≃ code x :=
+  equiv.MK (encode x) (decode x) (encode_decode x) (decode_encode x)
+
+  definition X_flip [unfold 2] (x : X) : X :=
+  begin
+    induction x with b,
+    { exact class_of _ (bnot b) },
+    { induction H with p, exact (pth p)⁻¹ },
+  end
+
+  attribute bnot bnot_bnot [unfold 1]
+  definition X_flip_flip [unfold 2] (x : X) : X_flip (X_flip x) = x :=
+  begin
+    induction x with b,
+    { exact ap (class_of R) !bnot_bnot },
+    { induction H with p, apply eq_pathover_id_right, apply hdeg_square,
+      krewrite [ap_compose' X_flip X_flip, ↑X_flip, elim_eq_of_rel, ▸*, ap_inv, elim_eq_of_rel, ▸*],
+      apply inv_inv },
+  end
+
+  definition X_flip_equiv [constructor] : X ≃ X :=
+  equiv.MK X_flip X_flip X_flip_flip X_flip_flip
+
+  definition is_set_X [instance] : is_set X :=
+  begin
+    apply is_trunc_succ_intro,
+    intro x y,
+    induction x using quotient.rec_prop with b,
+    assert H : Π(y : X), is_prop (pt = y),
+    { intro y, exact is_trunc_equiv_closed_rev _ (X_eq y) },
+    induction b,
+    { apply H },
+    { apply @(is_trunc_equiv_closed_rev _ (eq_equiv_fn_eq_of_equiv X_flip_equiv npt y)),
+      apply H }
+  end
+
+  definition Xs [constructor] : Set := trunctype.mk X _
+
+  definition Y := psusp X
+  definition tℤ : Set := trunctype.mk ℤ _
+
+  definition loop : pt = pt :> Y :=
+  merid npt ⬝ (merid pt)⁻¹
+
+  definition Ycode [unfold 2] : Y → Set.{0} :=
+  begin
+    intro y, induction y with x,
+    { exact tℤ }, --if P then unit else ℤ, except implement it using quotients with paths from P
+    { exact tℤ }, --
+    { apply tua, induction x with b,
+      { induction b,
+        { reflexivity },
+        { apply equiv_succ }},
+      { induction H with p, esimp, apply equiv_eq, intro x, exact sorry }}
+  end
+
+  definition Yencode [unfold 3] (y : Y) (p : pt = y) : Ycode y :=
+  transport Ycode p (0 : ℤ)
+
+  definition Ydecode [unfold 2 3] (y : Y) (c : Ycode y) : pt = y :=
+  begin
+    induction y with b,
+    { exact power loop c },
+    { exact power loop c ⬝ merid pt },
+    { apply arrow_pathover_left, intro c,
+      apply eq_pathover_constant_left_id_right, esimp at *, exact sorry }
+  end
+
+  definition Ydecode_encode (y : Y) (p : pt = y) : Ydecode y (Yencode y p) = p :=
+  begin
+    induction p, reflexivity
+  end
+
+  definition Yencode_decode (y : Y) (c : Ycode y) : Yencode y (Ydecode y c) = c :=
+  begin
+    induction y,
+    { exact sorry },
+    { exact sorry },
+    { apply is_prop.elimo }
+  end
+
+
+  end
+end susp
+
+/---------------------------------------------------------------------------------------------------
+start on the proof that susp (smash A B) = reduced_join A B
+however, this uses join instead of reduced join, which is of course wrong.
+---------------------------------------------------------------------------------------------------/
+namespace smash
+  open susp join smash pointed susp
+  variables {A B : Type*}
+  definition psusp_smash_of_pjoin [unfold 3] (x : pjoin A B) : psusp (smash A B) :=
+  begin
+    induction x with a b a b,
+    { exact pt },
+    { exact south },
+    { exact merid (smash.mk a b) },
+  end
+
+  definition pjoin_of_psusp_smash_merid [unfold 3] (x : smash A B) : inl pt = inr pt :> pjoin A B :=
+  begin
+    induction x,
+    { exact join.glue pt b ⬝ (join.glue a b)⁻¹ ⬝ join.glue a pt },
+    { exact join.glue pt pt },
+    { exact join.glue pt pt },
+    { apply inv_con_cancel_right },
+    { exact whisker_right !con.right_inv _ ⬝ !idp_con, }
+  end
+
+  definition pjoin_of_psusp_smash [unfold 3] (x : psusp (smash A B)) : pjoin A B :=
+  begin
+    induction x,
+    { exact pt },
+    { exact inr pt },
+    { exact pjoin_of_psusp_smash_merid a },
+  end
+
+  definition psusp_smash_pequiv_pjoin : psusp (smash A B) ≃* pjoin A B :=
+  begin
+    fapply pequiv_of_equiv,
+    { fapply equiv.MK,
+      { exact pjoin_of_psusp_smash },
+      { exact psusp_smash_of_pjoin },
+      { intro x, induction x: esimp,
+        { exact join.glue pt pt ⬝ (join.glue x pt)⁻¹ },
+        { exact (join.glue pt pt)⁻¹ ⬝ join.glue pt y },
+        { apply eq_pathover_id_right,
+          rewrite [ap_compose' pjoin_of_psusp_smash, ↑psusp_smash_of_pjoin, join.elim_glue],
+          rewrite [↑pjoin_of_psusp_smash, elim_merid, ▸*],
+          exact sorry}},
+      { exact sorry}},
+    { reflexivity }
+
+  end
+end smash
 
 
 /---------------------------------------------------------------------------------------------------
