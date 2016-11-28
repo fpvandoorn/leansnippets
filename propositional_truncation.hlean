@@ -310,7 +310,7 @@ section
   begin
     induction b with m b,
     { apply eq_constructors},
-    { apply (equiv.to_inv !pathover_eq_equiv_r), apply eq_constructors_comp_right},
+    { apply (equiv.to_inv !eq_pathover_equiv_r), apply eq_constructors_comp_right},
   end
 
   -- induction on a

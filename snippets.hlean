@@ -613,7 +613,7 @@ namespace smash
     { exact join.glue pt pt },
     { exact join.glue pt pt },
     { apply inv_con_cancel_right },
-    { exact whisker_right !con.right_inv _ ⬝ !idp_con, }
+    { exact whisker_right _ !con.right_inv ⬝ !idp_con, }
   end
 
   definition pjoin_of_psusp_smash [unfold 3] (x : psusp (smash A B)) : pjoin A B :=
