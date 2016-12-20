@@ -647,7 +647,7 @@ end smash
 /---------------------------------------------------------------------------------------------------
   define dependent computation rule of the circle from the other data?
 ---------------------------------------------------------------------------------------------------/
-exit
+
 namespace circlecomp
   section
   open circle eq sigma sigma.ops function equiv
@@ -663,9 +663,9 @@ namespace circlecomp
     : p..2 =[eq2_pr1 r] q..2 :=
   !pathover_ap (apd eq_pr2 r)
 
-  definition natural_square_tr_loop {A : Type} {B : Type} {a : A} {f g : A → B}
-    (p : f ~ g) (q : a = a) : natural_square_tr p q = _ :=
-  _
+  -- definition natural_square_tr_loop {A : Type} {B : Type} {a : A} {f g : A → B}
+  --   (p : f ~ g) (q : a = a) : natural_square_tr p q = _ :=
+  -- _
 
   definition pathover_ap_id {A : Type} {a a₂ : A} (B : A → Type) {p : a = a₂}
     {b : B a} {b₂ : B a₂} (q : b =[p] b₂) : pathover_ap B id q = change_path (ap_id p)⁻¹ q :=
@@ -739,29 +739,76 @@ namespace circlecomp2
 
   example {C : Type} (c : C) (p : c = c) : elim c p b = c := begin esimp end
 
-  definition XequivS : X ≃ S¹ :=
+  definition XequivS : S¹ ≃ X :=
   begin
     fapply equiv.MK,
-    { intro x, induction x, exact base, exact loop},
     { intro y, induction y, exact b, exact l},
-    { intro y, induction y, esimp, apply eq_pathover, apply hdeg_square,
-      rewrite [ap_id,ap_compose (elim base loop),elim_loop], apply elim_l},
+    { intro x, induction x, exact base, exact loop},
     { intro x, induction x, esimp, apply eq_pathover, apply hdeg_square,
       rewrite [ap_id,ap_compose (circle.elim b l),elim_l], apply elim_loop},
+    { intro y, induction y, esimp, apply eq_pathover, apply hdeg_square,
+      rewrite [ap_id,ap_compose (elim base loop),elim_loop], apply elim_l},
   end
 
-  --set_option pp.notation false
-  definition foo {A A' : Type} (f : A ≃ A') (B : A → Type) {a a' : A} {p : a = a'}
-    {b : B a} {b' : B a'} : b =[p] b' ≃
-  pathover (B ∘ to_inv f) ((to_left_inv f a)⁻¹ ▸ b) (ap (to_fun f) p) ((to_left_inv f a')⁻¹ ▸ b') :=
-  begin
-    induction p, esimp,
-    refine !pathover_idp ⬝e _ ⬝e !pathover_idp⁻¹ᵉ,
-    apply eq_equiv_fn_eq
-  end
+  definition is_circle (X : Type) : Type :=
+  Σ(x₀ : X)
+   (p : x₀ = x₀)
+   (rec : Π(C : X → Type) (c : C x₀) (q : c =[p] c) (x : X), C x)
+   (rec_x₀ : Π(C : X → Type) (c : C x₀) (q : c =[p] c), rec C c q x₀ = c),
+   Π(C : X → Type) (c : C x₀) (q : c =[p] c), squareover C vrfl (apdo (rec C c q) p) q (pathover_idp_of_eq !rec_x₀) (pathover_idp_of_eq !rec_x₀)
 
-  theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apd (rec c p) l = p :=
-  begin
-    refine eq_of_fn_eq_fn !(foo XequivS) _,
-  end
+  definition is_circle_circle : is_circle S¹ :=
+  ⟨base, loop, @circle.rec, by intros; reflexivity, begin intros, apply vdeg_squareover, apply rec_loop end⟩
+
+  definition is_circle_X {X : Type₀} (f : S¹ ≃ X) : is_circle X :=
+  transport is_circle (ua f) is_circle_circle
+
+  namespace new
+  definition b : X := (is_circle_X XequivS).1
+  definition l : b = b := (is_circle_X XequivS).2.1
+  definition rec : Π{C : X → Type} (c : C b) (p : c =[l] c) (x : X), C x := (is_circle_X XequivS).2.2.1
+  definition rec_pt : Π{C : X → Type} (c : C b) (p : c =[l] c), rec c p b = c := (is_circle_X XequivS).2.2.2.1
+  definition rec_loop : Π{C : X → Type} (c : C b) (p : c =[l] c), squareover C vrfl (apdo (rec c p) l) p (pathover_idp_of_eq !rec_pt) (pathover_idp_of_eq !rec_pt) := proof (is_circle_X XequivS).2.2.2.2 qed
+  end new
+
+  -- --set_option pp.notation false
+  -- definition foo {A A' : Type} (f : A ≃ A') (B : A → Type) {a a' : A} {p : a = a'}
+  --   {b : B a} {b' : B a'} : b =[p] b' ≃
+  -- pathover (B ∘ to_inv f) ((to_left_inv f a)⁻¹ ▸ b) (ap (to_fun f) p) ((to_left_inv f a')⁻¹ ▸ b') :=
+  -- begin
+  --   induction p, esimp,
+  --   refine !pathover_idp ⬝e _ ⬝e !pathover_idp⁻¹ᵉ,
+  --   apply eq_equiv_fn_eq
+  -- end
+
+  -- theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apdo (rec c p) l = p :=
+  -- begin
+  --   refine eq_of_fn_eq_fn !(foo XequivS) _,
+  -- end
+
 end circlecomp2
+
+namespace merely_decidable_equality
+
+open eq trunc is_trunc function equiv is_equiv decidable
+
+definition decidable_equiv_closed {A B : Type} (e : A ≃ B) (H : decidable A)
+ : decidable B :=
+ begin
+   apply decidable_of_decidable_of_iff H,
+   split, exact to_fun e, exact to_inv e
+ end
+
+local attribute is_trunc_decidable [instance]
+example {A : Type} : decidable_eq (trunc 0 A) ↔
+  decidable_rel (λa a' : A, trunc -1 (a = a')) :=
+begin
+  constructor: intro H,
+  { intro a a', refine decidable_equiv_closed !tr_eq_tr_equiv (H (tr a) (tr a')) },
+  { intro a a', induction a with a, induction a' with a',
+    refine decidable_equiv_closed _ (H a a'),
+    exact !tr_eq_tr_equiv⁻¹ᵉ
+  }
+end
+
+end merely_decidable_equality
