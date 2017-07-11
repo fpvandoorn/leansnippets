@@ -592,8 +592,24 @@ namespace susp
 end susp
 
 /---------------------------------------------------------------------------------------------------
+Suspension of a prop
+---------------------------------------------------------------------------------------------------/
+
+namespace susp
+  open is_trunc trunc_index
+
+  definition susp_of_is_prop (A : Type) [is_prop A] : is_set (susp A) :=
+  begin
+    apply is_trunc_succ_of_is_trunc_loop, apply algebra.le.refl,
+    intro x, induction x using susp.rec_prop,
+
+  end
+
+end susp
+
+/---------------------------------------------------------------------------------------------------
 start on the proof that susp (smash A B) = reduced_join A B
-however, this uses join instead of reduced join, which is of course wrong.
+Here we use the join, which is equivalent(?)
 ---------------------------------------------------------------------------------------------------/
 namespace smash
   open susp join smash pointed susp
@@ -703,8 +719,8 @@ namespace circlecomp
     apply transport (λx, squareover P x _ _ _ _),
     apply to_left_inv !hdeg_square_equiv, esimp,
     apply hdeg_squareover,
-    rewrite [pathover_ap_id, apd_eq_apd_ap pr2 f loop, ]
-    --unfold natural_square_tr,
+    rewrite [pathover_ap_id, apd_eq_apd_ap pr2 f loop, ],
+    exact sorry --unfold natural_square_tr,
   end
 
   definition p : ap f loop = (sigma_eq loop Ploop) := !elim_loop
@@ -715,7 +731,7 @@ namespace circlecomp
 --set_option pp.notation false
   theorem my_rec_loop  : apd (circle.rec Pbase Ploop) loop = Ploop :=
   begin
-    refine _ ⬝ tr_eq_of_pathover r,
+    refine _ ⬝ tr_eq_of_pathover r, exact sorry
   end
 
   end
@@ -755,7 +771,7 @@ namespace circlecomp2
    (p : x₀ = x₀)
    (rec : Π(C : X → Type) (c : C x₀) (q : c =[p] c) (x : X), C x)
    (rec_x₀ : Π(C : X → Type) (c : C x₀) (q : c =[p] c), rec C c q x₀ = c),
-   Π(C : X → Type) (c : C x₀) (q : c =[p] c), squareover C vrfl (apdo (rec C c q) p) q (pathover_idp_of_eq !rec_x₀) (pathover_idp_of_eq !rec_x₀)
+   Π(C : X → Type) (c : C x₀) (q : c =[p] c), squareover C vrfl (apd (rec C c q) p) q (pathover_idp_of_eq !rec_x₀) (pathover_idp_of_eq !rec_x₀)
 
   definition is_circle_circle : is_circle S¹ :=
   ⟨base, loop, @circle.rec, by intros; reflexivity, begin intros, apply vdeg_squareover, apply rec_loop end⟩
@@ -768,7 +784,7 @@ namespace circlecomp2
   definition l : b = b := (is_circle_X XequivS).2.1
   definition rec : Π{C : X → Type} (c : C b) (p : c =[l] c) (x : X), C x := (is_circle_X XequivS).2.2.1
   definition rec_pt : Π{C : X → Type} (c : C b) (p : c =[l] c), rec c p b = c := (is_circle_X XequivS).2.2.2.1
-  definition rec_loop : Π{C : X → Type} (c : C b) (p : c =[l] c), squareover C vrfl (apdo (rec c p) l) p (pathover_idp_of_eq !rec_pt) (pathover_idp_of_eq !rec_pt) := proof (is_circle_X XequivS).2.2.2.2 qed
+--  definition rec_loop : Π{C : X → Type} (c : C b) (p : c =[l] c), squareover C vrfl (apd (rec c p) l) p (pathover_idp_of_eq !rec_pt) (pathover_idp_of_eq !rec_pt) := proof (is_circle_X XequivS).2.2.2.2 qed
   end new
 
   -- --set_option pp.notation false
@@ -812,3 +828,5 @@ begin
 end
 
 end merely_decidable_equality
+
+end pushout

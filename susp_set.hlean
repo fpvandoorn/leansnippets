@@ -5,7 +5,7 @@ Is the suspension of sets without decidable equality a 1-type?
 
 import homotopy.susp types.int ..Spectral.algebra.group_constructions
 
-open susp eq bool is_trunc quotient unit pointed equiv prod int pi algebra group trunc
+open susp eq bool is_trunc quotient unit pointed equiv prod int pi algebra group trunc lift
 
 namespace susp
   /- move to library -/
@@ -41,22 +41,23 @@ namespace susp
 
   /- First something easier: the suspension of a mere proposition is a set -/
   section
-  parameter (P : Prop.{0})
+  universe variable u
+  parameter (P : Prop.{u})
 
   definition X : Type* := psusp P
 
-  definition code [unfold 2] : X → Prop.{0} :=
+  definition code [unfold 2] : X → Prop.{u} :=
   begin
     intro x, induction x,
-    { exact trunctype.mk unit _},
+    { exact trunctype.mk (lift unit) _},
     { exact P},
     { apply tua, esimp, apply equiv_of_is_prop,
       { intro u, exact a },
-      { intro p, exact ⋆ }}
+      { intro p, exact up ⋆ }}
   end
 
   definition encode [unfold 3] (x : X) (p : north = x) : code x :=
-  transport code p ⋆
+  transport code p (up ⋆)
 
   definition decode [unfold 2 3] (x : X) (c : code x) : north = x :=
   begin
@@ -79,7 +80,7 @@ namespace susp
   definition X_eq [constructor] (x : X) : (north = x) ≃ code x :=
   equiv.MK (encode x) (decode x) (encode_decode x) (decode_encode x)
 
-  definition is_set_X [instance] : is_set X :=
+  definition is_set_X : is_set X :=
   begin
     apply is_trunc_succ_intro,
     intro x y,
@@ -91,7 +92,13 @@ namespace susp
       apply H }
   end
 
-  definition Xs [constructor] : Set := trunctype.mk X _
+  definition is_set_susp [instance] (A : Type) [is_prop A] : is_set (susp A) :=
+  susp.is_set_X (trunctype.mk A _)
+
+  definition is_set_psusp [instance] (A : Type) [is_prop A] : is_set (psusp A) :=
+  is_set_susp A
+
+  definition Xs [constructor] : Set := trunctype.mk X is_set_X
 
   definition Y := psusp X
   definition tℤ : Set := trunctype.mk ℤ _

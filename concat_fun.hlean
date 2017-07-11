@@ -17,9 +17,10 @@ open eq
   example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₃ idp p := idp
   example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₄ idp p := idp
   example {A : Type} {a a' : A} (p : a = a') :       p = concat₁ p idp := idp
-  example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₂ p idp := sorry --idp
+  example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₂ p idp := sorry
   example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₃ p idp := idp
-  example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₄ p idp := sorry --idp
+  example {A : Type} {a a' : A} (p : a = a') : ap id p = concat₄ p idp := sorry
+  example {A : Type} {a a' : A} (p : a = a') : concat₃ idp p = concat₃ p idp := idp
 
   eval λ(A : Type) (a a' : A) (p : a = a'), concat₁ p idp
   eval λ(A : Type) (a a' : A) (p : a = a'), concat₂ p idp
@@ -39,3 +40,13 @@ open eq
   example {A B : Type} (f : A → B) {a a' : A} (p : a = a') : ap f (ap id p) = ap f (idp ⬝ p) := idp
   example {A : Type} {a a' : A} (p : a = a') : ap id p = idp ⬝ p := idp
   example {A : Type} {a a' : A} (p : a = a') : ap_id p = idp_con p := idp
+
+
+  example : @ap_id = @idp_con := idp
+
+
+  definition idp_con_rev {A : Type} {a a' : A} (p : a = a') : p = idp ⬝ p :=
+  by induction p; reflexivity
+
+eval λ{A B : Type} (f : A → B) {a a' : A} (p : a = a'),
+    ap_compose' f id p = ap02 f (idp_con_rev p)
