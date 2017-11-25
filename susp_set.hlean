@@ -44,7 +44,7 @@ namespace susp
   universe variable u
   parameter (P : Prop.{u})
 
-  definition X : Type* := psusp P
+  definition X : Type* := susp P
 
   definition code [unfold 2] : X → Prop.{u} :=
   begin
@@ -95,12 +95,12 @@ namespace susp
   definition is_set_susp [instance] (A : Type) [is_prop A] : is_set (susp A) :=
   susp.is_set_X (trunctype.mk A _)
 
-  definition is_set_psusp [instance] (A : Type) [is_prop A] : is_set (psusp A) :=
+  definition is_set_susp [instance] (A : Type) [is_prop A] : is_set (susp A) :=
   is_set_susp A
 
   definition Xs [constructor] : Set := trunctype.mk X is_set_X
 
-  definition Y := psusp X
+  definition Y := susp X
   definition tℤ : Set := trunctype.mk ℤ _
 
   definition loop : north = north :> Y :=
@@ -168,7 +168,7 @@ namespace hide_susp
   universe variable u
   parameter (A : pSet.{u})
 
-  definition X : Type* := psusp A
+  definition X : Type* := susp A
 
   definition susp_loop {A : Type*} (a : A) : north = north :> susp A :=
   merid a ⬝ (merid pt)⁻¹

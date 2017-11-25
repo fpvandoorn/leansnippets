@@ -544,7 +544,7 @@ namespace susp
 
   definition Xs [constructor] : Set := trunctype.mk X _
 
-  definition Y := psusp X
+  definition Y := susp X
   definition tℤ : Set := trunctype.mk ℤ _
 
   definition loop : pt = pt :> Y :=
@@ -596,14 +596,14 @@ Suspension of a prop
 ---------------------------------------------------------------------------------------------------/
 
 namespace susp
-  open is_trunc trunc_index
+  open is_trunc trunc_index pointed
 
-  definition susp_of_is_prop (A : Type) [is_prop A] : is_set (susp A) :=
-  begin
-    apply is_trunc_succ_of_is_trunc_loop, apply algebra.le.refl,
-    intro x, induction x using susp.rec_prop,
+  -- definition susp_of_is_prop (A : Type) [is_prop A] : is_set (susp A) :=
+  -- begin
+  --   apply is_trunc_succ_of_is_trunc_loop, apply algebra.le.refl,
+  --   intro x, exact sorry --induction x using susp.rec_prop,
 
-  end
+  -- end
 
 end susp
 
@@ -614,7 +614,7 @@ Here we use the join, which is equivalent(?)
 namespace smash
   open susp join smash pointed susp
   variables {A B : Type*}
-  definition psusp_smash_of_pjoin [unfold 3] (x : pjoin A B) : psusp (smash A B) :=
+  definition susp_smash_of_pjoin [unfold 3] (x : pjoin A B) : susp (smash A B) :=
   begin
     induction x with a b a b,
     { exact pt },
@@ -622,7 +622,7 @@ namespace smash
     { exact merid (smash.mk a b) },
   end
 
-  definition pjoin_of_psusp_smash_merid [unfold 3] (x : smash A B) : inl pt = inr pt :> pjoin A B :=
+  definition pjoin_of_susp_smash_merid [unfold 3] (x : smash A B) : inl pt = inr pt :> pjoin A B :=
   begin
     induction x,
     { exact join.glue pt b ⬝ (join.glue a b)⁻¹ ⬝ join.glue a pt },
@@ -632,26 +632,26 @@ namespace smash
     { exact whisker_right _ !con.right_inv ⬝ !idp_con, }
   end
 
-  definition pjoin_of_psusp_smash [unfold 3] (x : psusp (smash A B)) : pjoin A B :=
+  definition pjoin_of_susp_smash [unfold 3] (x : susp (smash A B)) : pjoin A B :=
   begin
     induction x,
     { exact pt },
     { exact inr pt },
-    { exact pjoin_of_psusp_smash_merid a },
+    { exact pjoin_of_susp_smash_merid a },
   end
 
-  definition psusp_smash_pequiv_pjoin : psusp (smash A B) ≃* pjoin A B :=
+  definition susp_smash_pequiv_pjoin : susp (smash A B) ≃* pjoin A B :=
   begin
     fapply pequiv_of_equiv,
     { fapply equiv.MK,
-      { exact pjoin_of_psusp_smash },
-      { exact psusp_smash_of_pjoin },
+      { exact pjoin_of_susp_smash },
+      { exact susp_smash_of_pjoin },
       { intro x, induction x: esimp,
         { exact join.glue pt pt ⬝ (join.glue x pt)⁻¹ },
         { exact (join.glue pt pt)⁻¹ ⬝ join.glue pt y },
         { apply eq_pathover_id_right,
-          rewrite [ap_compose' pjoin_of_psusp_smash, ↑psusp_smash_of_pjoin, join.elim_glue],
-          rewrite [↑pjoin_of_psusp_smash, elim_merid, ▸*],
+          rewrite [ap_compose' pjoin_of_susp_smash, ↑susp_smash_of_pjoin, join.elim_glue],
+          rewrite [↑pjoin_of_susp_smash, elim_merid, ▸*],
           exact sorry}},
       { exact sorry}},
     { reflexivity }
