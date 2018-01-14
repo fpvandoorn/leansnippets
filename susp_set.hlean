@@ -3,7 +3,7 @@
 Is the suspension of sets without decidable equality a 1-type?
 ---------------------------------------------------------------------------------------------------/
 
-import homotopy.susp types.int ..Spectral.algebra.group_constructions
+import homotopy.susp types.int ..Spectral.algebra.free_group
 
 open susp eq bool is_trunc quotient unit pointed equiv prod int pi algebra group trunc lift
 

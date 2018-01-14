@@ -1,7 +1,7 @@
 import types.eq types.pi hit.colimit types.nat.hott homotopy.sphere
 
 --open unit pi equiv sum
-open eq quotient sphere sphere.ops nat sphere_index seq_colim is_trunc sum
+open eq quotient sphere sphere.ops nat seq_colim is_trunc sum pointed
 
 
 -- /- HELPER LEMMAS -/
@@ -31,7 +31,7 @@ namespace dtr
 section
   parameters {k : ℕ} {A : Type}
 
-  abbreviation B := A + (S k → A)
+  abbreviation B := A ⊎ (S k → A)
   inductive R : B → B → Type :=
   | Rmk : Π(s : S k → A) (x : S k), R (inl (s x)) (inr s)
 
@@ -76,7 +76,7 @@ section
   private definition i [reducible] {n : ℕ} (a : A n) : my_tr             := inclusion f a
   private definition g [reducible] {n : ℕ} (a : A n) : i (f a) = i a     := glue f a
 
-
+exit
   -- defining the recursor
   private definition rec {P : my_tr → Type} [Pt : Πx, is_trunc (k.-2.+1) (P x)]
     (H : Π(a : X), P (@i 0 a)) (x : my_tr) : P x :=
