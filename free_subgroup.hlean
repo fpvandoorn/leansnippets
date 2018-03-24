@@ -5,6 +5,7 @@ import ..Spectral.homotopy.fwedge ..Spectral.algebra.free_group ..Spectral.homot
 
 open eq equiv is_equiv fwedge circle trunc pointed pushout is_trunc algebra group EM quotient
      sigma unit is_conn pi sigma.ops function sum choice property prod.ops lift nat fiber decidable
+     prod
 
 universe variables u v
 set_option formatter.hide_full_terms false
@@ -379,6 +380,11 @@ open paths
 definition unique_reduced_paths {V : Set} (E : V → V → Type) : Type :=
 Πv v', is_prop (rpaths E v v')
 
+definition is_prop_unique_reduced_paths {V : Set} (E : V → V → Type) :
+  is_prop (unique_reduced_paths E) :=
+!is_trunc_pi
+
+
 definition is_reduced_invert {V : Set} {E : V → V → Type}
   {v₁ v₃ v₄ : V} (e : undir E v₃ v₄) {p : upaths E v₁ v₃} : is_reduced (e::p) → is_reduced p :=
 begin
@@ -487,7 +493,7 @@ attribute [coercion] spanning_tree.tree
 attribute [instance] spanning_tree.decT
 
 open spanning_tree
-variables {V : Set} {v₀ v₁ v₂ : V} {E : V → V → Set} {T : spanning_tree E}
+variables {V : Set.{u}} {v₀ v₁ v₂ : V} {E : V → V → Set} {T : spanning_tree E}
 definition spanning' (T : spanning_tree E) (v₁ v₂ : V) : upaths E v₁ v₂ :=
 umapr (λv v', pr1) (spanning T v₁ v₂)
 
@@ -509,7 +515,7 @@ definition Zorntype : Type := Π⦃A : Type.{u}⦄ (H : is_set A) (s : prop_weak
 definition LEM_of_AC (AC : ACtype.{u}) : LEMtype.{u} :=
 sorry
 
-definition LEM_of_LEM_up (AC : LEMtype.{max u v}) : LEMtype.{u} :=
+definition LEM_of_LEM_up (LEM : LEMtype.{max u v}) : LEMtype.{u} :=
 sorry
 
 definition Hartog_lemma (A : Type) : Σ(B : Type) (R : B → B → Type),
@@ -617,11 +623,28 @@ structure subforest {V : Set.{u}} (E : V → V → Set.{u}) : Type :=
 attribute [coercion] subforest.tree
 attribute [instance] subforest.decT
 
-definition is_embedding_tree (E : V → V → Set) : is_embedding (@subforest.tree V E) :=
-sorry
+local attribute [instance] is_trunc_decidable is_prop_unique_reduced_paths
 
-definition is_set_subforest (E : V → V → Set) : is_set (subforest E) :=
-sorry
+definition subforest.sigma_char (E : V → V → Set.{u}) :
+  subforest E ≃ Σ(T : Π⦃v v'⦄, E v v' → Prop.{u}), (Π⦃v v'⦄ (e : E v v'), decidable (T e)) ×
+    unique_reduced_paths (subgraph T) :=
+equiv.MK (λT, ⟨subforest.tree T, (subforest.decT T, subforest.is_tree T)⟩)
+         (λX, subforest.mk X.1 X.2.1 X.2.2)
+         begin intro X, induction X with T p, induction p, reflexivity end
+         begin intro T, induction T, reflexivity end
+
+definition is_embedding_tree (E : V → V → Set) : is_embedding (@subforest.tree V E) :=
+begin
+  apply is_embedding_compose sigma.pr1 (subforest.sigma_char E),
+  apply is_embedding_pr1, apply is_embedding_of_is_equiv
+end
+
+definition is_set_subforest (E : V → V → Set.{u}) : is_set (subforest E) :=
+have H1 : is_set (Π⦃v v'⦄, E v v' → Prop.{u}), from _,
+have H2 : Π(T : Π⦃v v'⦄, E v v' → Prop.{u}), is_prop ((Π⦃v v'⦄ (e : E v v'), decidable (T e)) ×
+    unique_reduced_paths (subgraph T)), from _,
+@is_trunc_equiv_closed_rev _ _ 0 (subforest.sigma_char E)
+  (@is_trunc_sigma _ _ _ H1 (λT, @is_trunc_succ _ _ (H2 T)))
 
 definition prop_weak_order_property [instance] (A : Type.{u}) : prop_weak_order.{u+1} (property.{u u} A) :=
 ⦃ prop_weak_order, le := λs t, lift (s ⊆ t),
@@ -784,11 +807,24 @@ end
 definition is_free_free_group (X : Set) : is_free (free_group X) :=
 exists.intro X !isomorphism.refl
 
+definition is_strictly_free (G : Group.{u}) : Prop :=
+∃(X : Type.{u}), Σ(H : decidable_eq X), G ≃g free_group X
+
+definition is_strictly_free_isomorphism {G H : Group.{u}} (φ : G ≃g H) (HH : is_strictly_free H) :
+  is_strictly_free G :=
+begin
+  refine exists.elim HH _, intro X Hψ, induction Hψ with H2 ψ,
+  exact exists.intro X ⟨H2, (φ ⬝g ψ)⟩
+end
+
+definition is_strictly_free_free_group (X : Type) [decidable_eq X] : is_strictly_free (free_group X) :=
+exists.intro X ⟨_, !isomorphism.refl⟩
+
 local attribute [instance] decidable_eq_nonvertices
 /- todo: weaken AC to be only AC on the required type. add hypotheses of decidable equality on
   - cokernel (cosets) of φ (V) -/
 definition reflect_embedding_free_group {G : Group} {X : Type.{u}} [decidable_eq X]
-  (φ : G →g free_group X) (Hφ : is_embedding φ) (AC : ACtype.{u+2}) : is_free G :=
+  (φ : G →g free_group X) (Hφ : is_embedding φ) (AC : ACtype.{u+2}) : is_strictly_free G :=
 let P : VS1 X → Set.{u} := covering_space_free_subgroup φ Hφ,
     V : Set.{u} := P pt,
     v₀ : V := fiberpt,
@@ -804,7 +840,7 @@ have f : EM1 G ≃* VS1 (nonvertices T), from
   (covering_graph_covering_space φ Hφ)⁻¹ᵉ* ⬝e* quotient_pequiv_VS1 _ _ v₀,
 have ψ : G ≃g free_group (nonvertices T), from
   !fundamental_group_EM1⁻¹ᵍ ⬝g homotopy_group_isomorphism_of_pequiv 0 f ⬝g !fundamental_group_VS1,
-show is_free G, from is_free_isomorphism ψ !is_free_free_group)
+show is_strictly_free G, from is_strictly_free_isomorphism ψ !is_strictly_free_free_group)
 
 -- definition covering_graph_covering_space {X : Type} [decidable_eq X]
 --   {G : Group} (φ : G →g free_group X) (H : is_embedding φ) :
@@ -813,11 +849,11 @@ show is_free G, from is_free_isomorphism ψ !is_free_free_group)
 
 
 definition is_free_reflect_embedding {G : Group} {H : Group.{u}} (φ : G →g H)
-  (Hφ : is_embedding φ) (HH : is_free H) (AC : ACtype.{u+2}) : is_free G :=
+  (Hφ : is_embedding φ) (HH : is_strictly_free H) (AC : ACtype.{u+2}) : is_strictly_free.{u}
+ G :=
 begin
-  refine exists.elim HH _,
-  intro X ψ, exact sorry
-
+  refine exists.elim HH _, intro X Hψ, induction Hψ with H2 ψ,
+  exact reflect_embedding_free_group (ψ ∘g φ) (is_embedding_compose ψ φ _ _) AC,
 end
 
 
