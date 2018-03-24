@@ -1,75 +1,15 @@
 /- Some work to show that the subgroup of a free group is free -/
 
 import ..Spectral.homotopy.fwedge ..Spectral.algebra.free_group ..Spectral.homotopy.EM algebra.graph
-       ..Spectral.choice
+       ..Spectral.choice ..Spectral.algebra.free_group
 
 open eq equiv is_equiv fwedge circle trunc pointed pushout is_trunc algebra group EM quotient
-     sigma unit is_conn pi sigma.ops function sum choice property prod.ops lift nat fiber
+     sigma unit is_conn pi sigma.ops function sum choice property prod.ops lift nat fiber decidable
 
 universe variables u v
 set_option formatter.hide_full_terms false
 set_option pp.binder_types true
 /- move -/
-
-definition fiberpt [constructor] {A B : Type*} {f : A →* B} : fiber f pt :=
-fiber.mk pt (respect_pt f)
-
-definition psigma_fiber_pequiv [constructor] {A B : Type*} (f : A →* B) :
-  psigma_gen (fiber f) fiberpt ≃* A :=
-pequiv_of_equiv (sigma_fiber_equiv f) idp
-
-definition eq.rec_sigma {A : Type} {B : A → Type} {a : A} {b : B a}
-  (P : Π⦃a'⦄ {b' : B a'}, ⟨a, b⟩ = ⟨a', b'⟩ → Type)
-  (IH : P idp) ⦃a' : A⦄ {b' : B a'} (p : ⟨a, b⟩ = ⟨a', b'⟩) : P p :=
-begin
-  apply transport (λp, P p) (to_left_inv !sigma_eq_equiv p),
-  generalize !sigma_eq_equiv p, esimp, intro q,
-  induction q with q₁ q₂, induction q₂, exact IH
-end
-
-lemma Prop_eq {P Q : Prop} (H : P ↔ Q) : P = Q :=
-tua (equiv_of_is_prop (iff.mp H) (iff.mpr H))
-
-theorem ext {X : Type} {a b : property X} (H : ∀x, x ∈ a ↔ x ∈ b) : a = b :=
-eq_of_homotopy (take x, Prop_eq (H x))
-
-theorem subproperty.antisymm {X : Type} {a b : property X} (h₁ : a ⊆ b) (h₂ : b ⊆ a) : a = b :=
-ext (λ x, iff.intro (λ ina, h₁ ina) (λ inb, h₂ inb))
-
-  definition ap_dpair_eq_dpair_pr {A A' : Type} {B : A → Type} {a a' : A} {b : B a} {b' : B a'} (f : Πa, B a → A') (p : a = a') (q : b =[p] b')
-    : ap (λx, f x.1 x.2) (dpair_eq_dpair p q) = apd011 f p q :=
-  by induction q; reflexivity
-
-  definition pathover_tr_pathover_idp_of_eq {A : Type} {B : A → Type} {a a' : A} {b : B a} {b' : B a'} {p : a = a'}
-    (q : b =[p] b') :
-    pathover_tr p b ⬝o pathover_idp_of_eq (tr_eq_of_pathover q) = q :=
-  begin induction q; reflexivity end
-
-  definition pathover_of_tr_eq_idp {A : Type} {B : A → Type} {a a₂ : A} (p : a = a₂) (b : B a) :
-    pathover_of_tr_eq idp = pathover_tr p b :=
-  by induction p; constructor
-
-  definition lift_functor2 {A B C : Type} (f : A → B → C) (x : lift A) (y : lift B) : lift C :=
-  up (f (down x) (down y))
-
-definition double_neg_elim {A : Type} (H : decidable A) (p : ¬ ¬ A) : A :=
-begin induction H, assumption, contradiction end
-
-definition dite_true {C : Type} [H : decidable C] {A : Type}
-  {t : C → A} {e : ¬ C → A} (c : C) (H' : is_prop C) : dite C t e = t c :=
-begin
-  induction H with H H,
-  exact ap t !is_prop.elim,
-  contradiction
-end
-
-definition dite_false {C : Type} [H : decidable C] {A : Type}
-  {t : C → A} {e : ¬ C → A} (c : ¬ C) : dite C t e = e c :=
-begin
-  induction H with H H,
-  contradiction,
-  exact ap e !is_prop.elim,
-end
 
 definition is_maximal {A : Type} [weak_order A] (a : A) : Type :=
 Π(b : A), ¬a ≤ b
@@ -97,40 +37,6 @@ definition is_prop_upper_bound [instance] {A : Type} [prop_weak_order A] (C : A 
   is_prop (upper_bound C a) :=
 !is_trunc_pi
 
-definition decidable_eq_of_is_prop (A : Type) [is_prop A] : decidable_eq A :=
-λa a', decidable.inl !is_prop.elim
-
-definition decidable_eq_sigma [instance] {A : Type} (B : A → Type) [HA : decidable_eq A]
-  [HB : Πa, decidable_eq (B a)] : decidable_eq (Σa, B a) :=
-begin
-  intro v v', induction v with a b, induction v' with a' b',
-  cases HA a a' with p np,
-  { induction p, cases HB a b b' with q nq,
-      induction q, exact decidable.inl idp,
-      apply decidable.inr, intro p, apply nq, apply @eq_of_pathover_idp A B,
-      exact change_path !is_prop.elim p..2 },
-  { apply decidable.inr, intro p, apply np, exact p..1 }
-end
-
-definition decidable_eq_sum [instance] (A B : Type) [HA : decidable_eq A] [HB : decidable_eq B] :
-  decidable_eq (A ⊎ B) :=
-begin
-  intro v v', induction v with a b: induction v' with a' b',
-  { cases HA a a' with p np,
-    { exact decidable.inl (ap inl p) },
-    { apply decidable.inr, intro p, cases p, apply np, reflexivity }},
-  { apply decidable.inr, intro p, cases p },
-  { apply decidable.inr, intro p, cases p },
-  { cases HB b b' with p np,
-    { exact decidable.inl (ap inr p) },
-    { apply decidable.inr, intro p, cases p, apply np, reflexivity }},
-end
-
-definition fundamental_group_isomorphism {X : Type*} {G : Group}
-  (e : Ω X ≃ G) (hom_e : Πp q, e (p ⬝ q) = e p * e q) : π₁ X ≃g G :=
-isomorphism_of_equiv (trunc_equiv_trunc 0 e ⬝e (trunc_equiv 0 G))
-  begin intro p q, induction p with p, induction q with q, exact hom_e p q end
-
 /- wedge of circles -/
 definition VS1 (X : Type) : Type* :=
 @pquotient punit (λx y, X)
@@ -147,6 +53,27 @@ eq_of_rel _ x
 lemma is_conn_VS1 [instance] (X : Type) : is_conn 0 (VS1 X) :=
 is_conn_zero_pointed'
   begin intro x, induction x using quotient.rec_prop with x, induction x, exact tidp end
+
+section
+open list group algebra
+definition VS1_code {X : Type.{u}} [decidable_eq X] (x : VS1 X) : Type.{u} :=
+begin
+  induction x with u u₁ u₂ x,
+  { exact dfree_group X },
+  { apply ua, exact right_action (rsingleton (inl x)) }
+end
+
+definition VS1_encode {X : Type} [decidable_eq X] {x : VS1 X} (p : pt = x) : VS1_code x :=
+transport VS1_code p (@one (dfree_group X) _)
+
+definition VS1_decode {X : Type} [decidable_eq X] {x : VS1 X} (c : VS1_code x) : pt = x :=
+begin
+  induction x with u u₁ u₂ x,
+  { induction u, exact sorry },
+  { exact sorry }
+end
+
+end
 
 definition loop_VS1 (X : Type) [decidable_eq X] : Ω (VS1 X) ≃* free_group X :=
 sorry /- encode-decode using free-group definition without propositional truncation -/
@@ -226,7 +153,7 @@ begin
       refine !ap_con ⬝ !elim_eq_of_rel ◾ !ap_compose'⁻¹ ⬝ _, esimp,
       refine idp ◾ !ap_dpair ⬝ !dpair_eq_dpair_con⁻¹ ⬝ _,
       apply ap (dpair_eq_dpair _),
-      exact !pathover_of_tr_eq_idp ◾o idp ⬝ !pathover_tr_pathover_idp_of_eq }},
+      exact !pathover_of_tr_eq_idp' ◾o idp ⬝ !pathover_tr_pathover_idp_of_eq }},
   { intro x, induction x with y y₁ y₂ v,
     { reflexivity },
     { induction v with x p, apply eq_pathover_id_right, apply hdeg_square,
@@ -482,9 +409,9 @@ definition is_reduced_rcons {V : Set} {E : V → V → Type}
   {v₁ v₃ v₄ : V} (e : undir E v₃ v₄) {p : upaths E v₁ v₃} (Hp : is_reduced p) :
   is_reduced (rcons H e p) :=
 begin
-  cases p with x x v₂ x e' p', apply is_reduced.singleton,
+  cases p with x x v₂ x e' p', apply paths.is_reduced.singleton,
   apply dite (⟨v₂, undir_symm e'⟩ = ⟨v₄, e⟩): intro q,
-  { apply transport is_reduced (dite_true q _)⁻¹,
+  { apply transport paths.is_reduced (dite_true q _)⁻¹,
     exact transporto (@is_reduced V E v₁) !pathover_tr (is_reduced_invert _ Hp) },
   exact transport is_reduced (dite_false q)⁻¹ (is_reduced.cons q Hp)
 end
@@ -515,7 +442,7 @@ definition is_reduced_reduce_path {V : Set} {E : V → V → Type}
   (H : Πv, decidable_eq (Σv', undir E v v')) {v v' : V} (p : upaths E v v') :
   is_reduced (reduce_path' H p) :=
 begin
-  intros, induction p with a a₁ a₃ a₄ e p IH, apply is_reduced.nil,
+  intros, induction p with a a₁ a₃ a₄ e p IH, apply paths.is_reduced.nil,
   apply is_reduced_rcons, exact IH
 end
 
@@ -898,68 +825,3 @@ end
 definition is_free_subgroup {G : Group} {H : property G} [is_subgroup G H] (HG : is_free G) :
   is_free (subgroup H) :=
 sorry
-
-
-
-/- MOVE (not needed in this file) -/
-protected definition homomorphism.sigma_char [constructor]
-  (A B : Group) : (A →g B) ≃ Σ(f : A → B), is_mul_hom f :=
-begin
-  fapply equiv.MK,
-    {intro F, exact ⟨F, _⟩ },
-    {intro p, cases p with f H, exact (homomorphism.mk f H) },
-    {intro p, cases p, reflexivity },
-    {intro F, cases F, reflexivity },
-end
-
-definition homomorphism_pathover {A : Type} {a a' : A} (p : a = a')
-  {B : A → Group} {C : A → Group} (f : B a →g C a) (g : B a' →g C a')
-  (r : homomorphism.φ f =[p] homomorphism.φ g) : f =[p] g :=
-begin
-  fapply pathover_of_fn_pathover_fn,
-  { intro a, apply homomorphism.sigma_char },
-  { fapply sigma_pathover, exact r, apply is_prop.elimo }
-end
-
-protected definition isomorphism.sigma_char [constructor]
-  (A B : Group) : (A ≃g B) ≃ Σ(f : A →g B), is_equiv f :=
-begin
-  fapply equiv.MK,
-    {intro F, exact ⟨F, _⟩ },
-    {intro p, cases p with f H, exact (isomorphism.mk f H) },
-    {intro p, cases p, reflexivity },
-    {intro F, cases F, reflexivity },
-end
-
-definition isomorphism_pathover {A : Type} {a a' : A} (p : a = a')
-  {B : A → Group} {C : A → Group} (f : B a ≃g C a) (g : B a' ≃g C a')
-  (r : pathover (λa, B a → C a) f p g) : f =[p] g :=
-begin
-  fapply pathover_of_fn_pathover_fn,
-  { intro a, apply isomorphism.sigma_char },
-  { fapply sigma_pathover, apply homomorphism_pathover, exact r, apply is_prop.elimo }
-end
-
-variables {A : Type} {R : A → A → Type} {a₁ a₂ a₃ a₄ : A}
-inductive all (T : Π⦃a₁ a₂ : A⦄, R a₁ a₂ → Type) : Π⦃a₁ a₂ : A⦄, paths R a₁ a₂ → Type :=
-| nil {} : Π{a : A}, all T (@nil A R a)
-| cons   : Π{a₁ a₂ a₃ : A} {r : R a₂ a₃} {p : paths R a₁ a₂}, T r → all T p → all T (cons r p)
-
-inductive Exists (T : Π⦃a₁ a₂ : A⦄, R a₁ a₂ → Type) : Π⦃a₁ a₂ : A⦄, paths R a₁ a₂ → Type :=
-| base : Π{a₁ a₂ a₃ : A} {r : R a₂ a₃} (p : paths R a₁ a₂), T r → Exists T (cons r p)
-| cons : Π{a₁ a₂ a₃ : A} (r : R a₂ a₃) {p : paths R a₁ a₂}, Exists T p → Exists T (cons r p)
-
-inductive mem (l : R a₃ a₄) : Π⦃a₁ a₂ : A⦄, paths R a₁ a₂ → Type :=
-| base : Π{a₂ : A} (p : paths R a₂ a₃), mem l (cons l p)
-| cons : Π{a₁ a₂ a₃ : A} (r : R a₂ a₃) {p : paths R a₁ a₂}, mem l p → mem l (cons r p)
-
-definition mem_equiv_Exists (l : R a₁ a₂) (p : paths R a₃ a₄) :
-  mem l p ≃ Exists (λa a' r, ⟨a₁, a₂, l⟩ = ⟨a, a', r⟩) p :=
-sorry
-
-definition len (p : paths R a₁ a₂) : ℕ :=
-begin
-  induction p with a a₁ a₂ a₃ r p IH,
-  { exact 0 },
-  { exact nat.succ IH }
-end
