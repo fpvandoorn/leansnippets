@@ -12,6 +12,12 @@ set_option formatter.hide_full_terms false
 set_option pp.binder_types true
 /- move -/
 
+definition InfGroup_Loop [constructor] (X : Type*) : InfGroup :=
+InfGroup.mk (Ω X) _
+
+definition Group_Loop [constructor] (X : Type*) [is_trunc 1 X] : Group :=
+Group.mk (Ω X) (group_of_inf_group (Ω X))
+
 definition is_maximal {A : Type} [weak_order A] (a : A) : Type :=
 Π(b : A), ¬a ≤ b
 
@@ -39,8 +45,11 @@ definition is_prop_upper_bound [instance] {A : Type} [prop_weak_order A] (C : A 
 !is_trunc_pi
 
 /- wedge of circles -/
-definition VS1 (X : Type) : Type* :=
+definition VS1' (X : Type) : Type :=
 @pquotient punit (λx y, X)
+
+definition VS1 [reducible] (X : Type) : Type* :=
+pointed.MK (VS1' X) !Point
 
 definition VS1_functor' [unfold 4] {X X' : Type} (f : X → X') : VS1 X → VS1 X' :=
 quotient.functor _ _ id (λu v, f)
@@ -51,6 +60,50 @@ pmap.mk (VS1_functor' f) idp
 definition VS1_glue {X : Type} (x : X) : pt = pt :> VS1 X :=
 eq_of_rel _ x
 
+protected definition VS1.rec [recursor] {A : Type} {P : VS1 A → Type} (Ppt : P pt)
+  (Pglue : Π(a : A), Ppt =[VS1_glue a] Ppt) (x : VS1' A) : P x :=
+begin
+  induction x with u,
+  { cases u, exact Ppt },
+  { induction a, induction a', apply Pglue }
+end
+
+theorem rec_VS1_glue {A : Type} {P : VS1 A → Type} (Ppt : P pt)
+  (Pglue : Π(a : A), Ppt =[VS1_glue a] Ppt) (a : A)
+    : apd (VS1.rec Ppt Pglue) (VS1_glue a) = Pglue a :=
+!rec_eq_of_rel
+
+protected definition VS1.elim [recursor 5] {A : Type} {P : Type} (Ppt : P)
+  (Pglue : A → Ppt = Ppt) (x : VS1' A) : P :=
+begin
+  induction x with u,
+  { exact Ppt },
+  { apply pathover_of_eq, exact Pglue u }
+end
+
+theorem elim_VS1_glue {A : Type} {P : Type} (Ppt : P) (Pglue : A → Ppt = Ppt) (a : A)
+    : ap (VS1.elim Ppt Pglue) (VS1_glue a) = Pglue a :=
+begin
+  apply eq_of_fn_eq_fn_inv !(pathover_constant (VS1_glue a)),
+  xrewrite [▸*,-apd_eq_pathover_of_eq_ap,↑VS1.elim,rec_VS1_glue],
+end
+
+protected definition VS1.elim_type {X : Type} (Y : Type) (Pglue : X → Y ≃ Y) : VS1 X → Type :=
+VS1.elim Y (λx, ua (Pglue x))
+
+theorem elim_type_VS1_glue {X : Type} {Y : Type} (Pglue : X → Y ≃ Y) (x : X) (y : Y)
+  : transport (VS1.elim_type Y Pglue) (VS1_glue x) y = Pglue x y :=
+begin
+  xrewrite [tr_eq_cast_ap_fn, ↑VS1.elim_type, elim_VS1_glue], apply cast_ua
+end
+
+theorem elim_type_VS1_glue_inv {X : Type} {Y : Type} (Pglue : X → Y ≃ Y) (x : X) (y : Y)
+  : transport (VS1.elim_type Y Pglue) (VS1_glue x)⁻¹ y = (Pglue x)⁻¹ᵉ y :=
+begin
+  xrewrite [tr_eq_cast_ap_fn, ↑VS1.elim_type, ap_inv, elim_VS1_glue], apply cast_ua_inv
+end
+
+
 lemma is_conn_VS1 [instance] (X : Type) : is_conn 0 (VS1 X) :=
 is_conn_zero_pointed'
   begin intro x, induction x using quotient.rec_prop with x, induction x, exact tidp end
@@ -59,35 +112,127 @@ section
 open list group algebra
 definition VS1_code {X : Type.{u}} [decidable_eq X] (x : VS1 X) : Type.{u} :=
 begin
-  induction x with u u₁ u₂ x,
+  induction x with x,
   { exact dfree_group X },
-  { apply ua, exact right_action (rsingleton (inl x)) }
+  { apply ua, exact right_action (dfree_group_inclusion x) }
 end
 
-definition VS1_encode {X : Type} [decidable_eq X] {x : VS1 X} (p : pt = x) : VS1_code x :=
+definition VS1_encode {X : Type} [decidable_eq X] (x : VS1 X) (p : pt = x) : VS1_code x :=
 transport VS1_code p (@one (dfree_group X) _)
 
-definition VS1_decode {X : Type} [decidable_eq X] {x : VS1 X} (c : VS1_code x) : pt = x :=
+section
+local attribute [coercion] InfGroup_of_Group
+
+definition VS1_decode' {X : Type} [decidable_eq X] : dfree_group X →∞g InfGroup_Loop (VS1 X) :=
+dfree_group_inf_hom (InfGroup_Loop (VS1 X)) VS1_glue
+end
+
+definition VS1_decode {X : Type} [decidable_eq X] (x : VS1 X) (c : VS1_code x) : pt = x :=
 begin
-  induction x with u u₁ u₂ x,
-  { induction u, exact sorry },
-  { exact sorry }
+  induction x with x,
+  { exact VS1_decode' c },
+  { apply arrow_pathover_left,
+    intro c, apply eq_pathover,
+    refine _ ⬝vp ap VS1_decode' (elim_type_VS1_glue _ x c)⁻¹ᵖ,
+    refine !ap_constant ⬝ph _ ⬝hp !ap_id⁻¹,
+    refine _ ⬝vp (to_respect_mul_inf VS1_decode' c (dfree_group_inclusion x))⁻¹,
+    refine _ ⬝vp ap (λx, _ ⬝ x) !dfree_group_inf_hom_inclusion⁻¹,
+    apply square_of_eq, exact !idp_con⁻¹ }
+end
+
+definition VS1_decode_encode {X : Type} [decidable_eq X] (x : VS1 X) (p : pt = x) :
+  VS1_decode x (VS1_encode x p) = p :=
+by induction p; reflexivity
+
+definition VS1_encode_decode_pt_gen {X : Type} [decidable_eq X] (x : X) :
+  VS1_encode pt (VS1_decode' (dfree_group_inclusion x)) = dfree_group_inclusion x :=
+ap (VS1_encode pt) !dfree_group_inf_hom_inclusion ⬝ !elim_type_VS1_glue
+
+
+definition VS1_encode_decode_pt {X : Type} [decidable_eq X] : Π(c : dfree_group X),
+  VS1_encode pt (VS1_decode' c) = c :=
+begin
+  refine dfree_group.rec_rev _ _, reflexivity,
+  intro g v p, refine ap (VS1_encode pt) !to_respect_mul_inf ⬝ _, refine !con_tr ⬝ _,
+  refine ap (transport _ _) p ⬝ _,
+  induction v with x x,
+  refine ap (λx, transport _ x _) !dfree_group_inf_hom_inclusion ⬝ !elim_type_VS1_glue,
+  rewrite [rsingleton_inr, to_respect_inv_inf],
+  refine ap (λx, transport _ x _) !dfree_group_inf_hom_inclusion⁻² ⬝ !elim_type_VS1_glue_inv
 end
 
 end
 
-definition loop_VS1 (X : Type) [decidable_eq X] : Ω (VS1 X) ≃* free_group X :=
-sorry /- encode-decode using free-group definition without propositional truncation -/
+definition loop_VS1' (X : Type) [decidable_eq X] : Ω (VS1 X) ≃ dfree_group X :=
+begin
+  apply equiv.MK (VS1_encode pt) (VS1_decode pt),
+  { exact VS1_encode_decode_pt },
+  { exact VS1_decode_encode pt }
+end
 
-definition loop_VS1_con (X : Type) [decidable_eq X] (p q : Ω (VS1 X)) :
+definition loop_VS1'_con {X : Type} [decidable_eq X] (p q : Ω (VS1 X)) :
+  loop_VS1' X (p ⬝ q) = loop_VS1' X p * loop_VS1' X q :=
+preserve_binary_of_inv_preserve (loop_VS1' X) concat mul (to_respect_mul_inf VS1_decode') p q
+
+definition loop_VS1 (X : Type) [decidable_eq X] : Ω (VS1 X) ≃ free_group X :=
+loop_VS1' X ⬝e equiv_of_isomorphism (dfree_group_isomorphism X)
+
+definition loop_VS1_con {X : Type} [decidable_eq X] (p q : Ω (VS1 X)) :
   loop_VS1 X (p ⬝ q) = loop_VS1 X p * loop_VS1 X q :=
-sorry
+ap (equiv_of_isomorphism _) (loop_VS1'_con p q) ⬝ !to_respect_mul
+
+section
+open susp option
+variables {X : Type}
+definition susp_of_VS1 [unfold 1] (x : VS1 X) : ⅀ (option X) :=
+begin
+  induction x with x,
+  { exact north },
+  { exact merid (some x) ⬝ (merid none)⁻¹ }
+end
+
+definition VS1_of_susp [unfold 1] (x : ⅀ (option X)) : VS1 X :=
+begin
+  induction x with x,
+  { exact pt },
+  { exact pt },
+  { induction x with x, exact idp, exact VS1_glue x }
+end
+
+variables (X)
+-- definition susp_of_VS1 [constructor] : VS1 X →* ⅀ (option X) :=
+-- pmap.mk susp_of_VS1' idp
+
+-- definition VS1_of_susp [constructor] : ⅀ (option X) →* VS1 X :=
+-- pmap.mk VS1_of_susp' idp
+
+definition VS1_equiv_susp [constructor] :
+  VS1 X ≃ ⅀ (option X) :=
+equiv.MK susp_of_VS1 VS1_of_susp
+  abstract begin
+    intro x, induction x with x,
+    { reflexivity },
+    { exact merid none },
+    { apply eq_pathover_id_right, refine ap_compose susp_of_VS1 _ _ ⬝ ap02 _ !elim_merid ⬝ph _,
+      induction x: esimp,
+      { exact square_of_eq idp },
+      { refine !elim_VS1_glue ⬝ph _, exact whisker_bl _ hrfl }}
+  end end
+  abstract begin
+    intro x, induction x with x,
+    { reflexivity },
+    { apply eq_pathover_id_right,
+      refine ap_compose VS1_of_susp _ _ ⬝
+             ap02 _ !elim_VS1_glue ⬝ !ap_con ⬝ !elim_merid ◾ (!ap_inv ⬝ !elim_merid⁻²) ⬝ph hrfl }
+  end end
+
+end
 
 lemma is_trunc_VS1 [instance] (X : Type) [decidable_eq X] : is_trunc 1 (VS1 X) :=
 is_trunc_succ_succ_of_is_trunc_loop _ _ (is_trunc_equiv_closed_rev _ (loop_VS1 X)) _
 
 definition fundamental_group_VS1 (X : Type) [decidable_eq X] : π₁ (VS1 X) ≃g free_group X :=
-fundamental_group_isomorphism (loop_VS1 X) (loop_VS1_con X)
+fundamental_group_isomorphism (loop_VS1 X) loop_VS1_con
 
 definition EM1_free_group (X : Type) [decidable_eq X] : EM1 (free_group X) ≃* VS1 X :=
 EM1_pequiv (fundamental_group_VS1 X)⁻¹ᵍ
@@ -124,9 +269,9 @@ pointed.MK (covering_graph' P) (class_of _ p₀)
 definition covering_graph_of_sigma [unfold 3] (x : VS1 X) (y : P x) :
   covering_graph' P :=
 begin
-  induction x with u u₁ u₂ x,
-  { induction u, exact class_of _ y },
-  { induction u₁, induction u₂, esimp, apply arrow_pathover_constant_right, intro y,
+  induction x with x,
+  { exact class_of _ y },
+  { esimp, apply arrow_pathover_constant_right, intro y,
     exact eq_of_rel _ ⟨x, idp⟩ }
 end
 
@@ -140,10 +285,9 @@ end
 definition covering_graph_equiv (P : VS1 X → Set) : covering_graph' P ≃ Σx, P x :=
 begin
   fapply equiv.MK sigma_of_covering_graph (λv, covering_graph_of_sigma v.1 v.2),
-  { intro v, induction v with x p, esimp, induction x with u u₁ u₂ x,
-    { induction u, reflexivity },
-    { induction u₁, induction u₂, esimp,
-      apply @pi_pathover_right' _ _ _ _
+  { intro v, induction v with x p, esimp, induction x with x,
+    { reflexivity },
+    { esimp, apply @pi_pathover_right' _ _ _ _
         (λv, sigma_of_covering_graph (covering_graph_of_sigma v.1 v.2) = v),
       intro y, apply eq_pathover,
       refine ap_compose sigma_of_covering_graph _ _ ⬝ ap02 _ !ap_dpair_eq_dpair_pr ⬝ph _ ⬝hp
@@ -730,7 +874,7 @@ end
 definition quotient_of_VS1 [unfold 5] (T : spanning_tree E) (v₀ : V) (x : VS1 (nonvertices T)) :
   quotient E :=
 begin
-  induction x,
+  induction x with H,
   { exact class_of _ v₀ },
   { exact eq_of_upath !(spanning' T) ⬝ eq_of_rel _ H.2.2.1 ⬝ eq_of_upath !(spanning' T) }
 end
@@ -758,10 +902,10 @@ definition quotient_equiv_VS1 [constructor] (HV : decidable_eq V)
   (HE : Πv v', decidable_eq (E v v')) (v₀ : V) : quotient E ≃ VS1 (nonvertices T) :=
 begin
   apply equiv.MK (VS1_of_quotient T) (quotient_of_VS1 T v₀),
-  { intro x, induction x with u u₁ u₂ e,
-    { induction u, reflexivity },
-    { induction u₁, induction u₂, apply eq_pathover, apply hdeg_square,
-      refine ap_compose (VS1_of_quotient T) _ _ ⬝ ap02 _ !elim_eq_of_rel ⬝ _ ⬝ !ap_id⁻¹,
+  { intro x, induction x with e,
+    { reflexivity },
+    { apply eq_pathover, apply hdeg_square,
+      refine ap_compose (VS1_of_quotient T) _ _ ⬝ ap02 _ !elim_VS1_glue ⬝ _ ⬝ !ap_id⁻¹,
       refine !ap_con ⬝ (!ap_con ⬝ !VS1_of_quotient_tree ◾ !elim_eq_of_rel) ◾
         !VS1_of_quotient_tree ⬝ !con_idp ⬝ !idp_con ⬝ _,
       induction e with v₁ e2, induction e2 with v₂ e3, induction e3 with e H,
@@ -777,7 +921,7 @@ begin
         refine idp ◾ !ueqrealize_symm⁻¹ ⬝ _,
         refine (ueqrealize_append _ (usymm (spanning T v₀ v₂)) (inl ⟨e, h⟩ :: spanning T v₀ v₁))⁻¹ ⬝
           !ueqrealize_umapr⁻¹ ⬝ !eq_of_upath_irrel },
-      { refine ap02 _ (dite_false h) ⬝ !elim_eq_of_rel ⬝ph _,
+      { refine ap02 _ (dite_false h) ⬝ !elim_VS1_glue ⬝ph _,
         apply move_left_of_bot, apply whisker_tl, refine hrfl ⬝vp _, symmetry,
         refine !ueqrealize_append⁻¹ ⬝ _,
         refine ap (λx, ueqrealize _ x) !umapr_append⁻¹ ⬝ _,
@@ -855,8 +999,6 @@ begin
   refine exists.elim HH _, intro X Hψ, induction Hψ with H2 ψ,
   exact reflect_embedding_free_group (ψ ∘g φ) (is_embedding_compose ψ φ _ _) AC,
 end
-
-
 
 definition is_free_subgroup {G : Group} {H : property G} [is_subgroup G H] (HG : is_free G) :
   is_free (subgroup H) :=
