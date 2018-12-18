@@ -44,6 +44,40 @@ definition is_prop_upper_bound [instance] {A : Type} [prop_weak_order A] (C : A 
   is_prop (upper_bound C a) :=
 !is_trunc_pi
 
+lemma is_set_pfiber_EM1_functor {G H : Group.{u}} (φ : G →g H) (Hφ : is_embedding φ) :
+  is_set (pfiber (EM1_functor φ)) :=
+begin
+  assert H3 : Πy, is_contr (π[1] (pointed.MK (pfiber (EM1_functor φ)) y)),
+  { intro y, induction y with y p, revert y p,
+    refine is_conn.elim -1 _ _, intro p,
+    apply chain_complex.LES_is_contr_of_is_embedding_of_is_surjective 1 (pmap.mk (EM1_functor φ) p),
+    { refine is_embedding_homotopy_closed
+        (homotopy_group_functor_phomotopy 1 (change_path_psquare_cod' (EM1_functor φ) pt p)) _,
+      refine is_embedding_homotopy_closed_rev (homotopy_group_functor_compose _ _ _) _,
+      apply is_embedding_compose (π→[1] _),
+      { apply is_embedding_of_is_equiv, apply is_equiv_homotopy_group_functor },
+      exact is_embedding_of_square (equiv_of_isomorphism (fundamental_group_EM1' _))
+              (equiv_of_isomorphism (fundamental_group_EM1' _))
+              (homotopy_group_functor_EM1_functor φ)⁻¹ʰᵗʸ Hφ },
+    apply is_surjective_of_is_equiv, apply @is_equiv_of_is_contr,
+    exact @trivial_homotopy_group_of_is_trunc _ _ _ !is_trunc_EM1 (self_lt_succ 1),
+    exact @trivial_homotopy_group_of_is_trunc _ _ _ !is_trunc_EM1 (self_lt_succ 1) },
+  have H2 : is_trunc 1 (pfiber (EM1_functor φ)), from !is_trunc_fiber,
+  apply @is_trunc_of_is_trunc_succ 0, exact H2, exact H3
+end
+
+definition iff_of_equiv [constructor] {A B : Type} (e : A ≃ B) : A ↔ B :=
+iff.intro e e⁻¹ᵉ
+
+definition decidable_iff_closed {A B : Type} (e : A ↔ B) (H : decidable A) : decidable B :=
+begin
+  induction H with a na, exact inl (iff.mp e a),
+  apply decidable.inr, intro b, apply na, exact iff.mpr e b
+end
+
+definition decidable_equiv_closed {A B : Type} (e : A ≃ B) (H : decidable A) : decidable B :=
+decidable_iff_closed (iff_of_equiv e) H
+
 /- wedge of circles -/
 definition VS1' (X : Type) : Type :=
 @pquotient punit (λx y, X)
@@ -84,7 +118,7 @@ end
 theorem elim_VS1_glue {A : Type} {P : Type} (Ppt : P) (Pglue : A → Ppt = Ppt) (a : A)
     : ap (VS1.elim Ppt Pglue) (VS1_glue a) = Pglue a :=
 begin
-  apply eq_of_fn_eq_fn_inv !(pathover_constant (VS1_glue a)),
+  apply inj_inv !(pathover_constant (VS1_glue a)),
   xrewrite [▸*,-apd_eq_pathover_of_eq_ap,↑VS1.elim,rec_VS1_glue],
 end
 
@@ -241,10 +275,15 @@ definition fibration_free_subgroup {X : Type} [decidable_eq X]
   {G : Group} (φ : G →g free_group X) (x : VS1 X) : Type :=
 fiber (EM1_free_group X ∘* EM1_functor φ) x
 
-lemma is_set_fibration_free_subgroup {X : Type} [decidable_eq X]
-  {G : Group} (φ : G →g free_group X) (H : is_embedding φ) (x : VS1 X) :
-  is_set (fibration_free_subgroup φ x) :=
-sorry /- from LES -/
+lemma is_set_fibration_free_subgroup {X : Type.{u}} [decidable_eq X] {G : Group.{u}}
+  (φ : G →g free_group X) (H : is_embedding φ) :
+  Π(x : VS1 X), is_set (fibration_free_subgroup φ x) :=
+begin
+  refine is_conn.elim -1 _ _,
+  refine @(is_trunc_equiv_closed 0
+    (fiber_equiv_of_square erfl (EM1_free_group X) homotopy.rfl !respect_pt)) _,
+  exact is_set_pfiber_EM1_functor φ H
+end
 
 definition covering_space_free_subgroup {X : Type} [decidable_eq X]
   {G : Group} (φ : G →g free_group X) (H : is_embedding φ) (x : VS1 X) : Set :=
@@ -641,26 +680,54 @@ variables {V : Set.{u}} {v₀ v₁ v₂ : V} {E : V → V → Set} {T : spanning
 definition spanning' (T : spanning_tree E) (v₁ v₂ : V) : upaths E v₁ v₂ :=
 umapr (λv v', pr1) (spanning T v₁ v₂)
 
-/- constructing a maximal subtree from the axiom of choice -/
+definition quotient_prop_code (E : V → V → Set.{v}) (v : V) (x : quotient E) : Prop.{max u v} :=
+begin
+  induction x with v' v' v'' e,
+  exact ∥upaths E v v'∥,
+  apply Prop_eq, constructor: apply trunc_functor: intro p: refine cons _ p,
+  exact sum.inl e, exact sum.inr e
+end
+
+definition quotient_prop_encode (E : V → V → Set.{v}) (v : V) (x : quotient E)
+  (p : class_of E v = x): quotient_prop_code E v x :=
+transport (quotient_prop_code E v) p (tr nil)
 
 definition conn_of_is_conn_quotient (E : V → V → Set) (H : is_conn 0 (quotient E)) (v v' : V) :
   ∥upaths E v v'∥ :=
-sorry
+begin
+  induction merely_of_minus_one_conn (is_conn_eq -1 (class_of E v) (class_of E v')) with p,
+  exact quotient_prop_encode E v (class_of E v') p
+end
+
+/- constructing a maximal subtree from the axiom of choice -/
 
 /- Some properties of AC -/
 definition ACtype : Type :=
 Π(X : Type.{u}) (Y : X → Type.{u}), is_set X → (Πx, is_set (Y x)) → is_equiv (unchoose -1 Y)
 
-definition LEMtype : Type := Π⦃X : Type.{u}⦄, is_prop X → decidable X
+definition LEMtype : Type := Π⦃P : Type.{u}⦄, is_prop P → decidable P
 
 definition Zorntype : Type := Π⦃A : Type.{u}⦄ (H : is_set A) (s : prop_weak_order A)
   (ccc : Π(C : chain A), ∃a, upper_bound C.1 a), ∃(a : A), is_maximal a
 
 definition LEM_of_AC (AC : ACtype.{u}) : LEMtype.{u} :=
-sorry
+begin
+  intro P HP,
+  -- F (2 / P) -> U
+  -- F (0) = Σ(x : bool), x = tt ∨ P
+  -- F (1) = Σ(x : bool), x = ff ∨ P
+  -- f : Πx, F x by AC
+  -- now pr1 ∘ f : 2 / P -> bool.
+  -- decidable (x = y :> bool)
+  -- if f(0) = f(1) then P
+  -- if f(0) ≠ f(1) then ¬ P
+end
 
 definition LEM_of_LEM_up (LEM : LEMtype.{max u v}) : LEMtype.{u} :=
-sorry
+begin
+  intro X H,
+  exact decidable_equiv_closed (equiv_lift X)⁻¹ᵉ (@LEM (lift.{u v} X) !is_trunc_lift)
+end
 
 definition Hartog_lemma (A : Type) : Σ(B : Type) (R : B → B → Type),
   well_founded R × Π(f : B → A), ∃(b b' : B), f b = f b' :=
@@ -973,7 +1040,7 @@ let P : VS1 X → Set.{u} := covering_space_free_subgroup φ Hφ,
     V : Set.{u} := P pt,
     v₀ : V := fiberpt,
     E : V → V → Set := λv v', trunctype.mk (covering_graph_rel P v v') !is_set_covering_graph_rel in
-have dV : decidable_eq V, from sorry,
+have dV : decidable_eq V, from λv v', LEM_of_LEM_up (LEM_of_AC AC) _,
 have dE : Πv v', decidable_eq (E v v'), from
   λv v', @decidable_eq_sigma _ _ _ (λx, decidable_eq_of_is_prop _),
 have e : quotient E ≃ EM1 G, from equiv_of_pequiv (covering_graph_covering_space φ Hφ),

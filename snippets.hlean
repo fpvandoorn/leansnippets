@@ -799,7 +799,7 @@ namespace circlecomp2
 
   -- theorem rec_l {C : X → Type} (c : C b) (p : c =[l] c) : apdo (rec c p) l = p :=
   -- begin
-  --   refine eq_of_fn_eq_fn !(foo XequivS) _,
+  --   refine inj !(foo XequivS) _,
   -- end
 
 end circlecomp2

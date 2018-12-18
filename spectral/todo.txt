@@ -1,0 +1,4 @@
+TODO FOR FLORIS
+
+- clean up some sphere and EM-space theorems to use the loop-suspension adjunction
+- don't use equalities but phomotopies between phomotopies

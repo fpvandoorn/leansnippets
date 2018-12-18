@@ -66,7 +66,7 @@ namespace W_colim
     {a : A} (b : B a) {f : B a → W a, B a} (q : P (f b))
       : ap (elim Qincl Qglue) (glue b q) = Qglue b q :=
   begin
-    apply eq_of_fn_eq_fn_inv !(pathover_constant (glue b q)),
+    apply inj_inv !(pathover_constant (glue b q)),
     rewrite [▸*,-apd_eq_pathover_of_eq_ap,↑elim,rec_glue],
   end
 
